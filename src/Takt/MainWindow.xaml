@@ -1,0 +1,139 @@
+﻿<Window x:Class="Takt.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource App.Title}"
+        Width="580" Height="500"
+        MinWidth="540" MinHeight="460"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackgroundBrush}">
+    <DockPanel Margin="16">
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                <TextBlock Text="{DynamicResource App.Title}" Style="{StaticResource TitleText}" TextWrapping="Wrap" />
+                <TextBlock Text="{DynamicResource App.Subtitle}" Style="{StaticResource HintText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource GhostButton}" Command="{Binding PanicCommand}" Margin="0,0,8,0"
+                        MinWidth="120" Padding="12,8"
+                        ToolTip="{Binding PanicHotkeyText}">
+                    <TextBlock Text="{DynamicResource Action.Panic}" TextWrapping="Wrap" TextAlignment="Center" />
+                </Button>
+                <Button Style="{StaticResource IconButton}" Command="{Binding OpenSettingsCommand}"
+                        ToolTip="{DynamicResource Action.Settings}" Content="⚙" FontSize="14" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusMessage}" Style="{StaticResource HintText}"
+                   Margin="0,12,0,0" TextWrapping="Wrap" MinHeight="16" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid MinHeight="320">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="230" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" MinWidth="230" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="{DynamicResource Card.Jiggler}" Style="{StaticResource TitleText}" TextWrapping="Wrap" Margin="0,0,52,0" />
+                            <ToggleButton Style="{StaticResource SwitchToggle}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                          IsChecked="{Binding JigglerOn, Mode=TwoWay}" />
+                        </Grid>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                            <Ellipse Width="8" Height="8" Fill="{Binding Jiggler.Status, Converter={StaticResource StatusBrush}}" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Jiggler.Status, Converter={StaticResource StatusText}}" Style="{StaticResource HintText}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Text="{DynamicResource Label.Mode}" Style="{StaticResource FieldLabel}" />
+                            <ComboBox ItemsSource="{Binding JigglerModes}"
+                                      DisplayMemberPath="Label"
+                                      SelectedValuePath="Value"
+                                      SelectedValue="{Binding Settings.Jiggler.Mode}"
+                                      Margin="0,0,0,10" />
+                            <TextBlock Text="{DynamicResource Label.Interval}" Style="{StaticResource FieldLabel}" />
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Settings.Jiggler.IntervalMs, Converter={StaticResource MsToSec}, UpdateSourceTrigger=LostFocus}" />
+                                <TextBlock Grid.Column="1" Text="{DynamicResource Label.Seconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock Text="{DynamicResource Jiggler.Radius}" Style="{StaticResource FieldLabel}" />
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Settings.Jiggler.RadiusPx, UpdateSourceTrigger=LostFocus}" />
+                                <TextBlock Grid.Column="1" Text="px" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            </Grid>
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding PickRadiusCommand}"
+                                    HorizontalAlignment="Stretch" Padding="10,8">
+                                <TextBlock Text="{DynamicResource Jiggler.PickRadius}" TextWrapping="Wrap" TextAlignment="Center" />
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Grid.Row="3" Style="{StaticResource HintText}" Margin="0,12,0,0" TextWrapping="Wrap">
+                            <Run Text="{DynamicResource Label.Hotkey}" />
+                            <Run Text=" " />
+                            <Run Text="{Binding JigglerHotkeyText, Mode=OneWay}" />
+                        </TextBlock>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="{DynamicResource Card.Clicker}" Style="{StaticResource TitleText}" TextWrapping="Wrap" Margin="0,0,52,0" />
+                            <ToggleButton Style="{StaticResource SwitchToggle}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                          IsChecked="{Binding ClickerOn, Mode=TwoWay}" />
+                        </Grid>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                            <Ellipse Width="8" Height="8" Fill="{Binding Clicker.Status, Converter={StaticResource StatusBrush}}" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Clicker.Status, Converter={StaticResource StatusText}}" Style="{StaticResource HintText}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Text="{DynamicResource Label.Interval}" Style="{StaticResource FieldLabel}" />
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Settings.Clicker.IntervalMs, UpdateSourceTrigger=LostFocus}" />
+                                <TextBlock Grid.Column="1" Text="{DynamicResource Label.Milliseconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            </Grid>
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding PickPositionCommand}"
+                                    HorizontalAlignment="Stretch" Padding="10,8">
+                                <TextBlock Text="{DynamicResource Clicker.Pick}" TextWrapping="Wrap" TextAlignment="Center" />
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Grid.Row="3" Style="{StaticResource HintText}" Margin="0,12,0,0" TextWrapping="Wrap">
+                            <Run Text="{DynamicResource Label.Hotkey}" />
+                            <Run Text=" " />
+                            <Run Text="{Binding ClickerHotkeyText, Mode=OneWay}" />
+                        </TextBlock>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

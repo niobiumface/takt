@@ -1,0 +1,25 @@
+﻿<Application x:Class="Takt.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:Takt.Converters"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <SolidColorBrush x:Key="AccentBrush" Color="#5B8DEF" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#6D9BF3" />
+            <SolidColorBrush x:Key="AccentMutedBrush" Color="#305B8DEF" />
+            <Color x:Key="AccentColor">#5B8DEF</Color>
+            <conv:EngineStatusToBrushConverter x:Key="StatusBrush" />
+            <conv:EngineStatusToTextConverter x:Key="StatusText" />
+            <conv:MillisecondsToSecondsConverter x:Key="MsToSec" />
+            <conv:InverseBoolConverter x:Key="InverseBool" />
+            <conv:HexToBrushConverter x:Key="HexToBrush" />
+            <conv:NullToVisibilityConverter x:Key="NullToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Dark.xaml" />
+                <ResourceDictionary Source="Themes/Controls.xaml" />
+                <ResourceDictionary Source="Resources/Strings.en.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

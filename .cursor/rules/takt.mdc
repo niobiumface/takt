@@ -1,0 +1,15 @@
+---
+description: Takt repo conventions — read the project skills before changing architecture, input, or UI.
+globs:
+  - "**/*"
+---
+
+This repository is **Takt**, a native WPF mouse jiggler + autoclicker.
+
+Before implementing, follow:
+
+- `.cursor/skills/takt-architecture/SKILL.md` — product boundaries, folders, settings, safety
+- `.cursor/skills/win32-input-engine/SKILL.md` — SendInput, timers, hotkeys, failsafe
+- `.cursor/skills/wpf-compact-desktop/SKILL.md` — compact UI, tray, themes, i18n
+
+Do not add Electron, extra UI frameworks, stealth features, or settings files next to the exe.
