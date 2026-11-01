@@ -20,6 +20,22 @@ public partial class App : Application
             return;
         }
 
+        DispatcherUnhandledException += (_, args) =>
+        {
+            AppLog.Error("UI exception", args.Exception);
+            args.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception exception)
+                AppLog.Error("Unhandled exception", exception);
+        };
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            AppLog.Error("Unobserved task", args.Exception);
+            args.SetObserved();
+        };
+
         System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
 
         base.OnStartup(e);
@@ -33,7 +49,9 @@ public partial class App : Application
         var window = new MainWindow(viewModel);
         MainWindow = window;
         Services.Tray.Attach(window);
-        if (!Services.Activity.Start())
+        if (Services.Settings.LastLoadReset)
+            viewModel.ShowSettingsReset();
+        if (!Services.Activity.Start() && !Services.Settings.LastLoadReset)
             viewModel.ShowHookFailure();
         Services.Failsafe.Start();
 

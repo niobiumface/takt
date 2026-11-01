@@ -6,6 +6,13 @@ using WinForms = System.Windows.Forms;
 
 namespace Takt.Services;
 
+internal enum TrayPresence
+{
+    Off,
+    Active,
+    Paused
+}
+
 internal sealed class TrayService : IDisposable
 {
     private readonly WinForms.NotifyIcon _icon;
@@ -20,7 +27,7 @@ internal sealed class TrayService : IDisposable
         };
         _icon.MouseClick += OnClick;
         RebuildMenu();
-        ApplyIcon("#5B8DEF");
+        ApplyIcon("#5B8DEF", TrayPresence.Off);
     }
 
     public event Action? ShowWindowRequested;
@@ -31,12 +38,15 @@ internal sealed class TrayService : IDisposable
 
     public void Attach(Window window) => _ = window;
 
-    public void Refresh(string accentHex, bool jigglerOn, bool clickerOn)
+    public void Refresh(string accentHex, TrayPresence presence)
     {
-        ApplyIcon(accentHex);
-        var state = jigglerOn || clickerOn
-            ? LocalizationService.Text("Tray.Active", "Active")
-            : LocalizationService.Text("Tray.Idle", "Ready");
+        ApplyIcon(accentHex, presence);
+        var state = presence switch
+        {
+            TrayPresence.Active => LocalizationService.Text("Tray.Active", "Active"),
+            TrayPresence.Paused => LocalizationService.Text("Tray.Paused", "Paused"),
+            _ => LocalizationService.Text("Tray.Idle", "Ready")
+        };
         _icon.Text = $"Takt — {state}";
         RebuildMenu();
     }
@@ -57,7 +67,9 @@ internal sealed class TrayService : IDisposable
         menu.Items.Add(LocalizationService.Text("Tray.Panic", "Stop all"), null, (_, _) => PanicRequested?.Invoke());
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add(LocalizationService.Text("Tray.Exit", "Exit"), null, (_, _) => ExitRequested?.Invoke());
+        var previous = _icon.ContextMenuStrip;
         _icon.ContextMenuStrip = menu;
+        previous?.Dispose();
     }
 
     private void OnClick(object? sender, WinForms.MouseEventArgs e)
@@ -66,23 +78,29 @@ internal sealed class TrayService : IDisposable
             ShowWindowRequested?.Invoke();
     }
 
-    private void ApplyIcon(string hex)
+    private void ApplyIcon(string hex, TrayPresence presence)
     {
         var color = ThemeService.Parse(hex);
-        var drawing = System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
-        var created = CreateIcon(drawing);
+        var accent = System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
+        var created = CreateIcon(accent, presence);
         _icon.Icon = created;
         _currentIcon?.Dispose();
         _currentIcon = created;
     }
 
-    private static Icon CreateIcon(Color accent)
+    private static Icon CreateIcon(Color accent, TrayPresence presence)
     {
+        var fillColor = presence switch
+        {
+            TrayPresence.Active => accent,
+            TrayPresence.Paused => Color.FromArgb(224, 178, 93),
+            _ => Color.FromArgb(120, 128, 140)
+        };
         using var bmp = new Bitmap(32, 32);
         using var g = Graphics.FromImage(bmp);
         g.SmoothingMode = SmoothingMode.AntiAlias;
         g.Clear(Color.Transparent);
-        using (var fill = new SolidBrush(accent))
+        using (var fill = new SolidBrush(fillColor))
             g.FillEllipse(fill, 2, 2, 28, 28);
         using (var pen = new Pen(Color.FromArgb(230, 255, 255, 255), 2.4f))
         {

@@ -13,8 +13,11 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     private readonly Random _rng = new();
     private readonly object _gate = new();
     private readonly HoldSession _hold = new();
+    private readonly UiUpdateGate _countGate = new();
     private CancellationTokenSource? _cts;
     private int _generation;
+    private int _pendingCount;
+    private int _faultLogged;
 
     public ClickerEngine(ClickerSettings settings, Dispatcher dispatcher)
     {
@@ -40,6 +43,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         }
 
         ClickCount = 0;
+        _pendingCount = 0;
+        _faultLogged = 0;
         Publish(true, EngineStatus.Running, PauseReason.None, fault: false);
         _ = RunAsync(cts, generation);
     }
@@ -99,8 +104,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                     NoteFault();
 
                 clicks++;
-                var displayed = clicks;
-                _ = _dispatcher.BeginInvoke(() => ClickCount = displayed);
+                _pendingCount = clicks;
+                PublishCount(clicks, flush: false);
                 burstCounter++;
 
                 if (_settings.BurstSize > 0 && burstCounter >= _settings.BurstSize)
@@ -120,6 +125,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         finally
         {
             ReleaseHold();
+            PublishCount(_pendingCount, flush: true);
             if (!cancelled && IsCurrent(generation))
                 _dispatcher.Invoke(Stop);
             try
@@ -203,8 +209,17 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             return generation == _generation;
     }
 
+    private void PublishCount(int clicks, bool flush)
+    {
+        if (!flush && !_countGate.Allow(Environment.TickCount64, 100))
+            return;
+        _ = _dispatcher.BeginInvoke(() => ClickCount = clicks);
+    }
+
     private void NoteFault()
     {
+        if (Interlocked.Exchange(ref _faultLogged, 1) == 0)
+            AppLog.Error("Clicker SendInput was rejected.");
         void Apply() => InputFault = true;
         if (_dispatcher.CheckAccess())
             Apply();

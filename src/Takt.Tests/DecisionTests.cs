@@ -118,6 +118,49 @@ public class SettingsLimitTests
     }
 }
 
+public class UiUpdateGateTests
+{
+    [Fact]
+    public void ThrottlesUntilTheIntervalElapses()
+    {
+        var gate = new UiUpdateGate();
+        Assert.True(gate.Allow(1_000, 100));
+        Assert.False(gate.Allow(1_050, 100));
+        Assert.True(gate.Allow(1_100, 100));
+    }
+}
+
+public class SettingsVersionTests
+{
+    [Fact]
+    public void MissingVersionBecomesCurrentAndWriteLeavesNoTempFile()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "takt-version-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, "settings.json");
+        try
+        {
+            File.WriteAllText(path, """{ "jiggler": { "amplitude": 12 } }""");
+            using (var settings = new SettingsService(path))
+            {
+                settings.Load();
+                Assert.Equal(AppSettings.CurrentVersion, settings.Current.Version);
+                Assert.Equal(12, settings.Current.Jiggler.Amplitude);
+                settings.SaveNow();
+            }
+
+            Assert.False(File.Exists(path + ".tmp"));
+            using var reader = new SettingsService(path);
+            reader.Load();
+            Assert.Equal(AppSettings.CurrentVersion, reader.Current.Version);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+}
+
 public class MonitorCornerTests
 {
     [Fact]

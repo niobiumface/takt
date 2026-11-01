@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Takt.Models;
@@ -19,22 +21,32 @@ internal partial class MainViewModel : ObservableObject
         {
             if (e.PropertyName is nameof(JigglerEngine.IsEnabled))
                 OnPropertyChanged(nameof(JigglerOn));
+            if (e.PropertyName is nameof(JigglerEngine.Status) or nameof(JigglerEngine.PauseReason) or nameof(JigglerEngine.IsEnabled))
+                OnPropertyChanged(nameof(JigglerStatusText));
             if (e.PropertyName is nameof(JigglerEngine.InputFault) && Jiggler.InputFault)
                 ShowInputFault();
-            RefreshTray();
+            if (e.PropertyName is nameof(JigglerEngine.IsEnabled) or nameof(JigglerEngine.Status))
+                RefreshTray();
         };
         Clicker.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(ClickerEngine.IsEnabled))
                 OnPropertyChanged(nameof(ClickerOn));
+            if (e.PropertyName is nameof(ClickerEngine.Status) or nameof(ClickerEngine.PauseReason) or nameof(ClickerEngine.IsEnabled))
+                OnPropertyChanged(nameof(ClickerStatusText));
+            if (e.PropertyName is nameof(ClickerEngine.ClickCount) or nameof(ClickerEngine.Status))
+                OnPropertyChanged(nameof(ClickerProgress));
             if (e.PropertyName is nameof(ClickerEngine.InputFault) && Clicker.InputFault)
                 ShowInputFault();
-            RefreshTray();
+            if (e.PropertyName is nameof(ClickerEngine.IsEnabled) or nameof(ClickerEngine.Status))
+                RefreshTray();
         };
+        _services.Stopped += ShowStopped;
         _services.Hotkeys.Pressed += OnHotkey;
         _services.Hotkeys.ShowRequested += ShowMainWindow;
-        _services.Hotkeys.RegistrationFailed += _ =>
-            StatusMessage = LocalizationService.Text("Hotkey.Conflict", "Hotkey already in use.");
+        _services.Hotkeys.RegistrationFailed += name =>
+            StatusMessage = LocalizationService.Text("Hotkey.Conflict", "Hotkey already in use.") + " " + HotkeyLabel(name);
+        Settings.Clicker.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ClickerProgress));
         _services.Tray.ShowWindowRequested += ShowMainWindow;
         _services.Tray.ToggleJigglerRequested += () => ToggleJiggler();
         _services.Tray.ToggleClickerRequested += () => ToggleClicker();
@@ -87,15 +99,33 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void ToggleJiggler() => JigglerOn = !JigglerOn;
+    public string JigglerStatusText => Describe(Jiggler.Status, Jiggler.PauseReason);
+
+    public string ClickerStatusText => Describe(Clicker.Status, Clicker.PauseReason);
+
+    public string ClickerProgress =>
+        Settings.Clicker.RepeatMode == RepeatMode.Count
+            ? $"{Clicker.ClickCount} / {Math.Max(1, Settings.Clicker.RepeatCount)}"
+            : Clicker.ClickCount.ToString();
 
     [RelayCommand]
-    private void ToggleClicker() => ClickerOn = !ClickerOn;
+    private void ToggleJiggler()
+    {
+        CommitFocusedText();
+        JigglerOn = !JigglerOn;
+    }
+
+    [RelayCommand]
+    private void ToggleClicker()
+    {
+        CommitFocusedText();
+        ClickerOn = !ClickerOn;
+    }
 
     [RelayCommand]
     private void ToggleBoth()
     {
+        CommitFocusedText();
         var any = JigglerOn || ClickerOn;
         if (any)
         {
@@ -117,7 +147,6 @@ internal partial class MainViewModel : ObservableObject
         _services.Panic();
         OnPropertyChanged(nameof(JigglerOn));
         OnPropertyChanged(nameof(ClickerOn));
-        StatusMessage = LocalizationService.Text("Status.Panic", "Stopped.");
     }
 
     [RelayCommand]
@@ -170,15 +199,72 @@ internal partial class MainViewModel : ObservableObject
 
     public void AttachHotkeys(Window window) => _services.Hotkeys.Attach(window);
 
-    public void ShowHookFailure() =>
+    public void ShowHookFailure()
+    {
+        AppLog.Error("Low-level keyboard or mouse hook failed.");
         StatusMessage = LocalizationService.Text(
             "Status.HookFailed",
             "Could not watch keyboard and mouse. Idle pause will not work.");
+    }
+
+    public void ShowSettingsReset() =>
+        StatusMessage = LocalizationService.Text(
+            "Status.SettingsReset",
+            "Settings could not be read and were reset.");
 
     private void ShowInputFault() =>
         StatusMessage = LocalizationService.Text(
             "Status.SendInputFailed",
             "Input was rejected. An elevated window may be blocking it.");
+
+    private void ShowStopped()
+    {
+        void Apply() => StatusMessage = LocalizationService.Text("Status.Panic", "Stopped.");
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            Apply();
+        else
+            dispatcher.Invoke(Apply);
+    }
+
+    private static void CommitFocusedText()
+    {
+        if (Keyboard.FocusedElement is TextBox textBox)
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+    }
+
+    private static string Describe(EngineStatus status, PauseReason reason)
+    {
+        var label = status switch
+        {
+            EngineStatus.Running => LocalizationService.Text("Status.Running", "Active"),
+            EngineStatus.Paused => LocalizationService.Text("Status.Paused", "Paused"),
+            _ => LocalizationService.Text("Status.Stopped", "Off")
+        };
+        if (status != EngineStatus.Paused || reason == PauseReason.None)
+            return label;
+
+        var why = reason switch
+        {
+            PauseReason.Schedule => LocalizationService.Text("Pause.Schedule", "Time window"),
+            PauseReason.Fullscreen => LocalizationService.Text("Pause.Fullscreen", "Fullscreen"),
+            PauseReason.WaitingForIdle => LocalizationService.Text("Pause.Idle", "Waiting for idle"),
+            PauseReason.UserInput => LocalizationService.Text("Pause.Input", "User input"),
+            PauseReason.StartDelay => LocalizationService.Text("Pause.Delay", "Start delay"),
+            _ => ""
+        };
+        return string.IsNullOrEmpty(why) ? label : label + " · " + why;
+    }
+
+    private static string HotkeyLabel(string action) => action switch
+    {
+        nameof(HotkeyAction.ToggleJiggler) => LocalizationService.Text("Hotkey.Jiggler", "Toggle jiggler"),
+        nameof(HotkeyAction.ToggleClicker) => LocalizationService.Text("Hotkey.Clicker", "Toggle clicker"),
+        nameof(HotkeyAction.ToggleBoth) => LocalizationService.Text("Hotkey.Both", "Toggle both"),
+        nameof(HotkeyAction.Panic) => LocalizationService.Text("Hotkey.Panic", "Panic stop"),
+        nameof(HotkeyAction.PickPosition) => LocalizationService.Text("Hotkey.Pick", "Pick position"),
+        _ => action
+    };
 
     public void RefreshChoices()
     {
@@ -196,6 +282,8 @@ internal partial class MainViewModel : ObservableObject
         JigglerHotkeyText = Settings.Hotkeys.ToggleJiggler.ToDisplayString(german);
         ClickerHotkeyText = Settings.Hotkeys.ToggleClicker.ToDisplayString(german);
         PanicHotkeyText = Settings.Hotkeys.Panic.ToDisplayString(german);
+        OnPropertyChanged(nameof(SafetyHint));
+        OnPropertyChanged(nameof(FirstRunHint));
         _services.Hotkeys.Rebind();
     }
 
@@ -232,6 +320,11 @@ internal partial class MainViewModel : ObservableObject
             _services.Localization.Apply(Settings.Appearance.Language);
             RefreshHotkeyLabels();
             RefreshChoices();
+            OnPropertyChanged(nameof(JigglerStatusText));
+            OnPropertyChanged(nameof(ClickerStatusText));
+            OnPropertyChanged(nameof(ClickerProgress));
+            OnPropertyChanged(nameof(SafetyHint));
+            OnPropertyChanged(nameof(FirstRunHint));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -247,10 +340,50 @@ internal partial class MainViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(GeneralSettings.StartWithWindows))
             AutostartService.Apply(Settings.General.StartWithWindows);
+        if (e.PropertyName is nameof(GeneralSettings.FailsafeCorner) or nameof(GeneralSettings.FirstRunDismissed))
+        {
+            OnPropertyChanged(nameof(SafetyHint));
+            OnPropertyChanged(nameof(FirstRunHint));
+            OnPropertyChanged(nameof(ShowFirstRunHint));
+        }
     }
 
-    private void RefreshTray() =>
-        _services.Tray.Refresh(Settings.Appearance.AccentHex, Jiggler.IsEnabled, Clicker.IsEnabled);
+    public bool ShowFirstRunHint => !Settings.General.FirstRunDismissed;
+
+    public string SafetyHint =>
+        LocalizationService.Text("Safety.Panic", "Panic") + " " + PanicHotkeyText +
+        "  ·  " + CornerLabel();
+
+    public string FirstRunHint =>
+        string.Format(
+            LocalizationService.Text("FirstRun.Hint", "Panic is {0}. Moving the pointer into the {1} corner stops everything."),
+            PanicHotkeyText,
+            CornerLabel());
+
+    [RelayCommand]
+    private void DismissFirstRun()
+    {
+        Settings.General.FirstRunDismissed = true;
+        OnPropertyChanged(nameof(ShowFirstRunHint));
+    }
+
+    private string CornerLabel() => Settings.General.FailsafeCorner switch
+    {
+        FailsafeCorner.TopRight => LocalizationService.Text("Corner.TopRight", "Top right"),
+        FailsafeCorner.BottomLeft => LocalizationService.Text("Corner.BottomLeft", "Bottom left"),
+        FailsafeCorner.BottomRight => LocalizationService.Text("Corner.BottomRight", "Bottom right"),
+        _ => LocalizationService.Text("Corner.TopLeft", "Top left")
+    };
+
+    private void RefreshTray()
+    {
+        var presence = TrayPresence.Off;
+        if (Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running)
+            presence = TrayPresence.Active;
+        else if (Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused)
+            presence = TrayPresence.Paused;
+        _services.Tray.Refresh(Settings.Appearance.AccentHex, presence);
+    }
 
     private static void ShowMainWindow()
     {

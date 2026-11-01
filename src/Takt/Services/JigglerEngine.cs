@@ -22,6 +22,7 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
     private DateTime _ignoreInputUntil;
     private bool _awakeHeld;
     private bool _paused = true;
+    private int _faultLogged;
 
     public JigglerEngine(JigglerSettings settings, UserActivityMonitor activity, Dispatcher dispatcher)
     {
@@ -65,6 +66,7 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
         }
 
         _phase = 0;
+        _faultLogged = 0;
         _ignoreInputUntil = DateTime.UtcNow.AddMilliseconds(750);
         Publish(true, EngineStatus.Running, PauseReason.None, fault: false);
         _ = RunAsync(cts, generation);
@@ -124,8 +126,9 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
                     cancelled = true;
                     break;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    AppLog.Error("Jiggler tick failed.", ex);
                     NoteFault();
                     try
                     {
@@ -305,6 +308,8 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
 
     private void NoteFault()
     {
+        if (Interlocked.Exchange(ref _faultLogged, 1) == 0)
+            AppLog.Error("Jiggler SendInput was rejected.");
         void Apply() => InputFault = true;
         if (_dispatcher.CheckAccess())
             Apply();

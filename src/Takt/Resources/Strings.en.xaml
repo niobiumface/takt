@@ -12,6 +12,17 @@
     <sys:String x:Key="Status.Panic">Stopped.</sys:String>
     <sys:String x:Key="Status.SendInputFailed">Input was rejected. An elevated window may be blocking it.</sys:String>
     <sys:String x:Key="Status.HookFailed">Could not watch keyboard and mouse. Idle pause will not work.</sys:String>
+    <sys:String x:Key="Status.SettingsReset">Settings could not be read and were reset.</sys:String>
+    <sys:String x:Key="Pause.Schedule">Time window</sys:String>
+    <sys:String x:Key="Pause.Fullscreen">Fullscreen</sys:String>
+    <sys:String x:Key="Pause.Idle">Waiting for idle</sys:String>
+    <sys:String x:Key="Pause.Input">User input</sys:String>
+    <sys:String x:Key="Pause.Delay">Start delay</sys:String>
+    <sys:String x:Key="Clicker.Progress">Clicks</sys:String>
+    <sys:String x:Key="Tray.Paused">Paused</sys:String>
+    <sys:String x:Key="Safety.Panic">Panic</sys:String>
+    <sys:String x:Key="FirstRun.Hint">Panic is {0}. Moving the pointer into the {1} corner stops everything.</sys:String>
+    <sys:String x:Key="FirstRun.Dismiss">Dismiss</sys:String>
     <sys:String x:Key="Action.Settings">Settings</sys:String>
     <sys:String x:Key="Action.Panic">Stop all</sys:String>
     <sys:String x:Key="Label.Mode">Mode</sys:String>
@@ -29,7 +40,7 @@
     <sys:String x:Key="Jiggler.Radius">Operating radius (pixels)</sys:String>
     <sys:String x:Key="Jiggler.RadiusHint">The cursor stays inside this circle around the center. Circle, figure-8 and random modes use the radius directly.</sys:String>
     <sys:String x:Key="Jiggler.FixedCenter">Use a fixed center point</sys:String>
-    <sys:String x:Key="Jiggler.PickRadius">Set radius on screen</sys:String>
+    <sys:String x:Key="Jiggler.PickRadius">Set radius</sys:String>
     <sys:String x:Key="Radius.HintCenter">Click 1: set the center</sys:String>
     <sys:String x:Key="Radius.HintEdge">Click 2: set the radius · Esc cancels</sys:String>
     <sys:String x:Key="Radius.Measure">Radius</sys:String>

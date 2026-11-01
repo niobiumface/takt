@@ -22,6 +22,7 @@ internal sealed class HotkeyService : IDisposable
     private Window? _window;
     private HwndSource? _source;
     private nint _hwnd;
+    private bool _suspended;
     private readonly HashSet<int> _registered = [];
 
     public HotkeyService(HotkeySettings settings) => _settings = settings;
@@ -39,9 +40,24 @@ internal sealed class HotkeyService : IDisposable
             window.SourceInitialized += (_, _) => Hook();
     }
 
+    public void Suspend()
+    {
+        _suspended = true;
+        UnregisterAll();
+    }
+
+    public void Resume()
+    {
+        _suspended = false;
+        if (_hwnd == nint.Zero)
+            return;
+        UnregisterAll();
+        TryRegisterAll();
+    }
+
     public void Rebind()
     {
-        if (_hwnd == nint.Zero)
+        if (_hwnd == nint.Zero || _suspended)
             return;
         UnregisterAll();
         TryRegisterAll();
@@ -72,17 +88,24 @@ internal sealed class HotkeyService : IDisposable
 
     private void TryRegisterAll()
     {
-        TryRegister(HotkeyAction.ToggleJiggler, _settings.ToggleJiggler);
-        TryRegister(HotkeyAction.ToggleClicker, _settings.ToggleClicker);
-        TryRegister(HotkeyAction.ToggleBoth, _settings.ToggleBoth);
-        TryRegister(HotkeyAction.Panic, _settings.Panic);
-        TryRegister(HotkeyAction.PickPosition, _settings.PickPosition);
+        var seen = new HashSet<(int Modifiers, int VirtualKey)>();
+        TryRegister(HotkeyAction.ToggleJiggler, _settings.ToggleJiggler, seen);
+        TryRegister(HotkeyAction.ToggleClicker, _settings.ToggleClicker, seen);
+        TryRegister(HotkeyAction.ToggleBoth, _settings.ToggleBoth, seen);
+        TryRegister(HotkeyAction.Panic, _settings.Panic, seen);
+        TryRegister(HotkeyAction.PickPosition, _settings.PickPosition, seen);
     }
 
-    private void TryRegister(HotkeyAction action, HotkeyBinding binding)
+    private void TryRegister(HotkeyAction action, HotkeyBinding binding, HashSet<(int Modifiers, int VirtualKey)> seen)
     {
         if (!binding.IsValid)
             return;
+
+        if (!seen.Add((binding.Modifiers, binding.VirtualKey)))
+        {
+            RegistrationFailed?.Invoke(action.ToString());
+            return;
+        }
 
         var mods = (uint)binding.Modifiers | Win32.ModNoRepeat;
         if (Win32.RegisterHotKey(_hwnd, (int)action, mods, (uint)binding.VirtualKey))

@@ -4,6 +4,9 @@ namespace Takt.Models;
 
 public partial class AppSettings : ObservableObject
 {
+    public const int CurrentVersion = 1;
+
+    [ObservableProperty] private int _version = CurrentVersion;
     [ObservableProperty] private JigglerSettings _jiggler = new();
     [ObservableProperty] private ClickerSettings _clicker = new();
     [ObservableProperty] private HotkeySettings _hotkeys = new();
@@ -74,4 +77,5 @@ public partial class GeneralSettings : ObservableObject
     [ObservableProperty] private bool _failsafeEnabled = true;
     [ObservableProperty] private FailsafeCorner _failsafeCorner = FailsafeCorner.TopLeft;
     [ObservableProperty] private int _failsafeSize = 8;
+    [ObservableProperty] private bool _firstRunDismissed;
 }

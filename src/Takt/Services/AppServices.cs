@@ -41,11 +41,14 @@ internal sealed class AppServices : IDisposable
         };
     }
 
+    public event Action? Stopped;
+
     public void Panic()
     {
         Failsafe.IsArmed = false;
         Jiggler.Stop();
         Clicker.Stop();
+        Stopped?.Invoke();
     }
 
     public void Dispose()

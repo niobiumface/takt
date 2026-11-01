@@ -29,6 +29,7 @@ internal sealed class ThemeService
         ReplaceDictionary("takt-theme", new ResourceDictionary { Source = new Uri(themeUri, UriKind.Relative) });
         ApplyAccent(settings.Appearance.AccentHex);
         app.MainWindow?.SetValue(Window.TopmostProperty, settings.Appearance.AlwaysOnTop);
+        TitleBarTheme.ApplyAll(settings.Appearance.Theme != ThemeMode.Light);
     }
 
     public void ApplyAccent(string hex)

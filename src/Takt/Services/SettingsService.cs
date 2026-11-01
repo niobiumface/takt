@@ -52,6 +52,7 @@ public sealed class SettingsService : IDisposable
         catch
         {
             LastLoadReset = true;
+            AppLog.Error("Settings file could not be read and was reset.");
             try
             {
                 if (File.Exists(_path))
@@ -64,10 +65,13 @@ public sealed class SettingsService : IDisposable
         }
 
         EnsureNested();
+        var upgraded = Current.Version < AppSettings.CurrentVersion;
+        if (upgraded)
+            Current.Version = AppSettings.CurrentVersion;
         Wire(Current);
         _wired = true;
         SettingsNormalizer.ApplyAll(Current);
-        if (!File.Exists(_path) || LastLoadReset)
+        if (!File.Exists(_path) || LastLoadReset || upgraded)
             SaveNow();
     }
 
@@ -86,8 +90,12 @@ public sealed class SettingsService : IDisposable
             var json = JsonSerializer.Serialize(Current, JsonOptions);
             var tmp = _path + ".tmp";
             File.WriteAllText(tmp, json);
-            File.Copy(tmp, _path, overwrite: true);
-            File.Delete(tmp);
+            if (File.Exists(_path))
+                File.Replace(tmp, _path, destinationBackupFileName: null);
+            else
+                File.Move(tmp, _path);
+            if (File.Exists(tmp))
+                File.Delete(tmp);
         }
     }
 

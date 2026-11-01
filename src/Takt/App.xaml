@@ -15,6 +15,9 @@
             <conv:InverseBoolConverter x:Key="InverseBool" />
             <conv:HexToBrushConverter x:Key="HexToBrush" />
             <conv:NullToVisibilityConverter x:Key="NullToVis" />
+            <conv:EnumMatchVisibilityConverter x:Key="EnumVis" />
+            <conv:HexEqualsConverter x:Key="HexEquals" />
+            <BooleanToVisibilityConverter x:Key="BoolVis" />
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/Dark.xaml" />
                 <ResourceDictionary Source="Themes/Controls.xaml" />

@@ -12,6 +12,17 @@
     <sys:String x:Key="Status.Panic">Gestoppt.</sys:String>
     <sys:String x:Key="Status.SendInputFailed">Eingabe wurde abgelehnt. Ein Fenster mit höheren Rechten kann sie blockieren.</sys:String>
     <sys:String x:Key="Status.HookFailed">Tastatur und Maus konnten nicht beobachtet werden. Die Leerlauf-Pause bleibt aus.</sys:String>
+    <sys:String x:Key="Status.SettingsReset">Einstellungen konnten nicht gelesen werden und wurden zurückgesetzt.</sys:String>
+    <sys:String x:Key="Pause.Schedule">Zeitfenster</sys:String>
+    <sys:String x:Key="Pause.Fullscreen">Vollbild</sys:String>
+    <sys:String x:Key="Pause.Idle">Wartet auf Leerlauf</sys:String>
+    <sys:String x:Key="Pause.Input">Eingabe</sys:String>
+    <sys:String x:Key="Pause.Delay">Startverzögerung</sys:String>
+    <sys:String x:Key="Clicker.Progress">Klicks</sys:String>
+    <sys:String x:Key="Tray.Paused">Pausiert</sys:String>
+    <sys:String x:Key="Safety.Panic">Panik</sys:String>
+    <sys:String x:Key="FirstRun.Hint">Panik ist {0}. Die Maus in die Ecke {1} zu bewegen stoppt alles.</sys:String>
+    <sys:String x:Key="FirstRun.Dismiss">Schließen</sys:String>
     <sys:String x:Key="Action.Settings">Einstellungen</sys:String>
     <sys:String x:Key="Action.Panic">Alles stoppen</sys:String>
     <sys:String x:Key="Label.Mode">Modus</sys:String>
@@ -29,12 +40,12 @@
     <sys:String x:Key="Jiggler.Radius">Funktionsradius (Pixel)</sys:String>
     <sys:String x:Key="Jiggler.RadiusHint">Der Cursor bleibt in diesem Kreis um den Mittelpunkt. Kreis-, Achter- und Zufallsmodus nutzen den Radius direkt.</sys:String>
     <sys:String x:Key="Jiggler.FixedCenter">Festen Mittelpunkt verwenden</sys:String>
-    <sys:String x:Key="Jiggler.PickRadius">Radius auf dem Bildschirm setzen</sys:String>
+    <sys:String x:Key="Jiggler.PickRadius">Radius setzen</sys:String>
     <sys:String x:Key="Radius.HintCenter">Klick 1: Mittelpunkt setzen</sys:String>
     <sys:String x:Key="Radius.HintEdge">Klick 2: Radius festlegen · Esc bricht ab</sys:String>
     <sys:String x:Key="Radius.Measure">Radius</sys:String>
     <sys:String x:Key="Radius.Set">Radius</sys:String>
-    <sys:String x:Key="Jiggler.Jitter">Jitter (ms)</sys:String>
+    <sys:String x:Key="Jiggler.Jitter">Abweichung (ms)</sys:String>
     <sys:String x:Key="Jiggler.PreventSleep">System-Standby verhindern</sys:String>
     <sys:String x:Key="Jiggler.PreventDisplay">Bildschirm anlassen</sys:String>
     <sys:String x:Key="Jiggler.WaitIdle">Nur nach Leerlauf starten</sys:String>
@@ -46,9 +57,9 @@
     <sys:String x:Key="Jiggler.ScheduleEnd">Bis</sys:String>
     <sys:String x:Key="Clicker.Button">Maustaste</sys:String>
     <sys:String x:Key="Clicker.Action">Aktion</sys:String>
-    <sys:String x:Key="Clicker.Jitter">Jitter (ms)</sys:String>
-    <sys:String x:Key="Clicker.Burst">Burst-Größe (0 = aus)</sys:String>
-    <sys:String x:Key="Clicker.BurstPause">Burst-Pause (ms)</sys:String>
+    <sys:String x:Key="Clicker.Jitter">Abweichung (ms)</sys:String>
+    <sys:String x:Key="Clicker.Burst">Seriengröße (0 = aus)</sys:String>
+    <sys:String x:Key="Clicker.BurstPause">Serienpause (ms)</sys:String>
     <sys:String x:Key="Clicker.Repeat">Wiederholung</sys:String>
     <sys:String x:Key="Clicker.Count">Anzahl</sys:String>
     <sys:String x:Key="Clicker.Duration">Dauer (Sekunden)</sys:String>
@@ -72,11 +83,11 @@
     <sys:String x:Key="General.Tray">Beim Schließen in den Infobereich</sys:String>
     <sys:String x:Key="General.StartMin">Minimiert starten</sys:String>
     <sys:String x:Key="General.Autostart">Mit Windows starten</sys:String>
-    <sys:String x:Key="General.Failsafe">Failsafe-Ecke aktiv</sys:String>
+    <sys:String x:Key="General.Failsafe">Notstopp-Ecke aktiv</sys:String>
     <sys:String x:Key="General.Corner">Ecke</sys:String>
     <sys:String x:Key="General.CornerSize">Eckengröße (Pixel)</sys:String>
-    <sys:String x:Key="General.FailsafeHint">Maus in diese Ecke bewegt stoppt Jiggler und Klicker.</sys:String>
-    <sys:String x:Key="Mode.Nudge">Nudge</sys:String>
+    <sys:String x:Key="General.FailsafeHint">Die Maus in diese Ecke zu bewegen stoppt Jiggler und Klicker.</sys:String>
+    <sys:String x:Key="Mode.Nudge">Ruck</sys:String>
     <sys:String x:Key="Mode.Circle">Kreis</sys:String>
     <sys:String x:Key="Mode.Figure8">Achter</sys:String>
     <sys:String x:Key="Mode.Random">Zufall</sys:String>

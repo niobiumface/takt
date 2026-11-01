@@ -63,7 +63,18 @@ internal partial class SettingsViewModel : ObservableObject
     private void PickRadius() => _main.PickRadiusCommand.Execute(null);
 
     [RelayCommand]
-    private void CaptureHotkey(string name) => CapturingHotkey = name;
+    private void CaptureHotkey(string name)
+    {
+        CapturingHotkey = name;
+        _services.Hotkeys.Suspend();
+    }
+
+    public void CancelCapture()
+    {
+        if (CapturingHotkey is null)
+            return;
+        FinishCapture();
+    }
 
     public bool TryCompleteCapture(KeyEventArgs args)
     {
@@ -73,7 +84,7 @@ internal partial class SettingsViewModel : ObservableObject
             return true;
         if (args.Key == Key.Escape)
         {
-            CapturingHotkey = null;
+            FinishCapture();
             return true;
         }
 
@@ -105,9 +116,15 @@ internal partial class SettingsViewModel : ObservableObject
             NotifyHotkeyDisplays();
         }
 
-        CapturingHotkey = null;
+        FinishCapture();
         args.Handled = true;
         return true;
+    }
+
+    private void FinishCapture()
+    {
+        CapturingHotkey = null;
+        _services.Hotkeys.Resume();
     }
 
     public void RefreshChoices()

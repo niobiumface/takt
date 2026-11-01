@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using Takt.Models;
+using Takt.Services;
 using Takt.ViewModels;
 
 namespace Takt;
@@ -13,6 +15,14 @@ public partial class MainWindow : Window
         viewModel.AttachHotkeys(this);
         Closing += OnClosing;
         StateChanged += OnStateChanged;
+        SourceInitialized += (_, _) => ApplyTitleBar();
+    }
+
+    private void ApplyTitleBar()
+    {
+        var dark = DataContext is MainViewModel viewModel &&
+                   viewModel.Settings.Appearance.Theme != ThemeMode.Light;
+        TitleBarTheme.Apply(this, dark);
     }
 
     private void OnStateChanged(object? sender, EventArgs e)

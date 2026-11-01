@@ -69,8 +69,10 @@
                         <CheckBox IsChecked="{Binding Settings.Jiggler.WaitForIdle}">
                             <TextBlock Text="{DynamicResource Jiggler.WaitIdle}" TextWrapping="Wrap" />
                         </CheckBox>
-                        <TextBlock Text="{DynamicResource Jiggler.IdleSeconds}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
-                        <TextBox Text="{Binding Settings.Jiggler.IdleThresholdSeconds, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        <StackPanel Visibility="{Binding Settings.Jiggler.WaitForIdle, Converter={StaticResource BoolVis}}">
+                            <TextBlock Text="{DynamicResource Jiggler.IdleSeconds}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
+                            <TextBox Text="{Binding Settings.Jiggler.IdleThresholdSeconds, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        </StackPanel>
                         <CheckBox IsChecked="{Binding Settings.Jiggler.PauseOnUserInput}">
                             <TextBlock Text="{DynamicResource Jiggler.PauseInput}" TextWrapping="Wrap" />
                         </CheckBox>
@@ -80,7 +82,7 @@
                         <CheckBox IsChecked="{Binding Settings.Jiggler.UseSchedule}">
                             <TextBlock Text="{DynamicResource Jiggler.Schedule}" TextWrapping="Wrap" />
                         </CheckBox>
-                        <Grid Margin="0,8,0,0">
+                        <Grid Margin="0,8,0,0" Visibility="{Binding Settings.Jiggler.UseSchedule, Converter={StaticResource BoolVis}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="12" />
@@ -126,29 +128,32 @@
                         <TextBlock Text="{DynamicResource Clicker.Repeat}" Style="{StaticResource FieldLabel}" />
                         <ComboBox ItemsSource="{Binding RepeatModes}" DisplayMemberPath="Label" SelectedValuePath="Value"
                                   SelectedValue="{Binding Settings.Clicker.RepeatMode}" Margin="0,0,0,10" />
-                        <TextBlock Text="{DynamicResource Clicker.Count}" Style="{StaticResource FieldLabel}" />
-                        <TextBox Text="{Binding Settings.Clicker.RepeatCount, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
-                        <TextBlock Text="{DynamicResource Clicker.Duration}" Style="{StaticResource FieldLabel}" />
-                        <TextBox Text="{Binding Settings.Clicker.DurationSeconds, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        <StackPanel Visibility="{Binding Settings.Clicker.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Count}">
+                            <TextBlock Text="{DynamicResource Clicker.Count}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Settings.Clicker.RepeatCount, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Settings.Clicker.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Duration}">
+                            <TextBlock Text="{DynamicResource Clicker.Duration}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Settings.Clicker.DurationSeconds, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        </StackPanel>
                         <TextBlock Text="{DynamicResource Clicker.Delay}" Style="{StaticResource FieldLabel}" />
                         <TextBox Text="{Binding Settings.Clicker.StartDelayMs, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
                         <TextBlock Text="{DynamicResource Clicker.Position}" Style="{StaticResource FieldLabel}" />
                         <ComboBox ItemsSource="{Binding PositionModes}" DisplayMemberPath="Label" SelectedValuePath="Value"
                                   SelectedValue="{Binding Settings.Clicker.PositionMode}" Margin="0,0,0,10" />
-                        <Grid>
+                        <Grid Visibility="{Binding Settings.Clicker.PositionMode, Converter={StaticResource EnumVis}, ConverterParameter=Fixed}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="8" />
-                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBox Text="{Binding Settings.Clicker.FixedX, UpdateSourceTrigger=LostFocus}" />
                             <TextBox Grid.Column="2" Text="{Binding Settings.Clicker.FixedY, UpdateSourceTrigger=LostFocus}" />
-                            <Button Grid.Column="4" Style="{StaticResource PrimaryButton}" Command="{Binding PickPositionCommand}" Padding="12,8">
-                                <TextBlock Text="{DynamicResource Clicker.Pick}" TextWrapping="Wrap" />
-                            </Button>
                         </Grid>
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding PickPositionCommand}"
+                                HorizontalAlignment="Left" Margin="0,8,0,0" Padding="12,8">
+                            <TextBlock Text="{DynamicResource Clicker.Pick}" TextWrapping="NoWrap" />
+                        </Button>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -227,15 +232,32 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Width="28" Height="28" Margin="0,0,8,8"
-                                            Command="{Binding DataContext.SelectAccentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border CornerRadius="6" Background="{Binding Converter={StaticResource HexToBrush}}" />
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
+                                    <Border Width="32" Height="32" Margin="0,0,8,8" Padding="2" CornerRadius="8" BorderThickness="2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource HexEquals}">
+                                                                <Binding />
+                                                                <Binding Path="DataContext.Settings.Appearance.AccentHex" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource TextBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Button Command="{Binding DataContext.SelectAccentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="6" Background="{Binding Converter={StaticResource HexToBrush}}" />
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
