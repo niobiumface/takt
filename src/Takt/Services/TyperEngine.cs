@@ -109,11 +109,22 @@ internal sealed partial class TyperEngine : ObservableObject, IDisposable
                     if (value == '\n')
                         value = '\r';
 
+                    if (_settings.SimulateTypos && TyperHumanizer.ShouldTypo(value, _settings.TypoPercent, _rng))
+                    {
+                        if (!KeyboardInput.Type(TyperHumanizer.Mistype(value, _rng)))
+                            NoteFault();
+                        await Task.Delay(TyperTiming.DelayMs(_settings.CharactersPerMinute, _settings.JitterPercent, _rng), token);
+                        KeyboardInput.TapVirtualKey(0x08);
+                        await Task.Delay(40, token);
+                    }
+
                     if (!KeyboardInput.Type(value))
                         NoteFault();
                     typed++;
                     PublishCount(typed);
-                    await Task.Delay(TyperTiming.DelayMs(_settings.CharactersPerMinute, _settings.JitterPercent, _rng), token);
+                    var pause = TyperTiming.DelayMs(_settings.CharactersPerMinute, _settings.JitterPercent, _rng)
+                                + TyperHumanizer.ExtraPauseMs(value, _settings.PunctuationPauseMs);
+                    await Task.Delay(pause, token);
                 }
 
                 passes++;

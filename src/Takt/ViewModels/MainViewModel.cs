@@ -91,6 +91,7 @@ internal partial class MainViewModel : ObservableObject
         _services.Tray.ToggleClickerRequested += () => ToggleClicker();
         _services.Tray.PanicRequested += Panic;
         _services.Tray.ExitRequested += ExitApp;
+        _services.Tray.SettingsRequested += () => OpenSettings();
         _services.Settings.Current.Hotkeys.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleJiggler.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleClicker.PropertyChanged += (_, _) => RefreshHotkeyLabels();
@@ -111,6 +112,16 @@ internal partial class MainViewModel : ObservableObject
     public PresenceEngine Presence => _services.Presence;
 
     [ObservableProperty] private TextSnippet? _selectedSnippet;
+    [ObservableProperty] private ActivityProfile? _activeProfile;
+
+    partial void OnActiveProfileChanged(ActivityProfile? value)
+    {
+        if (value is null)
+            return;
+        ProfileApplicator.Apply(value, Settings);
+        _services.Theme.Apply(Settings);
+        RefreshHotkeyLabels();
+    }
 
     partial void OnSelectedSnippetChanged(TextSnippet? value)
     {
@@ -466,6 +477,15 @@ internal partial class MainViewModel : ObservableObject
                 case HotkeyAction.ToggleTyper:
                     ToggleTyper();
                     break;
+                case HotkeyAction.TogglePresence:
+                    PresenceOn = !PresenceOn;
+                    break;
+                case HotkeyAction.ShowWindow:
+                    ToggleWindow();
+                    break;
+                case HotkeyAction.RecordMacro:
+                    ToggleRecord();
+                    break;
             }
         });
     }
@@ -504,6 +524,10 @@ internal partial class MainViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(GeneralSettings.StartWithWindows))
             AutostartService.Apply(Settings.General.StartWithWindows);
+        if (e.PropertyName == nameof(GeneralSettings.LogLevel))
+            AppLog.Minimum = Settings.General.LogLevel;
+        if (e.PropertyName == nameof(GeneralSettings.CloseBehavior))
+            Settings.General.MinimizeToTray = Settings.General.CloseBehavior == CloseBehavior.ToTray;
         if (e.PropertyName == nameof(GeneralSettings.CheckForUpdates) && Settings.General.CheckForUpdates)
             _ = CheckForUpdateAsync();
         if (e.PropertyName is nameof(GeneralSettings.FailsafeCorner) or nameof(GeneralSettings.FirstRunDismissed))
@@ -595,9 +619,20 @@ internal partial class MainViewModel : ObservableObject
     private void OnRunFinished()
     {
         if (Settings.General.PlaySoundOnFinish)
-            CompletionFeedback.PlaySound();
+            CompletionFeedback.PlaySound(Settings.General.SoundName);
         if (Settings.General.NotifyOnFinish)
             _services.Tray.Notify(LocalizationService.Text("Notify.Done", "Finished."));
+    }
+
+    private static void ToggleWindow()
+    {
+        var window = Application.Current?.MainWindow;
+        if (window is null)
+            return;
+        if (window.IsVisible && window.WindowState != WindowState.Minimized)
+            window.Hide();
+        else
+            ShowMainWindow();
     }
 
     private void ExitApp()

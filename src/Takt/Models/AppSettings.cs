@@ -5,7 +5,7 @@ namespace Takt.Models;
 
 public partial class AppSettings : ObservableObject
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     [ObservableProperty] private int _version = CurrentVersion;
     [ObservableProperty] private JigglerSettings _jiggler = new();
@@ -16,6 +16,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private MacroSettings _macro = new();
     [ObservableProperty] private TyperSettings _typer = new();
     [ObservableProperty] private PresenceSettings _presence = new();
+    [ObservableProperty] private WorkScheduleSettings _work = new();
     [ObservableProperty] private ObservableCollection<ActivityProfile> _profiles = new();
 }
 
@@ -49,6 +50,9 @@ public partial class ActivityProfile : ObservableObject
     [ObservableProperty] private MacroSettings _macro = new();
     [ObservableProperty] private TyperSettings _typer = new();
     [ObservableProperty] private PresenceSettings _presence = new();
+    [ObservableProperty] private GeneralSettings _general = new();
+    [ObservableProperty] private AppearanceSettings _appearance = new();
+    [ObservableProperty] private WorkScheduleSettings _work = new();
 }
 
 public partial class TextSnippet : ObservableObject
@@ -62,6 +66,9 @@ public partial class TyperSettings : ObservableObject
     [ObservableProperty] private string _text = "";
     [ObservableProperty] private int _charactersPerMinute = 400;
     [ObservableProperty] private int _jitterPercent = 15;
+    [ObservableProperty] private int _punctuationPauseMs = 120;
+    [ObservableProperty] private bool _simulateTypos;
+    [ObservableProperty] private int _typoPercent = 2;
     [ObservableProperty] private int _startDelayMs;
     [ObservableProperty] private RepeatMode _repeatMode = RepeatMode.Count;
     [ObservableProperty] private int _repeatCount = 1;
@@ -76,6 +83,12 @@ public partial class PresenceSettings : ObservableObject
     [ObservableProperty] private int _jitterMs = 8_000;
     [ObservableProperty] private bool _useFallbackKey = true;
     [ObservableProperty] private PresenceKey _fallbackKey = PresenceKey.F15;
+    [ObservableProperty] private PresenceMotion _motion = PresenceMotion.Invisible;
+    [ObservableProperty] private bool _preventScreensaver = true;
+    [ObservableProperty] private bool _preventDisplayOff = true;
+    [ObservableProperty] private bool _preventSleep = true;
+    [ObservableProperty] private bool _pauseOnUserInput = true;
+    [ObservableProperty] private int _resumeIdleSeconds = 3;
     [ObservableProperty] private bool _useWorkHours = true;
     [ObservableProperty] private bool _monday = true;
     [ObservableProperty] private bool _tuesday = true;
@@ -112,6 +125,7 @@ public partial class JigglerSettings : ObservableObject
     [ObservableProperty] private bool _waitForIdle;
     [ObservableProperty] private int _idleThresholdSeconds = 30;
     [ObservableProperty] private bool _pauseOnUserInput = true;
+    [ObservableProperty] private int _resumeIdleSeconds = 2;
     [ObservableProperty] private bool _pauseWhenFullscreen;
     [ObservableProperty] private bool _useSchedule;
     [ObservableProperty] private string _scheduleStart = "09:00";
@@ -124,6 +138,9 @@ public partial class ClickerSettings : ObservableObject
     [ObservableProperty] private ClickAction _action = ClickAction.Single;
     [ObservableProperty] private int _intervalMs = 100;
     [ObservableProperty] private int _jitterMs;
+    [ObservableProperty] private int _jitterPercent;
+    [ObservableProperty] private int _holdDurationMs = 1000;
+    [ObservableProperty] private bool _preciseTiming = true;
     [ObservableProperty] private int _burstSize;
     [ObservableProperty] private int _burstPauseMs = 500;
     [ObservableProperty] private RepeatMode _repeatMode = RepeatMode.Infinite;
@@ -145,6 +162,9 @@ public partial class HotkeySettings : ObservableObject
     [ObservableProperty] private HotkeyBinding _pickPosition = HotkeyBinding.Vk(0x79);
     [ObservableProperty] private HotkeyBinding _toggleMacro = HotkeyBinding.Vk(0x7B);
     [ObservableProperty] private HotkeyBinding _toggleTyper = HotkeyBinding.Vk(0x7A);
+    [ObservableProperty] private HotkeyBinding _togglePresence = HotkeyBinding.Vk(0x7C);
+    [ObservableProperty] private HotkeyBinding _recordMacro = HotkeyBinding.Vk(0x7B, 0x0002);
+    [ObservableProperty] private HotkeyBinding _showWindow = HotkeyBinding.Vk(0x54, 0x0001 | 0x0002);
 }
 
 public partial class AppearanceSettings : ObservableObject
@@ -166,5 +186,44 @@ public partial class GeneralSettings : ObservableObject
     [ObservableProperty] private bool _firstRunDismissed;
     [ObservableProperty] private bool _checkForUpdates;
     [ObservableProperty] private bool _playSoundOnFinish;
+    [ObservableProperty] private string _soundName = "SystemAsterisk";
     [ObservableProperty] private bool _notifyOnFinish;
+    [ObservableProperty] private bool _notifyOnFailsafe = true;
+    [ObservableProperty] private bool _notifyOnPresence;
+    [ObservableProperty] private bool _notifyOnHotkey;
+    [ObservableProperty] private LogLevel _logLevel = LogLevel.Info;
+    [ObservableProperty] private CloseBehavior _closeBehavior = CloseBehavior.ToTray;
+}
+
+public partial class WorkScheduleSettings : ObservableObject
+{
+    public WorkScheduleSettings()
+    {
+        if (Days.Count == 0)
+        {
+            foreach (var day in new[]
+                     {
+                         DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+                         DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+                     })
+                Days.Add(new DayWindows { Day = day });
+        }
+    }
+
+    [ObservableProperty] private bool _enabled;
+    [ObservableProperty] private OutsideHoursBehavior _outside = OutsideHoursBehavior.PauseAndResume;
+    [ObservableProperty] private ObservableCollection<DayWindows> _days = new();
+    [ObservableProperty] private ObservableCollection<string> _holidays = new();
+}
+
+public partial class DayWindows : ObservableObject
+{
+    [ObservableProperty] private DayOfWeek _day;
+    [ObservableProperty] private ObservableCollection<TimeSpanWindow> _windows = new();
+}
+
+public partial class TimeSpanWindow : ObservableObject
+{
+    [ObservableProperty] private string _start = "08:00";
+    [ObservableProperty] private string _end = "17:00";
 }

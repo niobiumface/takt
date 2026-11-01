@@ -52,7 +52,43 @@ public enum FailsafeCorner
 public enum ThemeMode
 {
     Dark,
-    Light
+    Light,
+    System
+}
+
+public enum CloseBehavior
+{
+    ToTray,
+    Exit
+}
+
+public enum OutsideHoursBehavior
+{
+    PauseAndResume,
+    Stop,
+    HintOnly
+}
+
+public enum ScheduleEffect
+{
+    Run,
+    Pause,
+    Stop,
+    Hint
+}
+
+public enum PresenceMotion
+{
+    Invisible,
+    SmallMove,
+    SmallCircle
+}
+
+public enum LogLevel
+{
+    Error,
+    Info,
+    Debug
 }
 
 public enum AppLanguage
@@ -97,7 +133,8 @@ public enum PresenceKey
 {
     None,
     F15,
-    Shift
+    Shift,
+    Control
 }
 
 public enum PresenceWarning

@@ -20,7 +20,7 @@ Takt should feel like a small professional utility, not a game overlay and not a
 
 ## Settings
 
-Put density behind a gear. Tabs: Jiggler, Clicker, Hotkeys, Appearance, General. Validate numeric ranges in the ViewModel. Bind two-way to `AppSettings`; persist via `SettingsService` debounce.
+Put density behind a gear and the tray menu. The settings window uses a left sidebar (general, hotkeys, clicker, jiggler and presence, working hours, typer, notifications) and a search box that filters those sections. Validate and clamp in the settings normalizer. Bind two-way to `AppSettings` so engines see changes live; persist via `SettingsService` debounce. Every value can reset to its default. Profiles store a full copy of the settings.
 
 ## Visual language
 

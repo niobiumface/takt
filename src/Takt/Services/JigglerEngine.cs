@@ -34,6 +34,8 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
 
     public Func<bool>? ShouldKeepCursorStill { get; set; }
 
+    public Func<ScheduleEffect>? Schedule { get; set; }
+
     [ObservableProperty] private bool _isEnabled;
     [ObservableProperty] private EngineStatus _status = EngineStatus.Stopped;
     [ObservableProperty] private PauseReason _pauseReason;
@@ -161,7 +163,22 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
     {
         reason = PauseReason.None;
 
-        if (_settings.UseSchedule && !ScheduleWindow.IsInside(DateTime.Now, _settings.ScheduleStart, _settings.ScheduleEnd))
+        var schedule = Schedule?.Invoke() ?? ScheduleEffect.Run;
+        if (schedule == ScheduleEffect.Stop)
+        {
+            _dispatcher.BeginInvoke(() => Stop());
+            reason = PauseReason.Schedule;
+            return false;
+        }
+
+        if (schedule == ScheduleEffect.Pause)
+        {
+            reason = PauseReason.Schedule;
+            return false;
+        }
+
+        if (Schedule is null && _settings.UseSchedule &&
+            !ScheduleWindow.IsInside(DateTime.Now, _settings.ScheduleStart, _settings.ScheduleEnd))
         {
             reason = PauseReason.Schedule;
             return false;
@@ -180,7 +197,8 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
             return false;
         }
 
-        if (_settings.PauseOnUserInput && DateTime.UtcNow >= _ignoreInputUntil && idle.TotalSeconds < 0.5)
+        var resumeAfter = Math.Max(1, _settings.ResumeIdleSeconds);
+        if (_settings.PauseOnUserInput && DateTime.UtcNow >= _ignoreInputUntil && idle.TotalSeconds < resumeAfter)
         {
             if (!_settings.UseFixedCenter && MouseInput.TryGetCursorPos(out var pos))
             {

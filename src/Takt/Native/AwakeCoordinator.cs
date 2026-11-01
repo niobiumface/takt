@@ -6,6 +6,8 @@ internal static class AwakeCoordinator
     private static bool _jigglerSleep;
     private static bool _jigglerDisplay;
     private static bool _presence;
+    private static bool _presenceSleep;
+    private static bool _presenceDisplay;
 
     public static void SetJiggler(bool active, bool preventSleep, bool preventDisplay)
     {
@@ -15,9 +17,11 @@ internal static class AwakeCoordinator
         Apply();
     }
 
-    public static void SetPresence(bool active)
+    public static void SetPresence(bool active, bool preventSleep, bool preventDisplay)
     {
         _presence = active;
+        _presenceSleep = preventSleep;
+        _presenceDisplay = preventDisplay;
         Apply();
     }
 
@@ -30,9 +34,9 @@ internal static class AwakeCoordinator
 
     private static void Apply()
     {
-        if (_presence)
+        if (_presence && (_presenceSleep || _presenceDisplay))
         {
-            ExecutionState.Apply(preventSleep: true, preventDisplay: true);
+            ExecutionState.Apply(_presenceSleep, _presenceDisplay);
             return;
         }
 

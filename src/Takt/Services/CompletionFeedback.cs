@@ -4,11 +4,12 @@ namespace Takt.Services;
 
 internal static class CompletionFeedback
 {
-    public static void PlaySound()
+    public static void PlaySound(string? alias = null)
     {
         try
         {
-            PlaySound("SystemAsterisk", nint.Zero, 0x00010000 | 0x0001);
+            var name = string.IsNullOrWhiteSpace(alias) ? "SystemAsterisk" : alias;
+            PlaySound(name, nint.Zero, 0x00010000 | 0x0001);
         }
         catch (DllNotFoundException)
         {

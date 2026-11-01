@@ -33,6 +33,8 @@ public static class SettingsNormalizer
         settings.RepeatCount = SettingsLimits.ClampRepeatCount(settings.RepeatCount);
         settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
         settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
+        settings.JitterPercent = Math.Clamp(settings.JitterPercent, 0, 100);
+        settings.HoldDurationMs = Math.Clamp(settings.HoldDurationMs, 1, 60_000);
     }
 
     public static void ApplyTyper(TyperSettings settings)
@@ -54,6 +56,7 @@ public static class SettingsNormalizer
         settings.JitterMs = PresenceLimits.ClampJitter(settings.JitterMs);
         settings.ScheduleStart = SettingsLimits.ClampSchedule(settings.ScheduleStart, "08:00");
         settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "17:00");
+        settings.ResumeIdleSeconds = Math.Clamp(settings.ResumeIdleSeconds, 1, 3600);
     }
 
     public static void ApplyChanged(object? sender, string? propertyName)
@@ -130,6 +133,12 @@ public static class SettingsNormalizer
                 break;
             case nameof(ClickerSettings.StartDelayMs):
                 settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
+                break;
+            case nameof(ClickerSettings.JitterPercent):
+                settings.JitterPercent = Math.Clamp(settings.JitterPercent, 0, 100);
+                break;
+            case nameof(ClickerSettings.HoldDurationMs):
+                settings.HoldDurationMs = Math.Clamp(settings.HoldDurationMs, 1, 60_000);
                 break;
         }
     }

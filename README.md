@@ -55,7 +55,21 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Start with Windows, start minimized, always on top
 - Dark/light theme and accent color, dark title bar in the dark theme
 - English by default; German under Settings → Appearance → Language
-- Settings in `%AppData%\Takt\settings.json` (versioned). Logs in `%AppData%\Takt\logs`
+- Settings in `%AppData%\Takt\settings.json` (version 2, migrated from older files). Logs in `%AppData%\Takt\logs`
+
+## Settings
+
+The gear button and the tray menu open a settings window. A sidebar lists seven sections, and the search box filters them. Changes apply immediately and are saved in `%AppData%\Takt\settings.json` (never next to the exe). Each value can be reset, and the whole file can be exported, imported, or restored after a confirmation.
+
+- **General:** light, dark, or Windows theme, accent, German or English, autostart, start minimized, close to tray or exit, always on top, profiles.
+- **Hotkeys:** record, clear, or reset each shortcut. Duplicates and shortcuts Windows refuses are shown on the row.
+- **Clicker:** interval, jitter percent, button including X1/X2, single or double, hold duration, count, start delay, failsafe corner, precise timing.
+- **Jiggler and presence:** interval 5–120 s, movement (invisible nudge, small move, small circle), fallback key F15, Shift, Ctrl, or off, screensaver, display, and sleep separately, pause while you are active.
+- **Working hours:** several windows per weekday, days off, and outside those hours pause, stop, or only show a hint. Presence and the jiggler follow it.
+- **Typer:** speed, jitter, a pause after punctuation, optional typos that are corrected, start delay, repeat count, and saved snippets.
+- **Notifications:** end sound, tray notices, log level, open the log folder, update check.
+
+Profiles such as office and home store a full copy of these settings. Switch them from the main window or from settings. Older settings files are migrated to version 2. A status you set yourself in Teams is not changed, and Takt does not bypass a group-policy lock.
 - Optional update check against GitHub releases. It does not run unless you turn it on
 
 ## Safety

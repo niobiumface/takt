@@ -41,6 +41,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         Services = new AppServices(Dispatcher);
+        AppLog.Minimum = Services.Settings.Current.General.LogLevel;
         Services.Theme.Apply(Services.Settings.Current);
         Services.Localization.Apply(Services.Settings.Current.Appearance.Language);
         AutostartService.Apply(Services.Settings.Current.General.StartWithWindows);

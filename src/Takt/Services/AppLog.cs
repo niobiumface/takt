@@ -1,4 +1,5 @@
 using System.IO;
+using Takt.Models;
 
 namespace Takt.Services;
 
@@ -6,7 +7,17 @@ internal static class AppLog
 {
     private static readonly object Gate = new();
 
-    public static void Info(string message) => Write("INFO", message, null);
+    public static LogLevel Minimum { get; set; } = LogLevel.Info;
+
+    public static string Folder { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Takt", "logs");
+
+    public static void Info(string message)
+    {
+        if (Minimum < LogLevel.Info)
+            return;
+        Write("INFO", message, null);
+    }
 
     public static void Error(string message, Exception? exception = null) => Write("ERROR", message, exception);
 

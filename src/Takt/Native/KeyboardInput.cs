@@ -5,6 +5,7 @@ namespace Takt.Native;
 internal static class KeyboardInput
 {
     public const ushort VirtualKeyShift = 0x10;
+    public const ushort VirtualKeyControl = 0x11;
     public const ushort VirtualKeyF15 = 0x7E;
 
     public static bool Type(char value) => Send(value, up: false) && Send(value, up: true);

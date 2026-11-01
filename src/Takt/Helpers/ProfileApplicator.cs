@@ -13,7 +13,23 @@ public static class ProfileApplicator
         CopyMacro(settings.Macro, profile.Macro);
         CopyTyper(settings.Typer, profile.Typer);
         CopyPresence(settings.Presence, profile.Presence);
+        CopyGeneral(settings.General, profile.General);
+        CopyAppearance(settings.Appearance, profile.Appearance);
+        CopyWork(settings.Work, profile.Work);
         return profile;
+    }
+
+    public static void Overlay(AppSettings from, AppSettings to)
+    {
+        CopyJiggler(from.Jiggler, to.Jiggler);
+        CopyClicker(from.Clicker, to.Clicker);
+        CopyHotkeys(from.Hotkeys, to.Hotkeys);
+        CopyMacro(from.Macro, to.Macro);
+        CopyTyper(from.Typer, to.Typer);
+        CopyPresence(from.Presence, to.Presence);
+        CopyGeneral(from.General, to.General);
+        CopyAppearance(from.Appearance, to.Appearance);
+        CopyWork(from.Work, to.Work);
     }
 
     public static void Apply(ActivityProfile profile, AppSettings settings)
@@ -24,6 +40,9 @@ public static class ProfileApplicator
         CopyMacro(profile.Macro, settings.Macro);
         CopyTyper(profile.Typer, settings.Typer);
         CopyPresence(profile.Presence, settings.Presence);
+        CopyGeneral(profile.General, settings.General);
+        CopyAppearance(profile.Appearance, settings.Appearance);
+        CopyWork(profile.Work, settings.Work);
     }
 
     public static void CopyPresence(PresenceSettings from, PresenceSettings to)
@@ -45,6 +64,12 @@ public static class ProfileApplicator
         to.Sunday = from.Sunday;
         to.ScheduleStart = from.ScheduleStart;
         to.ScheduleEnd = from.ScheduleEnd;
+        to.Motion = from.Motion;
+        to.PreventScreensaver = from.PreventScreensaver;
+        to.PreventDisplayOff = from.PreventDisplayOff;
+        to.PreventSleep = from.PreventSleep;
+        to.PauseOnUserInput = from.PauseOnUserInput;
+        to.ResumeIdleSeconds = from.ResumeIdleSeconds;
     }
 
     public static void CopyTyper(TyperSettings from, TyperSettings to)
@@ -54,6 +79,9 @@ public static class ProfileApplicator
         to.Text = from.Text;
         to.CharactersPerMinute = from.CharactersPerMinute;
         to.JitterPercent = from.JitterPercent;
+        to.PunctuationPauseMs = from.PunctuationPauseMs;
+        to.SimulateTypos = from.SimulateTypos;
+        to.TypoPercent = from.TypoPercent;
         to.StartDelayMs = from.StartDelayMs;
         to.RepeatMode = from.RepeatMode;
         to.RepeatCount = from.RepeatCount;
@@ -81,6 +109,7 @@ public static class ProfileApplicator
         to.WaitForIdle = from.WaitForIdle;
         to.IdleThresholdSeconds = from.IdleThresholdSeconds;
         to.PauseOnUserInput = from.PauseOnUserInput;
+        to.ResumeIdleSeconds = from.ResumeIdleSeconds;
         to.PauseWhenFullscreen = from.PauseWhenFullscreen;
         to.UseSchedule = from.UseSchedule;
         to.ScheduleStart = from.ScheduleStart;
@@ -93,6 +122,9 @@ public static class ProfileApplicator
         to.Action = from.Action;
         to.IntervalMs = from.IntervalMs;
         to.JitterMs = from.JitterMs;
+        to.JitterPercent = from.JitterPercent;
+        to.HoldDurationMs = from.HoldDurationMs;
+        to.PreciseTiming = from.PreciseTiming;
         to.BurstSize = from.BurstSize;
         to.BurstPauseMs = from.BurstPauseMs;
         to.RepeatMode = from.RepeatMode;
@@ -119,6 +151,9 @@ public static class ProfileApplicator
         CopyBinding(from.PickPosition, to.PickPosition);
         CopyBinding(from.ToggleMacro, to.ToggleMacro);
         CopyBinding(from.ToggleTyper, to.ToggleTyper);
+        CopyBinding(from.TogglePresence, to.TogglePresence);
+        CopyBinding(from.RecordMacro, to.RecordMacro);
+        CopyBinding(from.ShowWindow, to.ShowWindow);
     }
 
     public static void CopyMacro(MacroSettings from, MacroSettings to)
@@ -138,6 +173,70 @@ public static class ProfileApplicator
                 Button = item.Button,
                 WheelDelta = item.WheelDelta
             });
+        }
+    }
+
+    public static void CopyGeneral(GeneralSettings from, GeneralSettings to)
+    {
+        if (from is null || to is null)
+            return;
+        to.MinimizeToTray = from.MinimizeToTray;
+        to.StartMinimized = from.StartMinimized;
+        to.StartWithWindows = from.StartWithWindows;
+        to.FailsafeEnabled = from.FailsafeEnabled;
+        to.FailsafeCorner = from.FailsafeCorner;
+        to.FailsafeSize = from.FailsafeSize;
+        to.CheckForUpdates = from.CheckForUpdates;
+        to.PlaySoundOnFinish = from.PlaySoundOnFinish;
+        to.SoundName = from.SoundName;
+        to.NotifyOnFinish = from.NotifyOnFinish;
+        to.NotifyOnFailsafe = from.NotifyOnFailsafe;
+        to.NotifyOnPresence = from.NotifyOnPresence;
+        to.NotifyOnHotkey = from.NotifyOnHotkey;
+        to.LogLevel = from.LogLevel;
+        to.CloseBehavior = from.CloseBehavior;
+        to.FirstRunDismissed = from.FirstRunDismissed;
+    }
+
+    public static void CopyAppearance(AppearanceSettings from, AppearanceSettings to)
+    {
+        if (from is null || to is null)
+            return;
+        to.Theme = from.Theme;
+        to.AccentHex = from.AccentHex;
+        to.Language = from.Language;
+        to.AlwaysOnTop = from.AlwaysOnTop;
+    }
+
+    public static void CopyWork(WorkScheduleSettings from, WorkScheduleSettings to)
+    {
+        if (from is null || to is null)
+            return;
+        to.Enabled = from.Enabled;
+        to.Outside = from.Outside;
+        to.Holidays ??= new();
+        to.Holidays.Clear();
+        if (from.Holidays is not null)
+        {
+            foreach (var holiday in from.Holidays)
+                to.Holidays.Add(holiday);
+        }
+
+        foreach (var day in from.Days ?? [])
+        {
+            var target = to.Days.FirstOrDefault(item => item.Day == day.Day);
+            if (target is null)
+            {
+                target = new DayWindows { Day = day.Day };
+                to.Days.Add(target);
+            }
+
+            target.Windows ??= new();
+            target.Windows.Clear();
+            if (day.Windows is null)
+                continue;
+            foreach (var window in day.Windows)
+                target.Windows.Add(new TimeSpanWindow { Start = window.Start, End = window.End });
         }
     }
 

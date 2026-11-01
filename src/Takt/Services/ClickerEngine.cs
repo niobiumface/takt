@@ -50,7 +50,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         _pendingCount = 0;
         _faultLogged = 0;
         _sequenceIndex = 0;
-        if (!_timerHeld)
+        if (_settings.PreciseTiming && !_timerHeld)
         {
             TimerResolution.Acquire();
             _timerHeld = true;
@@ -129,7 +129,10 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                     await Task.Delay(Math.Max(1, _settings.BurstPauseMs), token);
                 }
 
-                var delay = IntervalCalculator.NextDelayMs(_settings.IntervalMs, _settings.JitterMs, _rng);
+                var delay = IntervalCalculator.NextDelayMs(
+                    _settings.IntervalMs,
+                    ClickerTiming.JitterMilliseconds(_settings.IntervalMs, _settings.JitterMs, _settings.JitterPercent),
+                    _rng);
                 await Task.Delay(delay, token);
             }
         }
@@ -162,7 +165,12 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
     private async Task RunHoldAsync(CancellationToken token)
     {
-        var plan = HoldPlan.For(_settings.RepeatMode, _settings.RepeatCount, _settings.DurationSeconds, _settings.IntervalMs);
+        var plan = HoldPlan.For(
+            _settings.RepeatMode,
+            _settings.RepeatCount,
+            _settings.DurationSeconds,
+            _settings.IntervalMs,
+            _settings.HoldDurationMs);
         var button = _settings.Button;
         for (var i = 0; i < plan.Cycles; i++)
         {

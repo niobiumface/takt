@@ -1,4 +1,5 @@
 using System.Windows.Threading;
+using Takt.Helpers;
 using Takt.Models;
 using Takt.Native;
 
@@ -35,6 +36,8 @@ internal sealed class AppServices : IDisposable
 
         Jiggler.ShouldKeepCursorStill = () =>
             Clicker.IsEnabled && Settings.Current.Clicker.PositionMode == ClickPositionMode.CurrentCursor;
+        Jiggler.Schedule = () => WorkScheduleEvaluator.Evaluate(DateTime.Now, Settings.Current.Work);
+        Presence.Schedule = Jiggler.Schedule;
 
         Jiggler.PropertyChanged += (_, e) =>
         {

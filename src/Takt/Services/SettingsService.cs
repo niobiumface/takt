@@ -66,9 +66,7 @@ public sealed class SettingsService : IDisposable
         }
 
         EnsureNested();
-        var upgraded = Current.Version < AppSettings.CurrentVersion;
-        if (upgraded)
-            Current.Version = AppSettings.CurrentVersion;
+        var upgraded = SettingsMigration.Migrate(Current);
         Wire(Current);
         _wired = true;
         SettingsNormalizer.ApplyAll(Current);
@@ -135,9 +133,13 @@ public sealed class SettingsService : IDisposable
         Current.Hotkeys.PickPosition ??= HotkeyBinding.Vk(0x79);
         Current.Hotkeys.ToggleMacro ??= HotkeyBinding.Vk(0x7B);
         Current.Hotkeys.ToggleTyper ??= HotkeyBinding.Vk(0x7A);
+        Current.Hotkeys.TogglePresence ??= HotkeyBinding.Vk(0x7C);
+        Current.Hotkeys.RecordMacro ??= HotkeyBinding.Vk(0x7B, 0x0002);
+        Current.Hotkeys.ShowWindow ??= HotkeyBinding.Vk(0x54, 0x0001 | 0x0002);
         Current.Typer ??= new TyperSettings();
         Current.Typer.Snippets ??= new();
         Current.Presence ??= new PresenceSettings();
+        Current.Work ??= new WorkScheduleSettings();
         Current.Macro ??= new MacroSettings();
         Current.Macro.Events ??= new();
         Current.Clicker.Points ??= new();

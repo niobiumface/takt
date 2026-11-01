@@ -16,6 +16,8 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
     private CancellationTokenSource? _cts;
     private int _generation;
 
+    public Func<ScheduleEffect>? Schedule { get; set; }
+
     public PresenceEngine(PresenceSettings settings, UserActivityMonitor activity, Dispatcher dispatcher)
     {
         _settings = settings;
@@ -100,8 +102,15 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
 
             while (!token.IsCancellationRequested && IsCurrent(generation))
             {
-                if (!InsideWorkHours())
+                var effect = Schedule?.Invoke() ?? LegacyEffect();
+                if (effect is ScheduleEffect.Pause or ScheduleEffect.Stop)
                 {
+                    if (effect == ScheduleEffect.Stop)
+                    {
+                        _ = _dispatcher.BeginInvoke(() => Stop());
+                        return;
+                    }
+
                     var pausedWarning = SessionLocked
                         ? PresenceWarning.SessionLocked
                         : policy is > 0 ? PresenceWarning.PolicyLock : PresenceWarning.None;
@@ -115,33 +124,35 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
                     ? PresenceWarning.SessionLocked
                     : policy is > 0 ? PresenceWarning.PolicyLock : PresenceWarning.None;
 
-                if (_activity.IdleTime.TotalSeconds >= 0.5)
+                var resumeAfter = Math.Max(1, _settings.ResumeIdleSeconds);
+                if (_settings.PauseOnUserInput && _activity.IdleTime.TotalSeconds < resumeAfter)
                 {
-                    var moved = MouseInput.PulseRelative(1, 0);
-                    var idleKnown = SystemQuery.TryGetIdleTime(out var idle);
-                    if (!moved || !idleKnown || !IdleVerification.InputRegistered(idle))
-                    {
-                        if (_settings.UseFallbackKey && _settings.FallbackKey != PresenceKey.None)
-                        {
-                            KeyboardInput.TapVirtualKey(VirtualKey(_settings.FallbackKey));
-                            idleKnown = SystemQuery.TryGetIdleTime(out idle);
-                        }
+                    Publish(true, EngineStatus.Paused, PauseReason.UserInput, warning);
+                    UpdateAwake(true, generation);
+                    await Task.Delay(500, token);
+                    continue;
+                }
 
-                        if (!idleKnown || !IdleVerification.InputRegistered(idle))
-                        {
-                            if (warning == PresenceWarning.None)
-                                warning = PresenceWarning.IdleNotReset;
-                            AppLog.Error("Presence input did not reset the system idle timer.");
-                        }
+                var moved = MoveForPresence();
+                var idleKnown = SystemQuery.TryGetIdleTime(out var idle);
+                if (!moved || !idleKnown || !IdleVerification.InputRegistered(idle))
+                {
+                    if (_settings.UseFallbackKey && _settings.FallbackKey != PresenceKey.None)
+                    {
+                        KeyboardInput.TapVirtualKey(VirtualKey(_settings.FallbackKey));
+                        idleKnown = SystemQuery.TryGetIdleTime(out idle);
                     }
 
-                    if (idleKnown)
-                        PublishIdle(idle);
+                    if (!idleKnown || !IdleVerification.InputRegistered(idle))
+                    {
+                        if (warning == PresenceWarning.None)
+                            warning = PresenceWarning.IdleNotReset;
+                        AppLog.Error("Presence input did not reset the system idle timer.");
+                    }
                 }
-                else if (SystemQuery.TryGetIdleTime(out var idle))
-                {
+
+                if (idleKnown)
                     PublishIdle(idle);
-                }
 
                 Publish(true, EngineStatus.Running, PauseReason.None, warning);
                 UpdateAwake(true, generation);
@@ -155,8 +166,8 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
                 {
                     var slice = Math.Min(1000, left);
                     await Task.Delay(slice, token);
-                    if (SystemQuery.TryGetIdleTime(out var idle))
-                        PublishIdle(idle);
+                    if (SystemQuery.TryGetIdleTime(out var sliceIdle))
+                        PublishIdle(sliceIdle);
                     left -= slice;
                 }
             }
@@ -184,16 +195,39 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
         }
     }
 
-    private bool InsideWorkHours()
+    private ScheduleEffect LegacyEffect()
     {
         if (!_settings.UseWorkHours)
-            return true;
-        return ScheduleWindow.IsInside(DateTime.Now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.Days);
+            return ScheduleEffect.Run;
+        return ScheduleWindow.IsInside(DateTime.Now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.Days)
+            ? ScheduleEffect.Run
+            : ScheduleEffect.Pause;
     }
+
+    private bool MoveForPresence()
+    {
+        switch (_settings.Motion)
+        {
+            case PresenceMotion.SmallMove:
+                return MouseInput.Nudge(4);
+            case PresenceMotion.SmallCircle:
+                _phase += Math.PI / 6;
+                if (!MouseInput.TryGetCursorPos(out var pos))
+                    return false;
+                var x = pos.X + (int)Math.Round(Math.Cos(_phase) * 6);
+                var y = pos.Y + (int)Math.Round(Math.Sin(_phase) * 6);
+                return MouseInput.MoveAbsolute(x, y);
+            default:
+                return MouseInput.PulseRelative(1, 0);
+        }
+    }
+
+    private double _phase;
 
     private static ushort VirtualKey(PresenceKey key) => key switch
     {
         PresenceKey.Shift => KeyboardInput.VirtualKeyShift,
+        PresenceKey.Control => KeyboardInput.VirtualKeyControl,
         _ => KeyboardInput.VirtualKeyF15
     };
 
@@ -211,7 +245,10 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
         {
             if (!IsCurrent(generation))
                 return;
-            AwakeCoordinator.SetPresence(active && IsEnabled);
+            AwakeCoordinator.SetPresence(
+                active && IsEnabled,
+                _settings.PreventSleep,
+                _settings.PreventDisplayOff || _settings.PreventScreensaver);
         }
 
         if (_dispatcher.CheckAccess())
@@ -222,7 +259,7 @@ internal sealed partial class PresenceEngine : ObservableObject, IDisposable
 
     private void ClearAwake()
     {
-        void Apply() => AwakeCoordinator.SetPresence(false);
+        void Apply() => AwakeCoordinator.SetPresence(false, false, false);
         if (_dispatcher.CheckAccess())
             Apply();
         else

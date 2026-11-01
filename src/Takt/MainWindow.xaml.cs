@@ -39,7 +39,7 @@ public partial class MainWindow : Window
     private void ApplyTitleBar()
     {
         var dark = DataContext is MainViewModel viewModel &&
-                   viewModel.Settings.Appearance.Theme != ThemeMode.Light;
+                   ThemeService.IsDark(viewModel.Settings.Appearance.Theme);
         TitleBarTheme.Apply(this, dark);
     }
 
@@ -64,6 +64,6 @@ public partial class MainWindow : Window
 
     private bool ShouldHideToTray()
     {
-        return DataContext is MainViewModel vm && vm.Settings.General.MinimizeToTray;
+        return DataContext is MainViewModel vm && vm.Settings.General.CloseBehavior != CloseBehavior.Exit;
     }
 }

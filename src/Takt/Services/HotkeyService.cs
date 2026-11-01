@@ -13,7 +13,10 @@ internal enum HotkeyAction
     Panic = 4,
     PickPosition = 5,
     ToggleMacro = 6,
-    ToggleTyper = 7
+    ToggleTyper = 7,
+    TogglePresence = 8,
+    ShowWindow = 9,
+    RecordMacro = 10
 }
 
 internal sealed class HotkeyService : IDisposable
@@ -98,6 +101,9 @@ internal sealed class HotkeyService : IDisposable
         TryRegister(HotkeyAction.PickPosition, _settings.PickPosition, seen);
         TryRegister(HotkeyAction.ToggleMacro, _settings.ToggleMacro, seen);
         TryRegister(HotkeyAction.ToggleTyper, _settings.ToggleTyper, seen);
+        TryRegister(HotkeyAction.TogglePresence, _settings.TogglePresence, seen);
+        TryRegister(HotkeyAction.ShowWindow, _settings.ShowWindow, seen);
+        TryRegister(HotkeyAction.RecordMacro, _settings.RecordMacro, seen);
     }
 
     private void TryRegister(HotkeyAction action, HotkeyBinding binding, HashSet<(int Modifiers, int VirtualKey)> seen)

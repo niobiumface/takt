@@ -35,6 +35,7 @@ internal sealed class TrayService : IDisposable
     public event Action? ToggleClickerRequested;
     public event Action? PanicRequested;
     public event Action? ExitRequested;
+    public event Action? SettingsRequested;
 
     public void Attach(Window window) => _ = window;
 
@@ -70,6 +71,7 @@ internal sealed class TrayService : IDisposable
     {
         var menu = new WinForms.ContextMenuStrip();
         menu.Items.Add(LocalizationService.Text("Tray.Show", "Show window"), null, (_, _) => ShowWindowRequested?.Invoke());
+        menu.Items.Add(LocalizationService.Text("Tray.Settings", "Settings"), null, (_, _) => SettingsRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Jiggler", "Toggle jiggler"), null, (_, _) => ToggleJigglerRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Clicker", "Toggle clicker"), null, (_, _) => ToggleClickerRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Panic", "Stop all"), null, (_, _) => PanicRequested?.Invoke());

@@ -29,6 +29,8 @@ internal partial class SettingsViewModel : ObservableObject
         Settings.Hotkeys.PickPosition.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.ToggleMacro.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.ToggleTyper.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
+        _services.Hotkeys.RegistrationFailed += name => RefreshHotkeyRows(name);
+        BuildCatalog();
     }
 
     [RelayCommand]
@@ -157,6 +159,9 @@ internal partial class SettingsViewModel : ObservableObject
             "pick" => Settings.Hotkeys.PickPosition,
             "macro" => Settings.Hotkeys.ToggleMacro,
             "typer" => Settings.Hotkeys.ToggleTyper,
+            "presence" => Settings.Hotkeys.TogglePresence,
+            "record" => Settings.Hotkeys.RecordMacro,
+            "show" => Settings.Hotkeys.ShowWindow,
             _ => null
         };
 
@@ -209,13 +214,15 @@ internal partial class SettingsViewModel : ObservableObject
             new(ClickPositionMode.Sequence, T("Position.Sequence", "Point sequence")));
         Replace(Themes,
             new(ThemeMode.Dark, T("Theme.Dark", "Dark")),
-            new(ThemeMode.Light, T("Theme.Light", "Light")));
+            new(ThemeMode.Light, T("Theme.Light", "Light")),
+            new(ThemeMode.System, T("Theme.System", "System")));
         Replace(Languages,
             new(AppLanguage.English, "English"),
             new(AppLanguage.German, "Deutsch"));
         Replace(PresenceKeys,
             new(PresenceKey.F15, T("Presence.KeyF15", "F15")),
             new(PresenceKey.Shift, T("Presence.KeyShift", "Shift")),
+            new(PresenceKey.Control, T("Presence.KeyCtrl", "Ctrl")),
             new(PresenceKey.None, T("Presence.KeyNone", "None")));
         Replace(Corners,
             new(FailsafeCorner.TopLeft, T("Corner.TopLeft", "Top left")),
@@ -224,6 +231,8 @@ internal partial class SettingsViewModel : ObservableObject
             new(FailsafeCorner.BottomRight, T("Corner.BottomRight", "Bottom right")));
         OnPropertyChanged(nameof(IsGerman));
         NotifyHotkeyDisplays();
+        if (Navigation.Count > 0)
+            BuildCatalog();
     }
 
     private void NotifyHotkeyDisplays()
