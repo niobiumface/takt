@@ -8,6 +8,7 @@ public static class SettingsNormalizer
     {
         ApplyJiggler(settings.Jiggler);
         ApplyClicker(settings.Clicker);
+        ApplyTyper(settings.Typer);
         settings.General.FailsafeSize = SettingsLimits.ClampFailsafe(settings.General.FailsafeSize);
     }
 
@@ -33,6 +34,17 @@ public static class SettingsNormalizer
         settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
     }
 
+    public static void ApplyTyper(TyperSettings settings)
+    {
+        if (settings is null)
+            return;
+        settings.CharactersPerMinute = SettingsLimits.ClampCpm(settings.CharactersPerMinute);
+        settings.JitterPercent = SettingsLimits.ClampJitterPercent(settings.JitterPercent);
+        settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
+        settings.RepeatCount = SettingsLimits.ClampRepeatCount(settings.RepeatCount);
+        settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
+    }
+
     public static void ApplyChanged(object? sender, string? propertyName)
     {
         switch (sender)
@@ -42,6 +54,9 @@ public static class SettingsNormalizer
                 break;
             case ClickerSettings clicker:
                 ApplyClickerProperty(clicker, propertyName);
+                break;
+            case TyperSettings typer:
+                ApplyTyperProperty(typer, propertyName);
                 break;
             case GeneralSettings general when propertyName == nameof(GeneralSettings.FailsafeSize):
                 general.FailsafeSize = SettingsLimits.ClampFailsafe(general.FailsafeSize);
@@ -101,6 +116,28 @@ public static class SettingsNormalizer
                 break;
             case nameof(ClickerSettings.StartDelayMs):
                 settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
+                break;
+        }
+    }
+
+    private static void ApplyTyperProperty(TyperSettings settings, string? propertyName)
+    {
+        switch (propertyName)
+        {
+            case nameof(TyperSettings.CharactersPerMinute):
+                settings.CharactersPerMinute = SettingsLimits.ClampCpm(settings.CharactersPerMinute);
+                break;
+            case nameof(TyperSettings.JitterPercent):
+                settings.JitterPercent = SettingsLimits.ClampJitterPercent(settings.JitterPercent);
+                break;
+            case nameof(TyperSettings.StartDelayMs):
+                settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
+                break;
+            case nameof(TyperSettings.RepeatCount):
+                settings.RepeatCount = SettingsLimits.ClampRepeatCount(settings.RepeatCount);
+                break;
+            case nameof(TyperSettings.DurationSeconds):
+                settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
                 break;
         }
     }

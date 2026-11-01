@@ -14,6 +14,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private AppearanceSettings _appearance = new();
     [ObservableProperty] private GeneralSettings _general = new();
     [ObservableProperty] private MacroSettings _macro = new();
+    [ObservableProperty] private TyperSettings _typer = new();
     [ObservableProperty] private ObservableCollection<ActivityProfile> _profiles = new();
 }
 
@@ -45,6 +46,25 @@ public partial class ActivityProfile : ObservableObject
     [ObservableProperty] private ClickerSettings _clicker = new();
     [ObservableProperty] private HotkeySettings _hotkeys = new();
     [ObservableProperty] private MacroSettings _macro = new();
+    [ObservableProperty] private TyperSettings _typer = new();
+}
+
+public partial class TextSnippet : ObservableObject
+{
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private string _text = "";
+}
+
+public partial class TyperSettings : ObservableObject
+{
+    [ObservableProperty] private string _text = "";
+    [ObservableProperty] private int _charactersPerMinute = 400;
+    [ObservableProperty] private int _jitterPercent = 15;
+    [ObservableProperty] private int _startDelayMs;
+    [ObservableProperty] private RepeatMode _repeatMode = RepeatMode.Count;
+    [ObservableProperty] private int _repeatCount = 1;
+    [ObservableProperty] private int _durationSeconds = 60;
+    [ObservableProperty] private ObservableCollection<TextSnippet> _snippets = new();
 }
 
 public partial class JigglerSettings : ObservableObject
@@ -94,6 +114,7 @@ public partial class HotkeySettings : ObservableObject
     [ObservableProperty] private HotkeyBinding _panic = HotkeyBinding.Vk(0x78);
     [ObservableProperty] private HotkeyBinding _pickPosition = HotkeyBinding.Vk(0x79);
     [ObservableProperty] private HotkeyBinding _toggleMacro = HotkeyBinding.Vk(0x7B);
+    [ObservableProperty] private HotkeyBinding _toggleTyper = HotkeyBinding.Vk(0x7A);
 }
 
 public partial class AppearanceSettings : ObservableObject

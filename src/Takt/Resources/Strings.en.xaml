@@ -140,4 +140,13 @@
     <sys:String x:Key="General.Notify">Tray notice when a run finishes</sys:String>
     <sys:String x:Key="Notify.Done">Finished.</sys:String>
     <sys:String x:Key="Status.Update">Update {0} is available.</sys:String>
+    <sys:String x:Key="Card.Typer">Typer</sys:String>
+    <sys:String x:Key="Tab.Typer">Typer</sys:String>
+    <sys:String x:Key="Typer.Text">Text</sys:String>
+    <sys:String x:Key="Typer.Speed">Speed (characters per minute)</sys:String>
+    <sys:String x:Key="Typer.Jitter">Variation (%)</sys:String>
+    <sys:String x:Key="Typer.SnippetName">Snippet name</sys:String>
+    <sys:String x:Key="Typer.SnippetText">Snippet text</sys:String>
+    <sys:String x:Key="Typer.SaveSnippet">Save snippet</sys:String>
+    <sys:String x:Key="Hotkey.Typer">Toggle typer</sys:String>
 </ResourceDictionary>

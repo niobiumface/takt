@@ -11,6 +11,7 @@ public static class ProfileApplicator
         CopyClicker(settings.Clicker, profile.Clicker);
         CopyHotkeys(settings.Hotkeys, profile.Hotkeys);
         CopyMacro(settings.Macro, profile.Macro);
+        CopyTyper(settings.Typer, profile.Typer);
         return profile;
     }
 
@@ -20,6 +21,26 @@ public static class ProfileApplicator
         CopyClicker(profile.Clicker, settings.Clicker);
         CopyHotkeys(profile.Hotkeys, settings.Hotkeys);
         CopyMacro(profile.Macro, settings.Macro);
+        CopyTyper(profile.Typer, settings.Typer);
+    }
+
+    public static void CopyTyper(TyperSettings from, TyperSettings to)
+    {
+        if (from is null || to is null)
+            return;
+        to.Text = from.Text;
+        to.CharactersPerMinute = from.CharactersPerMinute;
+        to.JitterPercent = from.JitterPercent;
+        to.StartDelayMs = from.StartDelayMs;
+        to.RepeatMode = from.RepeatMode;
+        to.RepeatCount = from.RepeatCount;
+        to.DurationSeconds = from.DurationSeconds;
+        to.Snippets ??= new();
+        to.Snippets.Clear();
+        if (from.Snippets is null)
+            return;
+        foreach (var snippet in from.Snippets)
+            to.Snippets.Add(new TextSnippet { Name = snippet.Name, Text = snippet.Text });
     }
 
     public static void CopyJiggler(JigglerSettings from, JigglerSettings to)
@@ -74,6 +95,7 @@ public static class ProfileApplicator
         CopyBinding(from.Panic, to.Panic);
         CopyBinding(from.PickPosition, to.PickPosition);
         CopyBinding(from.ToggleMacro, to.ToggleMacro);
+        CopyBinding(from.ToggleTyper, to.ToggleTyper);
     }
 
     public static void CopyMacro(MacroSettings from, MacroSettings to)

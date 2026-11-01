@@ -221,6 +221,19 @@ public class ProfileApplicatorTests
     }
 }
 
+public class TyperTimingTests
+{
+    [Fact]
+    public void KeepsCharacterDelayInsideTheJitterBand()
+    {
+        var rng = new Random(4);
+        var values = Enumerable.Range(0, 40).Select(_ => TyperTiming.DelayMs(600, 20, rng)).ToArray();
+        Assert.All(values, value => Assert.InRange(value, 80, 120));
+        Assert.Equal(120, TyperTiming.WordsPerMinute(600));
+        Assert.True(TyperTiming.DelayMs(10, 0, rng) >= 1);
+    }
+}
+
 public class MonitorCornerTests
 {
     [Fact]

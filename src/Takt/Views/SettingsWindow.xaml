@@ -181,6 +181,54 @@
                 </ScrollViewer>
             </TabItem>
 
+            <TabItem Header="{DynamicResource Tab.Typer}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,0,8,8">
+                        <TextBlock Text="{DynamicResource Typer.Text}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding Settings.Typer.Text, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource Typer.Speed}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding Settings.Typer.CharactersPerMinute, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource Typer.Jitter}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding Settings.Typer.JitterPercent, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource Clicker.Delay}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding Settings.Typer.StartDelayMs, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource Clicker.Repeat}" Style="{StaticResource FieldLabel}" />
+                        <ComboBox ItemsSource="{Binding RepeatModes}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding Settings.Typer.RepeatMode}" Margin="0,0,0,10" />
+                        <StackPanel Visibility="{Binding Settings.Typer.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Count}">
+                            <TextBlock Text="{DynamicResource Clicker.Count}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Settings.Typer.RepeatCount, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Settings.Typer.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Duration}">
+                            <TextBlock Text="{DynamicResource Clicker.Duration}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Settings.Typer.DurationSeconds, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        </StackPanel>
+                        <TextBlock Text="{DynamicResource Typer.SnippetName}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding SnippetName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <TextBlock Text="{DynamicResource Typer.SnippetText}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding SnippetText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="48" Margin="0,0,0,8" />
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding AddSnippetCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Padding="12,8">
+                            <TextBlock Text="{DynamicResource Typer.SaveSnippet}" TextWrapping="NoWrap" />
+                        </Button>
+                        <ItemsControl ItemsSource="{Binding Settings.Typer.Snippets}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,3">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Padding="8,4"
+                                                Command="{Binding DataContext.DeleteSnippetCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="{DynamicResource Profile.Delete}" />
+                                        </Button>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <TabItem Header="{DynamicResource Tab.Hotkeys}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="0,0,8,8">
@@ -196,6 +244,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -237,6 +286,12 @@
                             <TextBlock Grid.Row="5" Text="{DynamicResource Hotkey.Macro}" Style="{StaticResource BodyText}" TextWrapping="NoWrap" VerticalAlignment="Center" Margin="0,6" />
                             <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding MacroHotkeyDisplay}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
                             <Button Grid.Row="5" Grid.Column="4" Style="{StaticResource GhostButton}" Command="{Binding CaptureHotkeyCommand}" CommandParameter="macro" Margin="0,4" Padding="10,6">
+                                <TextBlock Text="{DynamicResource Hotkey.Record}" TextWrapping="NoWrap" />
+                            </Button>
+
+                            <TextBlock Grid.Row="6" Text="{DynamicResource Hotkey.Typer}" Style="{StaticResource BodyText}" TextWrapping="NoWrap" VerticalAlignment="Center" Margin="0,6" />
+                            <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding TyperHotkeyDisplay}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
+                            <Button Grid.Row="6" Grid.Column="4" Style="{StaticResource GhostButton}" Command="{Binding CaptureHotkeyCommand}" CommandParameter="typer" Margin="0,4" Padding="10,6">
                                 <TextBlock Text="{DynamicResource Hotkey.Record}" TextWrapping="NoWrap" />
                             </Button>
                         </Grid>

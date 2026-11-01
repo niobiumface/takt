@@ -28,6 +28,7 @@ internal partial class SettingsViewModel : ObservableObject
         Settings.Hotkeys.Panic.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.PickPosition.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.ToggleMacro.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
+        Settings.Hotkeys.ToggleTyper.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
     }
 
     [RelayCommand]
@@ -83,6 +84,10 @@ internal partial class SettingsViewModel : ObservableObject
     public string PanicHotkeyDisplay => Settings.Hotkeys.Panic.ToDisplayString(IsGerman);
     public string PickHotkeyDisplay => Settings.Hotkeys.PickPosition.ToDisplayString(IsGerman);
     public string MacroHotkeyDisplay => Settings.Hotkeys.ToggleMacro.ToDisplayString(IsGerman);
+    public string TyperHotkeyDisplay => Settings.Hotkeys.ToggleTyper.ToDisplayString(IsGerman);
+
+    [ObservableProperty] private string _snippetName = "";
+    [ObservableProperty] private string _snippetText = "";
 
     [ObservableProperty] private string _profileName = "";
     [ObservableProperty] private ActivityProfile? _selectedProfile;
@@ -150,6 +155,7 @@ internal partial class SettingsViewModel : ObservableObject
             "panic" => Settings.Hotkeys.Panic,
             "pick" => Settings.Hotkeys.PickPosition,
             "macro" => Settings.Hotkeys.ToggleMacro,
+            "typer" => Settings.Hotkeys.ToggleTyper,
             _ => null
         };
 
@@ -223,6 +229,27 @@ internal partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(PanicHotkeyDisplay));
         OnPropertyChanged(nameof(PickHotkeyDisplay));
         OnPropertyChanged(nameof(MacroHotkeyDisplay));
+        OnPropertyChanged(nameof(TyperHotkeyDisplay));
+    }
+
+    [RelayCommand]
+    private void AddSnippet()
+    {
+        if (string.IsNullOrWhiteSpace(SnippetText))
+            return;
+        Settings.Typer.Snippets ??= new();
+        Settings.Typer.Snippets.Add(new TextSnippet
+        {
+            Name = string.IsNullOrWhiteSpace(SnippetName) ? "Text" : SnippetName.Trim(),
+            Text = SnippetText
+        });
+    }
+
+    [RelayCommand]
+    private void DeleteSnippet(TextSnippet? snippet)
+    {
+        if (snippet is not null)
+            Settings.Typer.Snippets?.Remove(snippet);
     }
 
     private static void Replace(ObservableCollection<ChoiceOption> target, params ChoiceOption[] items)

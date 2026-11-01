@@ -1,8 +1,8 @@
 # Takt
 
-A small Windows utility that combines a **mouse jiggler** and an **autoclicker**. Native WPF, no installer noise, no telemetry.
+A small Windows utility that combines a **mouse jiggler**, an **autoclicker**, and a **typer**. Native WPF, no installer noise, no telemetry.
 
-Jiggler and clicker run independently and can be on at the same time. The UI stays compact; detailed options live in Settings.
+Jiggler, clicker, and typer run independently and can be on at the same time. The UI stays compact; detailed options live in Settings.
 
 Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) for the default build.
 
@@ -14,28 +14,44 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Operating radius so the cursor stays inside a circle around the start point or a fixed center
 - Set the radius on screen (click center, then edge)
 - Interval with optional jitter, amplitude, idle wait, pause on real input, pause on fullscreen, time window
-- Prevent system sleep and keep the display on, separately
+- Prevent system sleep and keep the display on, separately, and only while the jiggler is actually running
+- Circle, figure-8, and random stay inside the operating radius. Amplitude applies to nudge only
 
 **Autoclicker**
 
-- Left / right / middle button
-- Single, double, or hold
+- Left, right, middle, X1, X2, and wheel
+- Single, double, or hold (hold releases the button that was pressed)
 - Interval, jitter, burst, start delay
 - Repeat forever, N clicks, or a duration
-- Click at the cursor or at a picked screen position
+- Click at the cursor, at one picked point, or through a sequence of points
+- Optional sound and tray notice when a run finishes
+
+**Typer**
+
+- Types text you enter or save as snippets. It does not read the keyboard
+- Characters per minute with variation, start delay, and repeat by count or duration
+- Unicode input via `SendInput`
+
+**Macro**
+
+- Records your own pointer and plays it back in the open window
+- Stops with panic. Nothing is hidden and no target process is chosen
 
 **App**
 
-- Global hotkeys (customizable)
-- Tray icon, start with Windows, start minimized, always on top
-- Dark/light theme and accent color
+- Global hotkeys (customizable), including while recording a new one
+- Tray icon that shows off, running, and paused
+- Named profiles in the same settings file
+- Start with Windows, start minimized, always on top
+- Dark/light theme and accent color, dark title bar in the dark theme
 - English by default; German under Settings → Appearance → Language
-- Settings in `%AppData%\Takt\settings.json`
+- Settings in `%AppData%\Takt\settings.json` (versioned). Logs in `%AppData%\Takt\logs`
+- Optional update check against GitHub releases. It does not run unless you turn it on
 
 ## Safety
 
-- **Panic stop** (default `F9`) turns both engines off
-- Moving the mouse into a screen corner (default: top-left, 8 px) does the same and releases a held button
+- **Panic stop** (default `F9`) turns jiggler, clicker, typer, and macro off
+- Moving the mouse into a corner of the monitor under the pointer (default: top-left, 8 px) does the same and releases a held button
 - No admin rights, no process hiding, no game-specific bypass
 
 Takt is a desktop utility. Using an autoclicker in a game or online service may violate that product’s terms.
@@ -49,6 +65,8 @@ Takt is a desktop utility. Using an autoclicker in a game or online service may 
 | Toggle both | `F8` |
 | Panic stop | `F9` |
 | Pick click position | `F10` |
+| Toggle typer | `F11` |
+| Play macro | `F12` |
 
 Rebind them in Settings → Hotkeys.
 

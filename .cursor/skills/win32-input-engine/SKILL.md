@@ -11,7 +11,10 @@ All pointer synthesis goes through `SendInput`. Do not use `mouse_event`. Do not
 
 - Relative moves: `MOUSEEVENTF_MOVE` (and `MOUSEEVENTF_MOVE_NOCOALESCE` when available)
 - Clicks: separate DOWN then UP events; double-click = two pairs with a short gap
-- Hold mode: DOWN on start, UP on stop — never leave the button stuck on cancel/panic
+- Hold mode: remember the button used for DOWN and send UP for that same button. Count mode repeats a finite hold; it does not wait forever. Duration holds for the configured seconds. Infinite holds until stop
+- X buttons use `MOUSEEVENTF_XDOWN` / `XUP` with the button id in the high word of `mouseData`. Wheel uses `MOUSEEVENTF_WHEEL`
+- Typer uses `KEYEVENTF_UNICODE` for text the user supplied. It is not a key logger
+- Call `timeBeginPeriod(1)` only while the clicker runs, and `timeEndPeriod(1)` when it stops
 - Absolute: `MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK`, coordinates 0–65535 over the **virtual screen** (`SM_XVIRTUALSCREEN` / `SM_CXVIRTUALSCREEN`), not primary-monitor pixels
 
 Normalize: `x65535 = (pixelX - virtualLeft) * 65535 / max(virtualWidth - 1, 1)`
@@ -26,7 +29,7 @@ Normalize: `x65535 = (pixelX - virtualLeft) * 65535 / max(virtualWidth - 1, 1)`
 | Random | small random delta, clamp to amp |
 | Invisible | no cursor move; `SetThreadExecutionState` only |
 
-`SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | optional ES_DISPLAY_REQUIRED)`. On stop: `ES_CONTINUOUS` alone.
+`SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | optional ES_DISPLAY_REQUIRED)` on the UI thread. On stop, and while the jiggler is paused, call `ES_CONTINUOUS` on that same thread. A background thread cannot clear a request made on the UI thread.
 
 Optional: wait until `GetLastInputInfo` idle exceeds threshold; pause while the user is actively inputting; skip visible moves when a fullscreen window is foreground.
 
@@ -46,7 +49,7 @@ Use `RegisterHotKey` on the main window `HwndSource` hook (`WM_HOTKEY`). Unregis
 
 ## Failsafe
 
-Poll cursor position on the engine thread (e.g. 50 ms). If the pointer is inside the configured screen corner rectangle (default 4–8 px), stop both engines and release any held buttons.
+Poll cursor position on the engine thread (e.g. 50 ms). Ignore a failed `GetCursorPos`. If the pointer is inside the configured corner of the monitor under the cursor (default 4–64 px), stop every engine and release any held buttons. Do not use the virtual-desktop origin as that corner.
 
 ## Cleanup
 

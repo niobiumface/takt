@@ -134,6 +134,9 @@ public sealed class SettingsService : IDisposable
         Current.Hotkeys.Panic ??= HotkeyBinding.Vk(0x78);
         Current.Hotkeys.PickPosition ??= HotkeyBinding.Vk(0x79);
         Current.Hotkeys.ToggleMacro ??= HotkeyBinding.Vk(0x7B);
+        Current.Hotkeys.ToggleTyper ??= HotkeyBinding.Vk(0x7A);
+        Current.Typer ??= new TyperSettings();
+        Current.Typer.Snippets ??= new();
         Current.Macro ??= new MacroSettings();
         Current.Macro.Events ??= new();
         Current.Clicker.Points ??= new();

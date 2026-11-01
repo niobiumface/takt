@@ -9,9 +9,12 @@ Takt should feel like a small professional utility, not a game overlay and not a
 
 ## Main window
 
-- Compact (~420×320), no giant dashboard
-- Two equal cards: Jiggler | Clicker
-- Each card: status dot + label, primary toggle, one or two live controls (mode or interval), hotkey hint
+- Compact (about 520×700 once the typer card is present), no giant dashboard
+- Two equal cards on the first row: Jiggler | Clicker. Typer is a full-width card under them
+- Each card: accent stripe and status pill while running, amber while paused, primary toggle, the live controls, hotkey hint
+- Path icons for stop and settings. No emoji glyphs
+- Themed checkbox, slider, scrollbar, and an accent focus ring
+- Dark or light title bar via `DWMWA_USE_IMMERSIVE_DARK_MODE`, matching the theme
 - Gear opens Settings; closing the window hides to tray if that option is on, otherwise exit
 - Optional always-on-top from settings
 

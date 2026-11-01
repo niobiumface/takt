@@ -5,6 +5,9 @@ namespace Takt.Native;
 internal static class Win32
 {
     public const int InputMouse = 0;
+    public const int InputKeyboard = 1;
+    public const uint KeyEventKeyUp = 0x0002;
+    public const uint KeyEventUnicode = 0x0004;
     public const uint MouseEventMove = 0x0001;
     public const uint MouseEventLeftDown = 0x0002;
     public const uint MouseEventLeftUp = 0x0004;

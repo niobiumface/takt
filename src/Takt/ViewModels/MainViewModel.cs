@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Takt.Helpers;
 using Takt.Models;
 using Takt.Services;
 using Takt.Views;
@@ -49,6 +50,25 @@ internal partial class MainViewModel : ObservableObject
         Settings.Clicker.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ClickerProgress));
         Clicker.CompletedNaturally += OnRunFinished;
         Macro.CompletedNaturally += OnRunFinished;
+        Typer.CompletedNaturally += OnRunFinished;
+        Typer.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(TyperEngine.IsEnabled))
+                OnPropertyChanged(nameof(TyperOn));
+            if (e.PropertyName is nameof(TyperEngine.Status) or nameof(TyperEngine.PauseReason) or nameof(TyperEngine.IsEnabled))
+                OnPropertyChanged(nameof(TyperStatusText));
+            if (e.PropertyName is nameof(TyperEngine.TypedCount))
+                OnPropertyChanged(nameof(TyperProgress));
+            if (e.PropertyName is nameof(TyperEngine.InputFault) && Typer.InputFault)
+                ShowInputFault();
+            if (e.PropertyName is nameof(TyperEngine.IsEnabled) or nameof(TyperEngine.Status))
+                RefreshTray();
+        };
+        Settings.Typer.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(TyperSettings.CharactersPerMinute))
+                OnPropertyChanged(nameof(TyperWpm));
+        };
         Macro.PropertyChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(MacroSummary));
@@ -64,6 +84,7 @@ internal partial class MainViewModel : ObservableObject
         _services.Settings.Current.Hotkeys.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleJiggler.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleClicker.PropertyChanged += (_, _) => RefreshHotkeyLabels();
+        _services.Settings.Current.Hotkeys.ToggleTyper.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Appearance.PropertyChanged += OnAppearanceChanged;
         _services.Settings.Current.General.PropertyChanged += OnGeneralChanged;
         RefreshHotkeyLabels();
@@ -76,11 +97,21 @@ internal partial class MainViewModel : ObservableObject
     public JigglerEngine Jiggler => _services.Jiggler;
     public ClickerEngine Clicker => _services.Clicker;
     public MacroEngine Macro => _services.Macro;
+    public TyperEngine Typer => _services.Typer;
+
+    [ObservableProperty] private TextSnippet? _selectedSnippet;
+
+    partial void OnSelectedSnippetChanged(TextSnippet? value)
+    {
+        if (value is not null)
+            Settings.Typer.Text = value.Text ?? "";
+    }
     public AppServices Services => _services;
 
     [ObservableProperty] private string _jigglerHotkeyText = "F6";
     [ObservableProperty] private string _clickerHotkeyText = "F7";
     [ObservableProperty] private string _panicHotkeyText = "F9";
+    [ObservableProperty] private string _typerHotkeyText = "F11";
     [ObservableProperty] private string _statusMessage = "";
 
     public bool JigglerOn
@@ -125,6 +156,25 @@ internal partial class MainViewModel : ObservableObject
         ? LocalizationService.Text("Macro.Stop", "Stop")
         : LocalizationService.Text("Macro.Play", "Play");
 
+    public bool TyperOn
+    {
+        get => Typer.IsEnabled;
+        set
+        {
+            if (value)
+                Typer.Start();
+            else
+                Typer.Stop();
+            OnPropertyChanged();
+        }
+    }
+
+    public string TyperStatusText => Describe(Typer.Status, Typer.PauseReason);
+
+    public string TyperProgress => Typer.TypedCount.ToString();
+
+    public string TyperWpm => TyperTiming.WordsPerMinute(Settings.Typer.CharactersPerMinute) + " WPM";
+
     public string ClickerProgress =>
         Settings.Clicker.RepeatMode == RepeatMode.Count
             ? $"{Clicker.ClickCount} / {Math.Max(1, Settings.Clicker.RepeatCount)}"
@@ -168,6 +218,13 @@ internal partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void TogglePlay() => Macro.TogglePlay();
+
+    [RelayCommand]
+    private void ToggleTyper()
+    {
+        CommitFocusedText();
+        TyperOn = !TyperOn;
+    }
 
     [RelayCommand]
     private void Panic()
@@ -306,6 +363,7 @@ internal partial class MainViewModel : ObservableObject
         nameof(HotkeyAction.Panic) => LocalizationService.Text("Hotkey.Panic", "Panic stop"),
         nameof(HotkeyAction.PickPosition) => LocalizationService.Text("Hotkey.Pick", "Pick position"),
         nameof(HotkeyAction.ToggleMacro) => LocalizationService.Text("Hotkey.Macro", "Play macro"),
+        nameof(HotkeyAction.ToggleTyper) => LocalizationService.Text("Hotkey.Typer", "Toggle typer"),
         _ => action
     };
 
@@ -325,6 +383,7 @@ internal partial class MainViewModel : ObservableObject
         JigglerHotkeyText = Settings.Hotkeys.ToggleJiggler.ToDisplayString(german);
         ClickerHotkeyText = Settings.Hotkeys.ToggleClicker.ToDisplayString(german);
         PanicHotkeyText = Settings.Hotkeys.Panic.ToDisplayString(german);
+        TyperHotkeyText = Settings.Hotkeys.ToggleTyper.ToDisplayString(german);
         OnPropertyChanged(nameof(SafetyHint));
         OnPropertyChanged(nameof(FirstRunHint));
         _services.Hotkeys.Rebind();
@@ -354,6 +413,9 @@ internal partial class MainViewModel : ObservableObject
                 case HotkeyAction.ToggleMacro:
                     TogglePlay();
                     break;
+                case HotkeyAction.ToggleTyper:
+                    ToggleTyper();
+                    break;
             }
         });
     }
@@ -374,6 +436,8 @@ internal partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(MacroSummary));
             OnPropertyChanged(nameof(RecordLabel));
             OnPropertyChanged(nameof(PlayLabel));
+            OnPropertyChanged(nameof(TyperStatusText));
+            OnPropertyChanged(nameof(TyperWpm));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -430,9 +494,11 @@ internal partial class MainViewModel : ObservableObject
     {
         var presence = TrayPresence.Off;
         if (Macro.IsRecording || Macro.IsPlaying ||
-            Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running)
+            Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running ||
+            Typer.Status == EngineStatus.Running)
             presence = TrayPresence.Active;
-        else if (Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused)
+        else if (Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused ||
+                 Typer.Status == EngineStatus.Paused)
             presence = TrayPresence.Paused;
         _services.Tray.Refresh(Settings.Appearance.AccentHex, presence);
     }
