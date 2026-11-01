@@ -47,6 +47,15 @@ internal partial class MainViewModel : ObservableObject
         _services.Hotkeys.RegistrationFailed += name =>
             StatusMessage = LocalizationService.Text("Hotkey.Conflict", "Hotkey already in use.") + " " + HotkeyLabel(name);
         Settings.Clicker.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ClickerProgress));
+        Clicker.CompletedNaturally += OnRunFinished;
+        Macro.CompletedNaturally += OnRunFinished;
+        Macro.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(MacroSummary));
+            OnPropertyChanged(nameof(RecordLabel));
+            OnPropertyChanged(nameof(PlayLabel));
+            RefreshTray();
+        };
         _services.Tray.ShowWindowRequested += ShowMainWindow;
         _services.Tray.ToggleJigglerRequested += () => ToggleJiggler();
         _services.Tray.ToggleClickerRequested += () => ToggleClicker();
@@ -66,6 +75,7 @@ internal partial class MainViewModel : ObservableObject
     public AppSettings Settings => _services.Settings.Current;
     public JigglerEngine Jiggler => _services.Jiggler;
     public ClickerEngine Clicker => _services.Clicker;
+    public MacroEngine Macro => _services.Macro;
     public AppServices Services => _services;
 
     [ObservableProperty] private string _jigglerHotkeyText = "F6";
@@ -102,6 +112,18 @@ internal partial class MainViewModel : ObservableObject
     public string JigglerStatusText => Describe(Jiggler.Status, Jiggler.PauseReason);
 
     public string ClickerStatusText => Describe(Clicker.Status, Clicker.PauseReason);
+
+    public string MacroSummary =>
+        LocalizationService.Text("Macro.Title", "Macro") + " · " +
+        LocalizationService.Text("Macro.Count", "Events") + " " + Macro.EventCount;
+
+    public string RecordLabel => Macro.IsRecording
+        ? LocalizationService.Text("Macro.Stop", "Stop")
+        : LocalizationService.Text("Macro.Record", "Record");
+
+    public string PlayLabel => Macro.IsPlaying
+        ? LocalizationService.Text("Macro.Stop", "Stop")
+        : LocalizationService.Text("Macro.Play", "Play");
 
     public string ClickerProgress =>
         Settings.Clicker.RepeatMode == RepeatMode.Count
@@ -142,6 +164,12 @@ internal partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleRecord() => Macro.ToggleRecord();
+
+    [RelayCommand]
+    private void TogglePlay() => Macro.TogglePlay();
+
+    [RelayCommand]
     private void Panic()
     {
         _services.Panic();
@@ -172,29 +200,43 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void PickPosition()
     {
-        var picker = new PositionPickerWindow();
-        if (picker.ShowDialog() == true)
-        {
-            Settings.Clicker.PositionMode = ClickPositionMode.Fixed;
-            Settings.Clicker.FixedX = picker.PickedX;
-            Settings.Clicker.FixedY = picker.PickedY;
-            StatusMessage = $"{picker.PickedX}, {picker.PickedY}";
-        }
+        if (!ScreenPicker.TryPickPosition(out var x, out var y))
+            return;
+        Settings.Clicker.PositionMode = ClickPositionMode.Fixed;
+        Settings.Clicker.FixedX = x;
+        Settings.Clicker.FixedY = y;
+        StatusMessage = $"{x}, {y}";
+    }
+
+    [RelayCommand]
+    private void AddSequencePoint()
+    {
+        if (!ScreenPicker.TryPickPosition(out var x, out var y))
+            return;
+        Settings.Clicker.Points ??= new();
+        Settings.Clicker.PositionMode = ClickPositionMode.Sequence;
+        Settings.Clicker.Points.Add(new ClickPoint { X = x, Y = y });
+        StatusMessage = $"{x}, {y}";
+    }
+
+    [RelayCommand]
+    private void RemoveSequencePoint(ClickPoint? point)
+    {
+        if (point is not null)
+            Settings.Clicker.Points?.Remove(point);
     }
 
     [RelayCommand]
     private void PickRadius()
     {
-        var picker = new RadiusPickerWindow();
-        if (picker.ShowDialog() == true)
-        {
-            Settings.Jiggler.UseFixedCenter = true;
-            Settings.Jiggler.CenterX = picker.CenterX;
-            Settings.Jiggler.CenterY = picker.CenterY;
-            Settings.Jiggler.RadiusPx = picker.RadiusPx;
-            StatusMessage = LocalizationService.Text("Radius.Set", "Radius") +
-                            $": {picker.RadiusPx} px @ {picker.CenterX},{picker.CenterY}";
-        }
+        if (!ScreenPicker.TryPickRadius(out var centerX, out var centerY, out var radius))
+            return;
+        Settings.Jiggler.UseFixedCenter = true;
+        Settings.Jiggler.CenterX = centerX;
+        Settings.Jiggler.CenterY = centerY;
+        Settings.Jiggler.RadiusPx = radius;
+        StatusMessage = LocalizationService.Text("Radius.Set", "Radius") +
+                        $": {radius} px @ {centerX},{centerY}";
     }
 
     public void AttachHotkeys(Window window) => _services.Hotkeys.Attach(window);
@@ -263,6 +305,7 @@ internal partial class MainViewModel : ObservableObject
         nameof(HotkeyAction.ToggleBoth) => LocalizationService.Text("Hotkey.Both", "Toggle both"),
         nameof(HotkeyAction.Panic) => LocalizationService.Text("Hotkey.Panic", "Panic stop"),
         nameof(HotkeyAction.PickPosition) => LocalizationService.Text("Hotkey.Pick", "Pick position"),
+        nameof(HotkeyAction.ToggleMacro) => LocalizationService.Text("Hotkey.Macro", "Play macro"),
         _ => action
     };
 
@@ -308,6 +351,9 @@ internal partial class MainViewModel : ObservableObject
                 case HotkeyAction.PickPosition:
                     PickPosition();
                     break;
+                case HotkeyAction.ToggleMacro:
+                    TogglePlay();
+                    break;
             }
         });
     }
@@ -325,6 +371,9 @@ internal partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(ClickerProgress));
             OnPropertyChanged(nameof(SafetyHint));
             OnPropertyChanged(nameof(FirstRunHint));
+            OnPropertyChanged(nameof(MacroSummary));
+            OnPropertyChanged(nameof(RecordLabel));
+            OnPropertyChanged(nameof(PlayLabel));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -340,6 +389,8 @@ internal partial class MainViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(GeneralSettings.StartWithWindows))
             AutostartService.Apply(Settings.General.StartWithWindows);
+        if (e.PropertyName == nameof(GeneralSettings.CheckForUpdates) && Settings.General.CheckForUpdates)
+            _ = CheckForUpdateAsync();
         if (e.PropertyName is nameof(GeneralSettings.FailsafeCorner) or nameof(GeneralSettings.FirstRunDismissed))
         {
             OnPropertyChanged(nameof(SafetyHint));
@@ -378,7 +429,8 @@ internal partial class MainViewModel : ObservableObject
     private void RefreshTray()
     {
         var presence = TrayPresence.Off;
-        if (Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running)
+        if (Macro.IsRecording || Macro.IsPlaying ||
+            Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running)
             presence = TrayPresence.Active;
         else if (Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused)
             presence = TrayPresence.Paused;
@@ -393,6 +445,41 @@ internal partial class MainViewModel : ObservableObject
         window.Show();
         window.WindowState = WindowState.Normal;
         window.Activate();
+    }
+
+    public void CheckForUpdateIfEnabled()
+    {
+        if (Settings.General.CheckForUpdates)
+            _ = CheckForUpdateAsync();
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            var current = typeof(MainViewModel).Assembly.GetName().Version ?? new Version(1, 0, 0);
+            var newer = await UpdateChecker.FindNewerTagAsync(current);
+            if (newer is null)
+                return;
+            var message = string.Format(LocalizationService.Text("Status.Update", "Update {0} is available."), newer);
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher is null || dispatcher.CheckAccess())
+                StatusMessage = message;
+            else
+                dispatcher.Invoke(() => StatusMessage = message);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Update check failed.", ex);
+        }
+    }
+
+    private void OnRunFinished()
+    {
+        if (Settings.General.PlaySoundOnFinish)
+            CompletionFeedback.PlaySound();
+        if (Settings.General.NotifyOnFinish)
+            _services.Tray.Notify(LocalizationService.Text("Notify.Done", "Finished."));
     }
 
     private void ExitApp()

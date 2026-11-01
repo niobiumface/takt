@@ -154,6 +154,29 @@
                                 HorizontalAlignment="Left" Margin="0,8,0,0" Padding="12,8">
                             <TextBlock Text="{DynamicResource Clicker.Pick}" TextWrapping="NoWrap" />
                         </Button>
+                        <StackPanel Margin="0,12,0,0" Visibility="{Binding Settings.Clicker.PositionMode, Converter={StaticResource EnumVis}, ConverterParameter=Sequence}">
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding AddPointCommand}"
+                                    HorizontalAlignment="Left" Margin="0,0,0,8" Padding="12,8">
+                                <TextBlock Text="{DynamicResource Clicker.AddPoint}" TextWrapping="NoWrap" />
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding Settings.Clicker.Points}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,2">
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Padding="8,4"
+                                                    Command="{Binding DataContext.RemovePointCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="{DynamicResource Clicker.RemovePoint}" />
+                                            </Button>
+                                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyText}"
+                                                       Text="{Binding X, StringFormat={}{0}}" />
+                                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyText}" Text=", " />
+                                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyText}" Text="{Binding Y}" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -173,6 +196,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -207,6 +231,12 @@
                             <TextBlock Grid.Row="4" Text="{DynamicResource Hotkey.Pick}" Style="{StaticResource BodyText}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,6" />
                             <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding PickHotkeyDisplay}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
                             <Button Grid.Row="4" Grid.Column="4" Style="{StaticResource GhostButton}" Command="{Binding CaptureHotkeyCommand}" CommandParameter="pick" Margin="0,4" Padding="10,6">
+                                <TextBlock Text="{DynamicResource Hotkey.Record}" TextWrapping="NoWrap" />
+                            </Button>
+
+                            <TextBlock Grid.Row="5" Text="{DynamicResource Hotkey.Macro}" Style="{StaticResource BodyText}" TextWrapping="NoWrap" VerticalAlignment="Center" Margin="0,6" />
+                            <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding MacroHotkeyDisplay}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
+                            <Button Grid.Row="5" Grid.Column="4" Style="{StaticResource GhostButton}" Command="{Binding CaptureHotkeyCommand}" CommandParameter="macro" Margin="0,4" Padding="10,6">
                                 <TextBlock Text="{DynamicResource Hotkey.Record}" TextWrapping="NoWrap" />
                             </Button>
                         </Grid>
@@ -290,6 +320,30 @@
                         <TextBlock Text="{DynamicResource General.CornerSize}" Style="{StaticResource FieldLabel}" />
                         <TextBox Text="{Binding Settings.General.FailsafeSize, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
                         <TextBlock Text="{DynamicResource General.FailsafeHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+                        <CheckBox IsChecked="{Binding Settings.General.CheckForUpdates}" Margin="0,14,0,0">
+                            <TextBlock Text="{DynamicResource General.Updates}" TextWrapping="Wrap" />
+                        </CheckBox>
+                        <CheckBox IsChecked="{Binding Settings.General.PlaySoundOnFinish}">
+                            <TextBlock Text="{DynamicResource General.Sound}" TextWrapping="Wrap" />
+                        </CheckBox>
+                        <CheckBox IsChecked="{Binding Settings.General.NotifyOnFinish}">
+                            <TextBlock Text="{DynamicResource General.Notify}" TextWrapping="Wrap" />
+                        </CheckBox>
+                        <TextBlock Text="{DynamicResource Profile.Name}" Style="{StaticResource FieldLabel}" Margin="0,16,0,0" />
+                        <TextBox Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Style="{StaticResource PrimaryButton}" Command="{Binding SaveProfileCommand}" Margin="0,0,8,0" Padding="12,8">
+                                <TextBlock Text="{DynamicResource Profile.Save}" TextWrapping="NoWrap" />
+                            </Button>
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding ApplyProfileCommand}" Margin="0,0,8,0" Padding="12,8">
+                                <TextBlock Text="{DynamicResource Profile.Apply}" TextWrapping="NoWrap" />
+                            </Button>
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding DeleteProfileCommand}" Padding="12,8">
+                                <TextBlock Text="{DynamicResource Profile.Delete}" TextWrapping="NoWrap" />
+                            </Button>
+                        </StackPanel>
+                        <ListBox ItemsSource="{Binding Settings.Profiles}" SelectedItem="{Binding SelectedProfile}"
+                                 DisplayMemberPath="Name" MinHeight="80" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

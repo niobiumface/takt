@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
@@ -132,6 +133,11 @@ public sealed class SettingsService : IDisposable
         Current.Hotkeys.ToggleBoth ??= HotkeyBinding.Vk(0x77);
         Current.Hotkeys.Panic ??= HotkeyBinding.Vk(0x78);
         Current.Hotkeys.PickPosition ??= HotkeyBinding.Vk(0x79);
+        Current.Hotkeys.ToggleMacro ??= HotkeyBinding.Vk(0x7B);
+        Current.Macro ??= new MacroSettings();
+        Current.Macro.Events ??= new();
+        Current.Clicker.Points ??= new();
+        Current.Profiles ??= new();
     }
 
     private void Wire(INotifyPropertyChanged target)
@@ -144,7 +150,38 @@ public sealed class SettingsService : IDisposable
                 continue;
             if (prop.GetValue(target) is INotifyPropertyChanged child)
                 Wire(child);
+            if (prop.GetValue(target) is INotifyCollectionChanged collection)
+                Watch(collection);
         }
+    }
+
+    private void Watch(INotifyCollectionChanged collection)
+    {
+        collection.CollectionChanged -= OnCollectionChanged;
+        collection.CollectionChanged += OnCollectionChanged;
+        if (collection is System.Collections.IEnumerable items)
+        {
+            foreach (var item in items)
+            {
+                if (item is INotifyPropertyChanged child)
+                    Wire(child);
+            }
+        }
+    }
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (var item in e.NewItems)
+            {
+                if (item is INotifyPropertyChanged child)
+                    Wire(child);
+            }
+        }
+
+        if (_wired)
+            QueueSave();
     }
 
     private void OnChanged(object? sender, PropertyChangedEventArgs e)

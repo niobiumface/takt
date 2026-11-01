@@ -4,6 +4,8 @@ using Takt.Native;
 
 namespace Takt.Services;
 
+internal readonly record struct PhysicalMouse(int Message, int X, int Y, int WheelDelta);
+
 internal sealed class UserActivityMonitor : IDisposable
 {
     private readonly Win32.HookProc _mouseProc;
@@ -23,6 +25,8 @@ internal sealed class UserActivityMonitor : IDisposable
     public DateTime LastPhysicalUtc { get; private set; }
 
     public bool IsInstalled { get; private set; }
+
+    public event Action<PhysicalMouse>? MouseObserved;
 
     public TimeSpan IdleTime => DateTime.UtcNow - LastPhysicalUtc;
 
@@ -64,7 +68,14 @@ internal sealed class UserActivityMonitor : IDisposable
         {
             var data = System.Runtime.InteropServices.Marshal.PtrToStructure<Win32.MSLLHOOKSTRUCT>(lParam);
             if (!UserActivityFilter.IsInjected(data.Flags, keyboard: false))
-                ConsiderMouse((int)wParam, data.Pt);
+            {
+                var message = (int)wParam;
+                ConsiderMouse(message, data.Pt);
+                var wheel = message is Win32.WmMouseWheel or Win32.WmMouseHWheel
+                    ? unchecked((short)(data.MouseData >> 16))
+                    : 0;
+                MouseObserved?.Invoke(new PhysicalMouse(message, data.Pt.X, data.Pt.Y, wheel));
+            }
         }
 
         return Win32.CallNextHookEx(_mouseHook, nCode, wParam, lParam);

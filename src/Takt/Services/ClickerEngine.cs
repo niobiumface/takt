@@ -18,6 +18,10 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     private int _generation;
     private int _pendingCount;
     private int _faultLogged;
+    private int _sequenceIndex;
+    private bool _timerHeld;
+
+    public event Action? CompletedNaturally;
 
     public ClickerEngine(ClickerSettings settings, Dispatcher dispatcher)
     {
@@ -45,6 +49,12 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         ClickCount = 0;
         _pendingCount = 0;
         _faultLogged = 0;
+        _sequenceIndex = 0;
+        if (!_timerHeld)
+        {
+            TimerResolution.Acquire();
+            _timerHeld = true;
+        }
         Publish(true, EngineStatus.Running, PauseReason.None, fault: false);
         _ = RunAsync(cts, generation);
     }
@@ -67,6 +77,11 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         }
 
         ReleaseHold();
+        if (_timerHeld)
+        {
+            TimerResolution.Release();
+            _timerHeld = false;
+        }
         Publish(false, EngineStatus.Stopped, PauseReason.None, fault: null);
     }
 
@@ -85,7 +100,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                 Publish(true, EngineStatus.Running, PauseReason.None, fault: null);
             }
 
-            if (_settings.Action == ClickAction.Hold)
+            if (_settings.Action == ClickAction.Hold && !PointerButtons.IsWheel(_settings.Button))
             {
                 await RunHoldAsync(token);
                 return;
@@ -127,7 +142,13 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             ReleaseHold();
             PublishCount(_pendingCount, flush: true);
             if (!cancelled && IsCurrent(generation))
-                _dispatcher.Invoke(Stop);
+            {
+                _dispatcher.Invoke(() =>
+                {
+                    CompletedNaturally?.Invoke();
+                    Stop();
+                });
+            }
             try
             {
                 cts.Dispose();
@@ -174,9 +195,21 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
     private bool MoveIfNeeded()
     {
-        if (_settings.PositionMode != ClickPositionMode.Fixed)
-            return true;
-        return MouseInput.MoveAbsolute(_settings.FixedX, _settings.FixedY);
+        switch (_settings.PositionMode)
+        {
+            case ClickPositionMode.Fixed:
+                return MouseInput.MoveAbsolute(_settings.FixedX, _settings.FixedY);
+            case ClickPositionMode.Sequence:
+                var points = _settings.Points;
+                if (points is null || points.Count == 0)
+                    return true;
+                var index = _sequenceIndex % points.Count;
+                var point = points[index];
+                _sequenceIndex = ClickSequence.NextIndex(index, points.Count);
+                return MouseInput.MoveAbsolute(point.X, point.Y);
+            default:
+                return true;
+        }
     }
 
     private void Press(ClickButton button)

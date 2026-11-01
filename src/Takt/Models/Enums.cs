@@ -13,7 +13,11 @@ public enum ClickButton
 {
     Left,
     Right,
-    Middle
+    Middle,
+    X1,
+    X2,
+    WheelUp,
+    WheelDown
 }
 
 public enum ClickAction
@@ -26,7 +30,8 @@ public enum ClickAction
 public enum ClickPositionMode
 {
     CurrentCursor,
-    Fixed
+    Fixed,
+    Sequence
 }
 
 public enum RepeatMode

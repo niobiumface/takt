@@ -222,6 +222,7 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
                 ), radius);
                 break;
             case JigglerMode.Random:
+                // Random lands anywhere inside the operating radius. Amplitude is only used by nudge.
                 ok &= MoveClamped(RadiusArea.RandomInCircle(_originX, _originY, radius, _rng), radius);
                 break;
             default:

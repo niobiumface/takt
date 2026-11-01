@@ -9,6 +9,7 @@ internal sealed class AppServices : IDisposable
     public UserActivityMonitor Activity { get; }
     public JigglerEngine Jiggler { get; }
     public ClickerEngine Clicker { get; }
+    public MacroEngine Macro { get; }
     public FailsafeMonitor Failsafe { get; }
     public HotkeyService Hotkeys { get; }
     public TrayService Tray { get; }
@@ -22,6 +23,7 @@ internal sealed class AppServices : IDisposable
         Activity = new UserActivityMonitor();
         Jiggler = new JigglerEngine(Settings.Current.Jiggler, Activity, dispatcher);
         Clicker = new ClickerEngine(Settings.Current.Clicker, dispatcher);
+        Macro = new MacroEngine(Settings.Current.Macro, Activity, dispatcher);
         Failsafe = new FailsafeMonitor(Settings.Current, Panic);
         Hotkeys = new HotkeyService(Settings.Current.Hotkeys);
         Tray = new TrayService();
@@ -48,6 +50,7 @@ internal sealed class AppServices : IDisposable
         Failsafe.IsArmed = false;
         Jiggler.Stop();
         Clicker.Stop();
+        Macro.Stop();
         Stopped?.Invoke();
     }
 
@@ -57,6 +60,7 @@ internal sealed class AppServices : IDisposable
         Activity.Dispose();
         Jiggler.Dispose();
         Clicker.Dispose();
+        Macro.Dispose();
         Hotkeys.Dispose();
         Tray.Dispose();
         Settings.Dispose();

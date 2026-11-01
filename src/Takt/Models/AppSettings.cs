@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Takt.Models;
@@ -12,6 +13,38 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private HotkeySettings _hotkeys = new();
     [ObservableProperty] private AppearanceSettings _appearance = new();
     [ObservableProperty] private GeneralSettings _general = new();
+    [ObservableProperty] private MacroSettings _macro = new();
+    [ObservableProperty] private ObservableCollection<ActivityProfile> _profiles = new();
+}
+
+public partial class ClickPoint : ObservableObject
+{
+    [ObservableProperty] private int _x;
+    [ObservableProperty] private int _y;
+}
+
+public partial class MacroEvent
+{
+    public int DelayMs { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public string Kind { get; set; } = "move";
+    public string Button { get; set; } = "Left";
+    public int WheelDelta { get; set; }
+}
+
+public partial class MacroSettings : ObservableObject
+{
+    [ObservableProperty] private ObservableCollection<MacroEvent> _events = new();
+}
+
+public partial class ActivityProfile : ObservableObject
+{
+    [ObservableProperty] private string _name = "Standard";
+    [ObservableProperty] private JigglerSettings _jiggler = new();
+    [ObservableProperty] private ClickerSettings _clicker = new();
+    [ObservableProperty] private HotkeySettings _hotkeys = new();
+    [ObservableProperty] private MacroSettings _macro = new();
 }
 
 public partial class JigglerSettings : ObservableObject
@@ -50,6 +83,7 @@ public partial class ClickerSettings : ObservableObject
     [ObservableProperty] private ClickPositionMode _positionMode = ClickPositionMode.CurrentCursor;
     [ObservableProperty] private int _fixedX;
     [ObservableProperty] private int _fixedY;
+    [ObservableProperty] private ObservableCollection<ClickPoint> _points = new();
 }
 
 public partial class HotkeySettings : ObservableObject
@@ -59,6 +93,7 @@ public partial class HotkeySettings : ObservableObject
     [ObservableProperty] private HotkeyBinding _toggleBoth = HotkeyBinding.Vk(0x77);
     [ObservableProperty] private HotkeyBinding _panic = HotkeyBinding.Vk(0x78);
     [ObservableProperty] private HotkeyBinding _pickPosition = HotkeyBinding.Vk(0x79);
+    [ObservableProperty] private HotkeyBinding _toggleMacro = HotkeyBinding.Vk(0x7B);
 }
 
 public partial class AppearanceSettings : ObservableObject
@@ -78,4 +113,7 @@ public partial class GeneralSettings : ObservableObject
     [ObservableProperty] private FailsafeCorner _failsafeCorner = FailsafeCorner.TopLeft;
     [ObservableProperty] private int _failsafeSize = 8;
     [ObservableProperty] private bool _firstRunDismissed;
+    [ObservableProperty] private bool _checkForUpdates;
+    [ObservableProperty] private bool _playSoundOnFinish;
+    [ObservableProperty] private bool _notifyOnFinish;
 }

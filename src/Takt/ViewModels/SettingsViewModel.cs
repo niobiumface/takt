@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Takt.Helpers;
 using Takt.Models;
 using Takt.Services;
 
@@ -26,6 +27,39 @@ internal partial class SettingsViewModel : ObservableObject
         Settings.Hotkeys.ToggleBoth.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.Panic.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.PickPosition.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
+        Settings.Hotkeys.ToggleMacro.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
+    }
+
+    [RelayCommand]
+    private void SaveProfile()
+    {
+        var name = string.IsNullOrWhiteSpace(ProfileName) ? "Standard" : ProfileName.Trim();
+        var existing = Settings.Profiles.FirstOrDefault(profile =>
+            string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+            Settings.Profiles.Remove(existing);
+        var captured = ProfileApplicator.Capture(Settings, name);
+        Settings.Profiles.Add(captured);
+        SelectedProfile = captured;
+        ProfileName = name;
+    }
+
+    [RelayCommand]
+    private void ApplyProfile()
+    {
+        if (SelectedProfile is null)
+            return;
+        ProfileApplicator.Apply(SelectedProfile, Settings);
+        _main.RefreshHotkeyLabels();
+    }
+
+    [RelayCommand]
+    private void DeleteProfile()
+    {
+        if (SelectedProfile is null)
+            return;
+        Settings.Profiles.Remove(SelectedProfile);
+        SelectedProfile = null;
     }
 
     public AppSettings Settings { get; }
@@ -48,6 +82,10 @@ internal partial class SettingsViewModel : ObservableObject
     public string BothHotkeyDisplay => Settings.Hotkeys.ToggleBoth.ToDisplayString(IsGerman);
     public string PanicHotkeyDisplay => Settings.Hotkeys.Panic.ToDisplayString(IsGerman);
     public string PickHotkeyDisplay => Settings.Hotkeys.PickPosition.ToDisplayString(IsGerman);
+    public string MacroHotkeyDisplay => Settings.Hotkeys.ToggleMacro.ToDisplayString(IsGerman);
+
+    [ObservableProperty] private string _profileName = "";
+    [ObservableProperty] private ActivityProfile? _selectedProfile;
 
     [RelayCommand]
     private void SelectAccent(string hex)
@@ -58,6 +96,12 @@ internal partial class SettingsViewModel : ObservableObject
 
     [RelayCommand]
     private void PickPosition() => _main.PickPositionCommand.Execute(null);
+
+    [RelayCommand]
+    private void AddPoint() => _main.AddSequencePointCommand.Execute(null);
+
+    [RelayCommand]
+    private void RemovePoint(ClickPoint? point) => _main.RemoveSequencePointCommand.Execute(point);
 
     [RelayCommand]
     private void PickRadius() => _main.PickRadiusCommand.Execute(null);
@@ -105,6 +149,7 @@ internal partial class SettingsViewModel : ObservableObject
             "both" => Settings.Hotkeys.ToggleBoth,
             "panic" => Settings.Hotkeys.Panic,
             "pick" => Settings.Hotkeys.PickPosition,
+            "macro" => Settings.Hotkeys.ToggleMacro,
             _ => null
         };
 
@@ -138,7 +183,11 @@ internal partial class SettingsViewModel : ObservableObject
         Replace(ClickButtons,
             new(ClickButton.Left, T("Button.Left", "Left")),
             new(ClickButton.Right, T("Button.Right", "Right")),
-            new(ClickButton.Middle, T("Button.Middle", "Middle")));
+            new(ClickButton.Middle, T("Button.Middle", "Middle")),
+            new(ClickButton.X1, T("Button.X1", "X1")),
+            new(ClickButton.X2, T("Button.X2", "X2")),
+            new(ClickButton.WheelUp, T("Button.WheelUp", "Wheel up")),
+            new(ClickButton.WheelDown, T("Button.WheelDown", "Wheel down")));
         Replace(ClickActions,
             new(ClickAction.Single, T("Action.Single", "Single")),
             new(ClickAction.Double, T("Action.Double", "Double")),
@@ -149,7 +198,8 @@ internal partial class SettingsViewModel : ObservableObject
             new(RepeatMode.Duration, T("Repeat.Duration", "Duration")));
         Replace(PositionModes,
             new(ClickPositionMode.CurrentCursor, T("Position.Cursor", "Current cursor")),
-            new(ClickPositionMode.Fixed, T("Position.Fixed", "Fixed position")));
+            new(ClickPositionMode.Fixed, T("Position.Fixed", "Fixed position")),
+            new(ClickPositionMode.Sequence, T("Position.Sequence", "Point sequence")));
         Replace(Themes,
             new(ThemeMode.Dark, T("Theme.Dark", "Dark")),
             new(ThemeMode.Light, T("Theme.Light", "Light")));
@@ -172,6 +222,7 @@ internal partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(BothHotkeyDisplay));
         OnPropertyChanged(nameof(PanicHotkeyDisplay));
         OnPropertyChanged(nameof(PickHotkeyDisplay));
+        OnPropertyChanged(nameof(MacroHotkeyDisplay));
     }
 
     private static void Replace(ObservableCollection<ChoiceOption> target, params ChoiceOption[] items)

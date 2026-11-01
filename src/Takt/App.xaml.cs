@@ -49,6 +49,7 @@ public partial class App : Application
         var window = new MainWindow(viewModel);
         MainWindow = window;
         Services.Tray.Attach(window);
+        viewModel.CheckForUpdateIfEnabled();
         if (Services.Settings.LastLoadReset)
             viewModel.ShowSettingsReset();
         if (!Services.Activity.Start() && !Services.Settings.LastLoadReset)

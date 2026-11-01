@@ -51,6 +51,13 @@ internal sealed class TrayService : IDisposable
         RebuildMenu();
     }
 
+    public void Notify(string message)
+    {
+        _icon.BalloonTipTitle = "Takt";
+        _icon.BalloonTipText = message;
+        _icon.ShowBalloonTip(3000);
+    }
+
     public void Dispose()
     {
         _icon.Visible = false;

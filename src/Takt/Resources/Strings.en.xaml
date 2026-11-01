@@ -117,4 +117,27 @@
     <sys:String x:Key="Tray.Exit">Exit</sys:String>
     <sys:String x:Key="Tray.Active">Active</sys:String>
     <sys:String x:Key="Tray.Idle">Ready</sys:String>
+    <sys:String x:Key="Button.X1">X1</sys:String>
+    <sys:String x:Key="Button.X2">X2</sys:String>
+    <sys:String x:Key="Button.WheelUp">Wheel up</sys:String>
+    <sys:String x:Key="Button.WheelDown">Wheel down</sys:String>
+    <sys:String x:Key="Position.Sequence">Point sequence</sys:String>
+    <sys:String x:Key="Clicker.AddPoint">Add point</sys:String>
+    <sys:String x:Key="Clicker.RemovePoint">Remove</sys:String>
+    <sys:String x:Key="Macro.Title">Macro</sys:String>
+    <sys:String x:Key="Macro.Record">Record</sys:String>
+    <sys:String x:Key="Macro.Stop">Stop</sys:String>
+    <sys:String x:Key="Macro.Play">Play</sys:String>
+    <sys:String x:Key="Macro.Count">Events</sys:String>
+    <sys:String x:Key="Macro.Hint">Records your own pointer. Playback stays visible and stops with panic.</sys:String>
+    <sys:String x:Key="Hotkey.Macro">Play macro</sys:String>
+    <sys:String x:Key="Profile.Name">Profile name</sys:String>
+    <sys:String x:Key="Profile.Save">Save profile</sys:String>
+    <sys:String x:Key="Profile.Apply">Apply</sys:String>
+    <sys:String x:Key="Profile.Delete">Delete</sys:String>
+    <sys:String x:Key="General.Updates">Check for updates</sys:String>
+    <sys:String x:Key="General.Sound">Sound when a run finishes</sys:String>
+    <sys:String x:Key="General.Notify">Tray notice when a run finishes</sys:String>
+    <sys:String x:Key="Notify.Done">Finished.</sys:String>
+    <sys:String x:Key="Status.Update">Update {0} is available.</sys:String>
 </ResourceDictionary>

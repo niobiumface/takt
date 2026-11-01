@@ -12,6 +12,9 @@ internal static class Win32
     public const uint MouseEventRightUp = 0x0010;
     public const uint MouseEventMiddleDown = 0x0020;
     public const uint MouseEventMiddleUp = 0x0040;
+    public const uint MouseEventXDown = 0x0080;
+    public const uint MouseEventXUp = 0x0100;
+    public const uint MouseEventWheel = 0x0800;
     public const uint MouseEventMoveNoCoalesce = 0x2000;
     public const uint MouseEventVirtualDesk = 0x4000;
     public const uint MouseEventAbsolute = 0x8000;
@@ -152,6 +155,8 @@ internal static class Win32
 
     public delegate nint HookProc(int nCode, nint wParam, nint lParam);
 
+    public delegate bool MonitorEnumProc(nint hMonitor, nint hdc, nint lprcMonitor, nint dwData);
+
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, ref INPUT pInputs, int cbSize);
 
@@ -220,4 +225,10 @@ internal static class Win32
 
     [DllImport("user32.dll")]
     public static extern bool DestroyIcon(nint hIcon);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumDisplayMonitors(nint hdc, nint lprcClip, MonitorEnumProc lpfnEnum, nint dwData);
+
+    [DllImport("shcore.dll")]
+    public static extern int GetDpiForMonitor(nint hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 }

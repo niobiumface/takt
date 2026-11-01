@@ -117,4 +117,27 @@
     <sys:String x:Key="Tray.Exit">Beenden</sys:String>
     <sys:String x:Key="Tray.Active">Aktiv</sys:String>
     <sys:String x:Key="Tray.Idle">Bereit</sys:String>
+    <sys:String x:Key="Button.X1">X1</sys:String>
+    <sys:String x:Key="Button.X2">X2</sys:String>
+    <sys:String x:Key="Button.WheelUp">Rad hoch</sys:String>
+    <sys:String x:Key="Button.WheelDown">Rad runter</sys:String>
+    <sys:String x:Key="Position.Sequence">Punktfolge</sys:String>
+    <sys:String x:Key="Clicker.AddPoint">Punkt hinzufügen</sys:String>
+    <sys:String x:Key="Clicker.RemovePoint">Entfernen</sys:String>
+    <sys:String x:Key="Macro.Title">Makro</sys:String>
+    <sys:String x:Key="Macro.Record">Aufnehmen</sys:String>
+    <sys:String x:Key="Macro.Stop">Stopp</sys:String>
+    <sys:String x:Key="Macro.Play">Abspielen</sys:String>
+    <sys:String x:Key="Macro.Count">Ereignisse</sys:String>
+    <sys:String x:Key="Macro.Hint">Nimmt den eigenen Zeiger auf. Die Wiedergabe bleibt sichtbar und endet mit dem Panik-Stopp.</sys:String>
+    <sys:String x:Key="Hotkey.Macro">Makro abspielen</sys:String>
+    <sys:String x:Key="Profile.Name">Profilname</sys:String>
+    <sys:String x:Key="Profile.Save">Profil speichern</sys:String>
+    <sys:String x:Key="Profile.Apply">Übernehmen</sys:String>
+    <sys:String x:Key="Profile.Delete">Löschen</sys:String>
+    <sys:String x:Key="General.Updates">Nach Updates suchen</sys:String>
+    <sys:String x:Key="General.Sound">Ton, wenn ein Lauf endet</sys:String>
+    <sys:String x:Key="General.Notify">Hinweis im Infobereich, wenn ein Lauf endet</sys:String>
+    <sys:String x:Key="Notify.Done">Fertig.</sys:String>
+    <sys:String x:Key="Status.Update">Update {0} ist verfügbar.</sys:String>
 </ResourceDictionary>

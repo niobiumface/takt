@@ -9,10 +9,22 @@ public partial class PositionPickerWindow : Window
     public int PickedX { get; private set; }
     public int PickedY { get; private set; }
 
-    public PositionPickerWindow()
+    public event Action<int, int>? Chosen;
+
+    public PositionPickerWindow() : this(coverVirtualScreen: true)
+    {
+    }
+
+    internal PositionPickerWindow(MonitorDisplay monitor) : this(coverVirtualScreen: false)
+    {
+        Loaded += (_, _) => ScreenPicker.Place(this, monitor);
+    }
+
+    private PositionPickerWindow(bool coverVirtualScreen)
     {
         InitializeComponent();
-        OverlayPlacement.CoverVirtualScreen(this);
+        if (coverVirtualScreen)
+            OverlayPlacement.CoverVirtualScreen(this);
         MouseMove += (_, _) =>
         {
             var pos = MouseInput.GetCursorPos();
@@ -25,16 +37,30 @@ public partial class PositionPickerWindow : Window
         var pos = MouseInput.GetCursorPos();
         PickedX = pos.X;
         PickedY = pos.Y;
-        DialogResult = true;
-        Close();
+        Chosen?.Invoke(PickedX, PickedY);
+        try
+        {
+            DialogResult = true;
+        }
+        catch (InvalidOperationException)
+        {
+            Close();
+        }
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
-            DialogResult = false;
-            Close();
+            Chosen?.Invoke(int.MinValue, int.MinValue);
+            try
+            {
+                DialogResult = false;
+            }
+            catch (InvalidOperationException)
+            {
+                Close();
+            }
         }
     }
 }

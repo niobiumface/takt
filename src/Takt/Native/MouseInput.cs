@@ -65,6 +65,16 @@ internal static class MouseInput
 
     public static bool Click(ClickButton button, ClickAction action)
     {
+        if (PointerButtons.IsWheel(button))
+        {
+            var (_, data) = PointerButtons.Describe(button, down: true);
+            var once = Wheel(unchecked((int)data));
+            if (action != ClickAction.Double)
+                return once;
+            Thread.Sleep(40);
+            return once && Wheel(unchecked((int)data));
+        }
+
         switch (action)
         {
             case ClickAction.Hold:
@@ -79,9 +89,20 @@ internal static class MouseInput
         }
     }
 
-    public static bool Down(ClickButton button) => SendFlags(0, 0, DownFlag(button), MouseData(button));
+    public static bool Down(ClickButton button)
+    {
+        var (flags, data) = PointerButtons.Describe(button, down: true);
+        return SendFlags(0, 0, flags, data);
+    }
 
-    public static bool Up(ClickButton button) => SendFlags(0, 0, UpFlag(button), MouseData(button));
+    public static bool Up(ClickButton button)
+    {
+        var (flags, data) = PointerButtons.Describe(button, down: false);
+        return SendFlags(0, 0, flags, data);
+    }
+
+    public static bool Wheel(int delta) =>
+        SendFlags(0, 0, PointerButtons.Wheel, unchecked((uint)delta));
 
     private static bool Pulse(ClickButton button)
     {
@@ -90,22 +111,6 @@ internal static class MouseInput
         Thread.Sleep(8);
         return Up(button);
     }
-
-    private static uint DownFlag(ClickButton button) => button switch
-    {
-        ClickButton.Right => Win32.MouseEventRightDown,
-        ClickButton.Middle => Win32.MouseEventMiddleDown,
-        _ => Win32.MouseEventLeftDown
-    };
-
-    private static uint UpFlag(ClickButton button) => button switch
-    {
-        ClickButton.Right => Win32.MouseEventRightUp,
-        ClickButton.Middle => Win32.MouseEventMiddleUp,
-        _ => Win32.MouseEventLeftUp
-    };
-
-    private static uint MouseData(ClickButton button) => 0;
 
     private static bool SendFlags(int dx, int dy, uint flags, uint mouseData = 0)
     {

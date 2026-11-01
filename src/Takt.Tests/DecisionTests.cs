@@ -161,6 +161,66 @@ public class SettingsVersionTests
     }
 }
 
+public class PointerButtonTests
+{
+    [Fact]
+    public void DescribesSideButtonsAndWheel()
+    {
+        Assert.Equal((PointerButtons.XDown, 1u << 16), PointerButtons.Describe(ClickButton.X1, down: true));
+        Assert.Equal((PointerButtons.XUp, 2u << 16), PointerButtons.Describe(ClickButton.X2, down: false));
+        Assert.Equal((PointerButtons.Wheel, (uint)PointerButtons.WheelDelta), PointerButtons.Describe(ClickButton.WheelUp, true));
+        Assert.Equal((PointerButtons.Wheel, unchecked((uint)-PointerButtons.WheelDelta)), PointerButtons.Describe(ClickButton.WheelDown, true));
+        Assert.True(PointerButtons.IsWheel(ClickButton.WheelUp));
+        Assert.False(PointerButtons.IsWheel(ClickButton.Left));
+    }
+}
+
+public class ClickSequenceTests
+{
+    [Fact]
+    public void WrapsToTheFirstPoint()
+    {
+        Assert.Equal(1, ClickSequence.NextIndex(0, 3));
+        Assert.Equal(0, ClickSequence.NextIndex(2, 3));
+        Assert.Equal(0, ClickSequence.NextIndex(0, 0));
+    }
+}
+
+public class ReleaseVersionTests
+{
+    [Fact]
+    public void DetectsANewerTag()
+    {
+        var current = new Version(1, 0, 0);
+        Assert.True(ReleaseVersion.IsNewer("v1.2.0", current));
+        Assert.False(ReleaseVersion.IsNewer("v1.0.0", current));
+        Assert.False(ReleaseVersion.IsNewer("nope", current));
+    }
+}
+
+public class ProfileApplicatorTests
+{
+    [Fact]
+    public void CopiesClickerValuesOntoTheLiveSettings()
+    {
+        var source = new AppSettings();
+        source.Clicker.IntervalMs = 80;
+        source.Clicker.Button = ClickButton.X1;
+        source.Clicker.Points.Add(new ClickPoint { X = 4, Y = 5 });
+        source.Hotkeys.Panic.VirtualKey = 0x1B;
+        var profile = ProfileApplicator.Capture(source, "Desk");
+        var live = new AppSettings();
+        var same = live.Clicker;
+        ProfileApplicator.Apply(profile, live);
+        Assert.Same(same, live.Clicker);
+        Assert.Equal(80, live.Clicker.IntervalMs);
+        Assert.Equal(ClickButton.X1, live.Clicker.Button);
+        Assert.Equal(4, live.Clicker.Points[0].X);
+        Assert.Equal(0x1B, live.Hotkeys.Panic.VirtualKey);
+        Assert.Equal("Desk", profile.Name);
+    }
+}
+
 public class MonitorCornerTests
 {
     [Fact]
