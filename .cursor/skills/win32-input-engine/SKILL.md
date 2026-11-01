@@ -27,11 +27,13 @@ Normalize: `x65535 = (pixelX - virtualLeft) * 65535 / max(virtualWidth - 1, 1)`
 | Circle | points on a circle of radius amp |
 | Figure8 | lemniscate around origin |
 | Random | small random delta, clamp to amp |
-| Invisible | no cursor move; `SetThreadExecutionState` only |
+| Invisible | one-pixel move and immediate restore, so last-input time resets without a visible jump |
 
 `SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | optional ES_DISPLAY_REQUIRED)` on the UI thread. On stop, and while the jiggler is paused, call `ES_CONTINUOUS` on that same thread. A background thread cannot clear a request made on the UI thread.
 
-Optional: wait until `GetLastInputInfo` idle exceeds threshold; pause while the user is actively inputting; skip visible moves when a fullscreen window is foreground.
+Optional: wait until physical idle (low-level hooks, not `GetLastInputInfo`) exceeds a threshold; pause while the user is actively inputting; skip visible moves when a fullscreen window is foreground. Injected input, including the typer and the presence fallback key, must not count as user activity.
+
+Keep-presence mode asks `SetThreadExecutionState` for `ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED` on the UI thread while it is inside working hours. After each nudge, read `GetLastInputInfo`. If idle time did not fall, tap a harmless virtual key (F15 or Shift, down and up) and surface a warning. Do not change group policy. If `InactivityTimeoutSecs` or a policy screensaver is set, or the session locks, tell the user and leave the lock alone.
 
 ## Clicker
 

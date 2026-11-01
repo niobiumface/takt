@@ -9,6 +9,7 @@ public static class SettingsNormalizer
         ApplyJiggler(settings.Jiggler);
         ApplyClicker(settings.Clicker);
         ApplyTyper(settings.Typer);
+        ApplyPresence(settings.Presence);
         settings.General.FailsafeSize = SettingsLimits.ClampFailsafe(settings.General.FailsafeSize);
     }
 
@@ -45,6 +46,16 @@ public static class SettingsNormalizer
         settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
     }
 
+    public static void ApplyPresence(PresenceSettings settings)
+    {
+        if (settings is null)
+            return;
+        settings.IntervalMs = PresenceLimits.ClampInterval(settings.IntervalMs);
+        settings.JitterMs = PresenceLimits.ClampJitter(settings.JitterMs);
+        settings.ScheduleStart = SettingsLimits.ClampSchedule(settings.ScheduleStart, "08:00");
+        settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "17:00");
+    }
+
     public static void ApplyChanged(object? sender, string? propertyName)
     {
         switch (sender)
@@ -57,6 +68,9 @@ public static class SettingsNormalizer
                 break;
             case TyperSettings typer:
                 ApplyTyperProperty(typer, propertyName);
+                break;
+            case PresenceSettings presence:
+                ApplyPresenceProperty(presence, propertyName);
                 break;
             case GeneralSettings general when propertyName == nameof(GeneralSettings.FailsafeSize):
                 general.FailsafeSize = SettingsLimits.ClampFailsafe(general.FailsafeSize);
@@ -138,6 +152,25 @@ public static class SettingsNormalizer
                 break;
             case nameof(TyperSettings.DurationSeconds):
                 settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
+                break;
+        }
+    }
+
+    private static void ApplyPresenceProperty(PresenceSettings settings, string? propertyName)
+    {
+        switch (propertyName)
+        {
+            case nameof(PresenceSettings.IntervalMs):
+                settings.IntervalMs = PresenceLimits.ClampInterval(settings.IntervalMs);
+                break;
+            case nameof(PresenceSettings.JitterMs):
+                settings.JitterMs = PresenceLimits.ClampJitter(settings.JitterMs);
+                break;
+            case nameof(PresenceSettings.ScheduleStart):
+                settings.ScheduleStart = SettingsLimits.ClampSchedule(settings.ScheduleStart, "08:00");
+                break;
+            case nameof(PresenceSettings.ScheduleEnd):
+                settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "17:00");
                 break;
         }
     }

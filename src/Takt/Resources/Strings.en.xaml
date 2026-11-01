@@ -149,4 +149,24 @@
     <sys:String x:Key="Typer.SnippetText">Snippet text</sys:String>
     <sys:String x:Key="Typer.SaveSnippet">Save snippet</sys:String>
     <sys:String x:Key="Hotkey.Typer">Toggle typer</sys:String>
+    <sys:String x:Key="Presence.Toggle">Keep presence</sys:String>
+    <sys:String x:Key="Presence.Title">Keep presence</sys:String>
+    <sys:String x:Key="Presence.Hint">Resets idle time so Teams, Zoom and Slack stay available. A status you set yourself in Teams is not changed.</sys:String>
+    <sys:String x:Key="Presence.Active">Presence on · last activity {0} s ago</sys:String>
+    <sys:String x:Key="Presence.OutsideHours">Paused · outside working hours</sys:String>
+    <sys:String x:Key="Presence.IdleWarning">Input did not reset the idle timer.</sys:String>
+    <sys:String x:Key="Presence.Policy">Windows may still lock this session because of policy. Takt does not bypass that.</sys:String>
+    <sys:String x:Key="Presence.Locked">The session locked. Takt does not override a policy lock.</sys:String>
+    <sys:String x:Key="Presence.Fallback">Harmless key if the mouse does not count</sys:String>
+    <sys:String x:Key="Presence.WorkHours">Only during working hours</sys:String>
+    <sys:String x:Key="Presence.KeyF15">F15</sys:String>
+    <sys:String x:Key="Presence.KeyShift">Shift</sys:String>
+    <sys:String x:Key="Presence.KeyNone">None</sys:String>
+    <sys:String x:Key="Day.Mon">Mon</sys:String>
+    <sys:String x:Key="Day.Tue">Tue</sys:String>
+    <sys:String x:Key="Day.Wed">Wed</sys:String>
+    <sys:String x:Key="Day.Thu">Thu</sys:String>
+    <sys:String x:Key="Day.Fri">Fri</sys:String>
+    <sys:String x:Key="Day.Sat">Sat</sys:String>
+    <sys:String x:Key="Day.Sun">Sun</sys:String>
 </ResourceDictionary>

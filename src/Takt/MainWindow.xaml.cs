@@ -15,7 +15,25 @@ public partial class MainWindow : Window
         viewModel.AttachHotkeys(this);
         Closing += OnClosing;
         StateChanged += OnStateChanged;
-        SourceInitialized += (_, _) => ApplyTitleBar();
+        SourceInitialized += (_, _) =>
+        {
+            ApplyTitleBar();
+            AttachSessionWatch();
+        };
+        Closed += (_, _) => _session?.Detach();
+    }
+
+    private SessionWatch? _session;
+
+    private void AttachSessionWatch()
+    {
+        _session = new SessionWatch();
+        _session.LockChanged += locked =>
+        {
+            if (DataContext is MainViewModel viewModel)
+                viewModel.Services.Presence.ReportSessionLock(locked);
+        };
+        _session.Attach(this);
     }
 
     private void ApplyTitleBar()

@@ -12,6 +12,7 @@ public static class ProfileApplicator
         CopyHotkeys(settings.Hotkeys, profile.Hotkeys);
         CopyMacro(settings.Macro, profile.Macro);
         CopyTyper(settings.Typer, profile.Typer);
+        CopyPresence(settings.Presence, profile.Presence);
         return profile;
     }
 
@@ -22,6 +23,28 @@ public static class ProfileApplicator
         CopyHotkeys(profile.Hotkeys, settings.Hotkeys);
         CopyMacro(profile.Macro, settings.Macro);
         CopyTyper(profile.Typer, settings.Typer);
+        CopyPresence(profile.Presence, settings.Presence);
+    }
+
+    public static void CopyPresence(PresenceSettings from, PresenceSettings to)
+    {
+        if (from is null || to is null)
+            return;
+        to.Enabled = from.Enabled;
+        to.IntervalMs = from.IntervalMs;
+        to.JitterMs = from.JitterMs;
+        to.UseFallbackKey = from.UseFallbackKey;
+        to.FallbackKey = from.FallbackKey;
+        to.UseWorkHours = from.UseWorkHours;
+        to.Monday = from.Monday;
+        to.Tuesday = from.Tuesday;
+        to.Wednesday = from.Wednesday;
+        to.Thursday = from.Thursday;
+        to.Friday = from.Friday;
+        to.Saturday = from.Saturday;
+        to.Sunday = from.Sunday;
+        to.ScheduleStart = from.ScheduleStart;
+        to.ScheduleEnd = from.ScheduleEnd;
     }
 
     public static void CopyTyper(TyperSettings from, TyperSettings to)

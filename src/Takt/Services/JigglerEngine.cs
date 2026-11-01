@@ -209,6 +209,7 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
         switch (mode)
         {
             case JigglerMode.Invisible:
+                ok &= MouseInput.PulseRelative(1, 0);
                 break;
             case JigglerMode.Circle:
                 _phase += Math.PI / 8;
@@ -266,11 +267,8 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
 
             _paused = paused;
             var request = AwakePolicy.ShouldRequest(IsEnabled, paused, _settings.PreventSleep, _settings.PreventDisplayOff);
-            if (request)
-                ExecutionState.Apply(_settings.PreventSleep, _settings.PreventDisplayOff);
-            else if (_awakeHeld)
-                ExecutionState.Clear();
             _awakeHeld = request;
+            AwakeCoordinator.SetJiggler(request, _settings.PreventSleep, _settings.PreventDisplayOff);
         }
 
         if (_dispatcher.CheckAccess())
@@ -283,10 +281,9 @@ internal sealed partial class JigglerEngine : ObservableObject, IDisposable
     {
         void Apply()
         {
-            if (_awakeHeld)
-                ExecutionState.Clear();
             _awakeHeld = false;
             _paused = true;
+            AwakeCoordinator.SetJiggler(false, false, false);
         }
 
         if (_dispatcher.CheckAccess())

@@ -32,7 +32,7 @@ Engines must not reference WPF controls. ViewModels talk to engines; Views bind 
 
 ## Feature map
 
-**In scope:** independent jiggler, autoclicker, and typer (can run together), a visible mouse macro of the user's own pointer, click sequences, named profiles in the AppData settings file, global hotkeys, tray, failsafe corner on the monitor under the pointer, English default UI with German in settings, dark/light + accent, autostart (HKCU Run), always-on-top, start minimized, opt-in update check.
+**In scope:** independent jiggler, autoclicker, typer, and keep-presence (can run together), a visible mouse macro of the user's own pointer, click sequences, named profiles in the AppData settings file, global hotkeys, tray, failsafe corner on the monitor under the pointer, English default UI with German in settings, dark/light + accent, autostart (HKCU Run), always-on-top, start minimized, opt-in update check. Keep-presence resets system idle time on a short interval and does not override a status the user set in Teams.
 
 **Out of scope:** process hiding, anti-cheat bypass, targeting a specific game window to evade detection, keyloggers, sending input to other sessions, portable-next-to-exe settings. The typer only plays text the user typed into Takt.
 

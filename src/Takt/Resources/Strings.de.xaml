@@ -149,4 +149,24 @@
     <sys:String x:Key="Typer.SnippetText">Text des Bausteins</sys:String>
     <sys:String x:Key="Typer.SaveSnippet">Baustein speichern</sys:String>
     <sys:String x:Key="Hotkey.Typer">Tipper umschalten</sys:String>
+    <sys:String x:Key="Presence.Toggle">Präsenz halten</sys:String>
+    <sys:String x:Key="Presence.Title">Präsenz halten</sys:String>
+    <sys:String x:Key="Presence.Hint">Setzt die Leerlaufzeit zurück, damit Teams, Zoom und Slack nicht auf Abwesend schalten. Ein selbst gesetzter Status in Teams bleibt unverändert.</sys:String>
+    <sys:String x:Key="Presence.Active">Präsenz aktiv · letzte Aktivität vor {0} s</sys:String>
+    <sys:String x:Key="Presence.OutsideHours">Pausiert · außerhalb der Arbeitszeit</sys:String>
+    <sys:String x:Key="Presence.IdleWarning">Die Eingabe hat die Leerlaufzeit nicht zurückgesetzt.</sys:String>
+    <sys:String x:Key="Presence.Policy">Windows kann die Sitzung wegen einer Richtlinie trotzdem sperren. Takt umgeht das nicht.</sys:String>
+    <sys:String x:Key="Presence.Locked">Die Sitzung wurde gesperrt. Takt hebt eine Richtliniensperre nicht auf.</sys:String>
+    <sys:String x:Key="Presence.Fallback">Harmlose Taste, falls die Maus nicht zählt</sys:String>
+    <sys:String x:Key="Presence.WorkHours">Nur in der Arbeitszeit</sys:String>
+    <sys:String x:Key="Presence.KeyF15">F15</sys:String>
+    <sys:String x:Key="Presence.KeyShift">Umschalt</sys:String>
+    <sys:String x:Key="Presence.KeyNone">Keine</sys:String>
+    <sys:String x:Key="Day.Mon">Mo</sys:String>
+    <sys:String x:Key="Day.Tue">Di</sys:String>
+    <sys:String x:Key="Day.Wed">Mi</sys:String>
+    <sys:String x:Key="Day.Thu">Do</sys:String>
+    <sys:String x:Key="Day.Fri">Fr</sys:String>
+    <sys:String x:Key="Day.Sat">Sa</sys:String>
+    <sys:String x:Key="Day.Sun">So</sys:String>
 </ResourceDictionary>

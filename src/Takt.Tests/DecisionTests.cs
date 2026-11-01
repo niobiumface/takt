@@ -221,6 +221,50 @@ public class ProfileApplicatorTests
     }
 }
 
+public class PresenceLogicTests
+{
+    [Fact]
+    public void TreatsAFreshIdleTimerAsRegistered()
+    {
+        Assert.True(IdleVerification.InputRegistered(TimeSpan.FromMilliseconds(200)));
+        Assert.False(IdleVerification.InputRegistered(TimeSpan.FromSeconds(5)));
+    }
+
+    [Fact]
+    public void ClampsPresenceIntervalBelowTypicalAwayTimers()
+    {
+        Assert.Equal(45_000, PresenceLimits.ClampInterval(45_000));
+        Assert.Equal(PresenceLimits.MinIntervalMs, PresenceLimits.ClampInterval(500));
+        Assert.Equal(PresenceLimits.MaxIntervalMs, PresenceLimits.ClampInterval(10 * 60_000));
+        Assert.Equal(0, PresenceLimits.ClampJitter(-5));
+        Assert.Equal(PresenceLimits.MaxJitterMs, PresenceLimits.ClampJitter(90_000));
+    }
+
+    [Fact]
+    public void KeepsPresenceInsideWeekdayHours()
+    {
+        var thursdayNoon = new DateTime(2026, 9, 3, 12, 0, 0);
+        var saturdayNoon = new DateTime(2026, 9, 5, 12, 0, 0);
+        var fridayLate = new DateTime(2026, 9, 4, 22, 0, 0);
+        var saturdayEarly = new DateTime(2026, 9, 5, 6, 0, 0);
+        Assert.True(ScheduleWindow.IsInside(thursdayNoon, "08:00", "17:00", WeekdayMask.Weekdays));
+        Assert.False(ScheduleWindow.IsInside(saturdayNoon, "08:00", "17:00", WeekdayMask.Weekdays));
+        Assert.False(ScheduleWindow.IsInside(thursdayNoon, "18:00", "20:00", WeekdayMask.Weekdays));
+        Assert.True(ScheduleWindow.IsInside(fridayLate, "21:00", "07:00", WeekdayMask.Friday));
+        Assert.True(ScheduleWindow.IsInside(saturdayEarly, "21:00", "07:00", WeekdayMask.Friday));
+        Assert.False(ScheduleWindow.IsInside(saturdayEarly, "21:00", "07:00", WeekdayMask.Saturday));
+    }
+
+    [Fact]
+    public void PrefersALockHintOverAPolicyHint()
+    {
+        Assert.Equal(PresenceWarning.SessionLocked, PresenceAdvisory.Evaluate(300, sessionLocked: true, idleNotReset: true));
+        Assert.Equal(PresenceWarning.PolicyLock, PresenceAdvisory.Evaluate(300, false, true));
+        Assert.Equal(PresenceWarning.IdleNotReset, PresenceAdvisory.Evaluate(null, false, true));
+        Assert.Equal(PresenceWarning.None, PresenceAdvisory.Evaluate(0, false, false));
+    }
+}
+
 public class TyperTimingTests
 {
     [Fact]

@@ -97,6 +97,51 @@
                                 <TextBox Text="{Binding Settings.Jiggler.ScheduleEnd, UpdateSourceTrigger=LostFocus}" />
                             </StackPanel>
                         </Grid>
+                        <TextBlock Text="{DynamicResource Presence.Title}" Style="{StaticResource TitleText}" Margin="0,18,0,8" />
+                        <TextBlock Text="{DynamicResource Presence.Hint}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <TextBlock Text="{DynamicResource Label.Interval}" Style="{StaticResource FieldLabel}" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding Settings.Presence.IntervalMs, Converter={StaticResource MsToSec}, UpdateSourceTrigger=LostFocus}" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Label.Seconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Text="{DynamicResource Jiggler.Jitter}" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding Settings.Presence.JitterMs, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10" />
+                        <CheckBox IsChecked="{Binding Settings.Presence.UseFallbackKey}">
+                            <TextBlock Text="{DynamicResource Presence.Fallback}" TextWrapping="Wrap" />
+                        </CheckBox>
+                        <ComboBox ItemsSource="{Binding PresenceKeys}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding Settings.Presence.FallbackKey}" Margin="0,8,0,10" />
+                        <CheckBox IsChecked="{Binding Settings.Presence.UseWorkHours}">
+                            <TextBlock Text="{DynamicResource Presence.WorkHours}" TextWrapping="Wrap" />
+                        </CheckBox>
+                        <WrapPanel Margin="0,8,0,8">
+                            <CheckBox Content="{DynamicResource Day.Mon}" IsChecked="{Binding Settings.Presence.Monday}" Margin="0,0,10,0" />
+                            <CheckBox Content="{DynamicResource Day.Tue}" IsChecked="{Binding Settings.Presence.Tuesday}" Margin="0,0,10,0" />
+                            <CheckBox Content="{DynamicResource Day.Wed}" IsChecked="{Binding Settings.Presence.Wednesday}" Margin="0,0,10,0" />
+                            <CheckBox Content="{DynamicResource Day.Thu}" IsChecked="{Binding Settings.Presence.Thursday}" Margin="0,0,10,0" />
+                            <CheckBox Content="{DynamicResource Day.Fri}" IsChecked="{Binding Settings.Presence.Friday}" Margin="0,0,10,0" />
+                            <CheckBox Content="{DynamicResource Day.Sat}" IsChecked="{Binding Settings.Presence.Saturday}" Margin="0,0,10,0" />
+                            <CheckBox Content="{DynamicResource Day.Sun}" IsChecked="{Binding Settings.Presence.Sunday}" />
+                        </WrapPanel>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{DynamicResource Jiggler.ScheduleStart}" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding Settings.Presence.ScheduleStart, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{DynamicResource Jiggler.ScheduleEnd}" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding Settings.Presence.ScheduleEnd, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

@@ -16,6 +16,16 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Interval with optional jitter, amplitude, idle wait, pause on real input, pause on fullscreen, time window
 - Prevent system sleep and keep the display on, separately, and only while the jiggler is actually running
 - Circle, figure-8, and random stay inside the operating radius. Amplitude applies to nudge only
+- Invisible mode nudges one pixel and restores it immediately, so idle timers reset without a visible jump
+
+**Keep presence**
+
+- One switch runs a quiet jiggler on a 30–60 second interval (default 45 s, configurable, clamped to 5–120 s)
+- After each nudge, Takt checks that Windows idle time actually reset. If not, it can tap F15 or Shift (keys that type nothing) and shows a warning
+- While presence is on, sleep, the display, and the screensaver are asked to stay off. A group-policy lock is not bypassed; Takt says so if that policy exists or the session locks anyway
+- Optional working hours, for example Monday–Friday 08:00–17:00
+- The typer does not pause presence. Injected keys are not treated as real user input
+- A status you set yourself in Teams (Away, Busy, and the rest) is not changed
 
 **Autoclicker**
 

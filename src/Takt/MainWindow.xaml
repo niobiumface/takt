@@ -161,6 +161,10 @@
                                     HorizontalAlignment="Stretch" Padding="10,8">
                                 <TextBlock Text="{DynamicResource Jiggler.PickRadius}" TextWrapping="NoWrap" TextAlignment="Center" />
                             </Button>
+                            <CheckBox IsChecked="{Binding PresenceOn}" Margin="0,10,0,0">
+                                <TextBlock Text="{DynamicResource Presence.Toggle}" TextWrapping="NoWrap" />
+                            </CheckBox>
+                            <TextBlock Text="{Binding PresenceStatusText}" Style="{StaticResource HintText}" Margin="0,6,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                         <TextBlock Grid.Row="3" Style="{StaticResource HintText}" Margin="0,12,0,0">
                             <Run Text="{DynamicResource Label.Hotkey}" />

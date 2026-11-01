@@ -55,6 +55,8 @@ public partial class App : Application
         if (!Services.Activity.Start() && !Services.Settings.LastLoadReset)
             viewModel.ShowHookFailure();
         Services.Failsafe.Start();
+        if (Services.Settings.Current.Presence.Enabled)
+            Services.Presence.Start();
 
         window.Show();
         if (Services.Settings.Current.General.StartMinimized)

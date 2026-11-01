@@ -15,6 +15,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private GeneralSettings _general = new();
     [ObservableProperty] private MacroSettings _macro = new();
     [ObservableProperty] private TyperSettings _typer = new();
+    [ObservableProperty] private PresenceSettings _presence = new();
     [ObservableProperty] private ObservableCollection<ActivityProfile> _profiles = new();
 }
 
@@ -47,6 +48,7 @@ public partial class ActivityProfile : ObservableObject
     [ObservableProperty] private HotkeySettings _hotkeys = new();
     [ObservableProperty] private MacroSettings _macro = new();
     [ObservableProperty] private TyperSettings _typer = new();
+    [ObservableProperty] private PresenceSettings _presence = new();
 }
 
 public partial class TextSnippet : ObservableObject
@@ -65,6 +67,34 @@ public partial class TyperSettings : ObservableObject
     [ObservableProperty] private int _repeatCount = 1;
     [ObservableProperty] private int _durationSeconds = 60;
     [ObservableProperty] private ObservableCollection<TextSnippet> _snippets = new();
+}
+
+public partial class PresenceSettings : ObservableObject
+{
+    [ObservableProperty] private bool _enabled;
+    [ObservableProperty] private int _intervalMs = 45_000;
+    [ObservableProperty] private int _jitterMs = 8_000;
+    [ObservableProperty] private bool _useFallbackKey = true;
+    [ObservableProperty] private PresenceKey _fallbackKey = PresenceKey.F15;
+    [ObservableProperty] private bool _useWorkHours = true;
+    [ObservableProperty] private bool _monday = true;
+    [ObservableProperty] private bool _tuesday = true;
+    [ObservableProperty] private bool _wednesday = true;
+    [ObservableProperty] private bool _thursday = true;
+    [ObservableProperty] private bool _friday = true;
+    [ObservableProperty] private bool _saturday;
+    [ObservableProperty] private bool _sunday;
+    [ObservableProperty] private string _scheduleStart = "08:00";
+    [ObservableProperty] private string _scheduleEnd = "17:00";
+
+    public WeekdayMask Days =>
+        (Monday ? WeekdayMask.Monday : WeekdayMask.None) |
+        (Tuesday ? WeekdayMask.Tuesday : WeekdayMask.None) |
+        (Wednesday ? WeekdayMask.Wednesday : WeekdayMask.None) |
+        (Thursday ? WeekdayMask.Thursday : WeekdayMask.None) |
+        (Friday ? WeekdayMask.Friday : WeekdayMask.None) |
+        (Saturday ? WeekdayMask.Saturday : WeekdayMask.None) |
+        (Sunday ? WeekdayMask.Sunday : WeekdayMask.None);
 }
 
 public partial class JigglerSettings : ObservableObject

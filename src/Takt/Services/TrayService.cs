@@ -38,7 +38,7 @@ internal sealed class TrayService : IDisposable
 
     public void Attach(Window window) => _ = window;
 
-    public void Refresh(string accentHex, TrayPresence presence)
+    public void Refresh(string accentHex, TrayPresence presence, string? detail = null)
     {
         ApplyIcon(accentHex, presence);
         var state = presence switch
@@ -47,7 +47,8 @@ internal sealed class TrayService : IDisposable
             TrayPresence.Paused => LocalizationService.Text("Tray.Paused", "Paused"),
             _ => LocalizationService.Text("Tray.Idle", "Ready")
         };
-        _icon.Text = $"Takt — {state}";
+        var text = string.IsNullOrWhiteSpace(detail) ? $"Takt — {state}" : $"Takt — {detail}";
+        _icon.Text = text.Length <= 127 ? text : text[..127];
         RebuildMenu();
     }
 

@@ -74,6 +74,7 @@ internal partial class SettingsViewModel : ObservableObject
     public ObservableCollection<ChoiceOption> Themes { get; } = [];
     public ObservableCollection<ChoiceOption> Languages { get; } = [];
     public ObservableCollection<ChoiceOption> Corners { get; } = [];
+    public ObservableCollection<ChoiceOption> PresenceKeys { get; } = [];
 
     [ObservableProperty] private string? _capturingHotkey;
 
@@ -212,6 +213,10 @@ internal partial class SettingsViewModel : ObservableObject
         Replace(Languages,
             new(AppLanguage.English, "English"),
             new(AppLanguage.German, "Deutsch"));
+        Replace(PresenceKeys,
+            new(PresenceKey.F15, T("Presence.KeyF15", "F15")),
+            new(PresenceKey.Shift, T("Presence.KeyShift", "Shift")),
+            new(PresenceKey.None, T("Presence.KeyNone", "None")));
         Replace(Corners,
             new(FailsafeCorner.TopLeft, T("Corner.TopLeft", "Top left")),
             new(FailsafeCorner.TopRight, T("Corner.TopRight", "Top right")),

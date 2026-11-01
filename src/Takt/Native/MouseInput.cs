@@ -44,6 +44,15 @@ internal static class MouseInput
     public static bool MoveRelative(int dx, int dy) =>
         SendFlags(dx, dy, Win32.MouseEventMove);
 
+    public static bool PulseRelative(int dx, int dy)
+    {
+        if (dx == 0 && dy == 0)
+            dx = 1;
+        var forward = MoveRelative(dx, dy);
+        var back = MoveRelative(-dx, -dy);
+        return forward && back;
+    }
+
     public static bool MoveAbsolute(int pixelX, int pixelY)
     {
         var screen = GetVirtualScreen();

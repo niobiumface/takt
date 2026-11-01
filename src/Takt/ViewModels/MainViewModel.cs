@@ -69,6 +69,16 @@ internal partial class MainViewModel : ObservableObject
             if (e.PropertyName == nameof(TyperSettings.CharactersPerMinute))
                 OnPropertyChanged(nameof(TyperWpm));
         };
+        Presence.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(PresenceEngine.IsEnabled))
+                OnPropertyChanged(nameof(PresenceOn));
+            if (e.PropertyName is nameof(PresenceEngine.IsEnabled) or nameof(PresenceEngine.Status)
+                or nameof(PresenceEngine.IdleSeconds) or nameof(PresenceEngine.Warning) or nameof(PresenceEngine.PauseReason))
+                OnPropertyChanged(nameof(PresenceStatusText));
+            if (e.PropertyName is nameof(PresenceEngine.IsEnabled) or nameof(PresenceEngine.Status))
+                RefreshTray();
+        };
         Macro.PropertyChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(MacroSummary));
@@ -98,6 +108,7 @@ internal partial class MainViewModel : ObservableObject
     public ClickerEngine Clicker => _services.Clicker;
     public MacroEngine Macro => _services.Macro;
     public TyperEngine Typer => _services.Typer;
+    public PresenceEngine Presence => _services.Presence;
 
     [ObservableProperty] private TextSnippet? _selectedSnippet;
 
@@ -174,6 +185,45 @@ internal partial class MainViewModel : ObservableObject
     public string TyperProgress => Typer.TypedCount.ToString();
 
     public string TyperWpm => TyperTiming.WordsPerMinute(Settings.Typer.CharactersPerMinute) + " WPM";
+
+    public bool PresenceOn
+    {
+        get => Presence.IsEnabled;
+        set
+        {
+            if (value)
+            {
+                Settings.Presence.Enabled = true;
+                Presence.Start();
+            }
+            else
+            {
+                Presence.Stop(persistOff: true);
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
+    public string PresenceStatusText
+    {
+        get
+        {
+            if (!Presence.IsEnabled && Presence.Status == EngineStatus.Stopped)
+                return "";
+            if (Presence.Warning == PresenceWarning.SessionLocked)
+                return LocalizationService.Text("Presence.Locked", "The session locked. Takt does not override a policy lock.");
+            if (Presence.Warning == PresenceWarning.PolicyLock)
+                return LocalizationService.Text("Presence.Policy", "Windows may still lock this session because of policy. Takt does not bypass that.");
+            if (Presence.Warning == PresenceWarning.IdleNotReset)
+                return LocalizationService.Text("Presence.IdleWarning", "Input did not reset the idle timer.");
+            if (Presence.Status == EngineStatus.Paused)
+                return LocalizationService.Text("Presence.OutsideHours", "Paused · outside working hours");
+            if (Presence.Status == EngineStatus.Running)
+                return string.Format(LocalizationService.Text("Presence.Active", "Presence on · last activity {0} s ago"), Presence.IdleSeconds);
+            return "";
+        }
+    }
 
     public string ClickerProgress =>
         Settings.Clicker.RepeatMode == RepeatMode.Count
@@ -438,6 +488,7 @@ internal partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(PlayLabel));
             OnPropertyChanged(nameof(TyperStatusText));
             OnPropertyChanged(nameof(TyperWpm));
+            OnPropertyChanged(nameof(PresenceStatusText));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -495,12 +546,13 @@ internal partial class MainViewModel : ObservableObject
         var presence = TrayPresence.Off;
         if (Macro.IsRecording || Macro.IsPlaying ||
             Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running ||
-            Typer.Status == EngineStatus.Running)
+            Typer.Status == EngineStatus.Running || Presence.Status == EngineStatus.Running)
             presence = TrayPresence.Active;
         else if (Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused ||
-                 Typer.Status == EngineStatus.Paused)
+                 Typer.Status == EngineStatus.Paused || Presence.Status == EngineStatus.Paused)
             presence = TrayPresence.Paused;
-        _services.Tray.Refresh(Settings.Appearance.AccentHex, presence);
+        var detail = Presence.Status == EngineStatus.Running ? PresenceStatusText : null;
+        _services.Tray.Refresh(Settings.Appearance.AccentHex, presence, detail);
     }
 
     private static void ShowMainWindow()

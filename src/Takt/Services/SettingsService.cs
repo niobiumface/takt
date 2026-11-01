@@ -137,6 +137,7 @@ public sealed class SettingsService : IDisposable
         Current.Hotkeys.ToggleTyper ??= HotkeyBinding.Vk(0x7A);
         Current.Typer ??= new TyperSettings();
         Current.Typer.Snippets ??= new();
+        Current.Presence ??= new PresenceSettings();
         Current.Macro ??= new MacroSettings();
         Current.Macro.Events ??= new();
         Current.Clicker.Points ??= new();

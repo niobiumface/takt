@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using Takt.Models;
+using Takt.Native;
 
 namespace Takt.Services;
 
@@ -11,6 +12,7 @@ internal sealed class AppServices : IDisposable
     public ClickerEngine Clicker { get; }
     public MacroEngine Macro { get; }
     public TyperEngine Typer { get; }
+    public PresenceEngine Presence { get; }
     public FailsafeMonitor Failsafe { get; }
     public HotkeyService Hotkeys { get; }
     public TrayService Tray { get; }
@@ -26,6 +28,7 @@ internal sealed class AppServices : IDisposable
         Clicker = new ClickerEngine(Settings.Current.Clicker, dispatcher);
         Macro = new MacroEngine(Settings.Current.Macro, Activity, dispatcher);
         Typer = new TyperEngine(Settings.Current.Typer, dispatcher);
+        Presence = new PresenceEngine(Settings.Current.Presence, Activity, dispatcher);
         Failsafe = new FailsafeMonitor(Settings.Current, Panic);
         Hotkeys = new HotkeyService(Settings.Current.Hotkeys);
         Tray = new TrayService();
@@ -43,6 +46,16 @@ internal sealed class AppServices : IDisposable
             if (e.PropertyName is nameof(ClickerEngine.IsEnabled) or nameof(ClickerEngine.Status))
                 UpdateArmed();
         };
+        Typer.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(TyperEngine.IsEnabled))
+                UpdateArmed();
+        };
+        Presence.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(PresenceEngine.IsEnabled))
+                UpdateArmed();
+        };
     }
 
     public event Action? Stopped;
@@ -54,6 +67,7 @@ internal sealed class AppServices : IDisposable
         Clicker.Stop();
         Macro.Stop();
         Typer.Stop();
+        Presence.Stop(persistOff: true);
         Stopped?.Invoke();
     }
 
@@ -65,13 +79,13 @@ internal sealed class AppServices : IDisposable
         Clicker.Dispose();
         Macro.Dispose();
         Typer.Dispose();
+        Presence.Dispose();
         Hotkeys.Dispose();
         Tray.Dispose();
         Settings.Dispose();
-        ExecutionStateClear();
+        AwakeCoordinator.ClearAll();
     }
 
-    private void UpdateArmed() => Failsafe.IsArmed = Jiggler.IsEnabled || Clicker.IsEnabled;
-
-    private static void ExecutionStateClear() => Native.ExecutionState.Clear();
+    private void UpdateArmed() =>
+        Failsafe.IsArmed = Jiggler.IsEnabled || Clicker.IsEnabled || Typer.IsEnabled || Presence.IsEnabled;
 }

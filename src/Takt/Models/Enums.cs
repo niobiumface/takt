@@ -77,3 +77,33 @@ public enum PauseReason
     UserInput,
     StartDelay
 }
+
+[Flags]
+public enum WeekdayMask
+{
+    None = 0,
+    Monday = 1 << 0,
+    Tuesday = 1 << 1,
+    Wednesday = 1 << 2,
+    Thursday = 1 << 3,
+    Friday = 1 << 4,
+    Saturday = 1 << 5,
+    Sunday = 1 << 6,
+    Weekdays = Monday | Tuesday | Wednesday | Thursday | Friday,
+    All = Weekdays | Saturday | Sunday
+}
+
+public enum PresenceKey
+{
+    None,
+    F15,
+    Shift
+}
+
+public enum PresenceWarning
+{
+    None,
+    IdleNotReset,
+    PolicyLock,
+    SessionLocked
+}
