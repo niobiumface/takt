@@ -51,6 +51,7 @@ If the clicker uses **cursor position** and the jiggler is in a **visible** move
 ## Persistence and publish
 
 - Autosave settings on change (debounce ~400 ms)
+- Settings schema version is `AppSettings.CurrentVersion` (currently 2). `SettingsMigration` carries older files forward. Do not write settings next to the exe
 - `dotnet publish -c Release -r win-x64 --self-contained false` is the default small build
 - Document self-contained as an optional larger build
 - DPI is `PerMonitorV2` via `ApplicationHighDpiMode` in the csproj and `SetHighDpiMode` before the first window. The .NET 8 SDK warns (WFAC010) if `app.manifest` repeats that declaration, so the manifest does not duplicate it. Pickers are one window per monitor, sized with that monitor's DPI
