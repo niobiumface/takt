@@ -33,7 +33,8 @@ public partial class App : Application
         var window = new MainWindow(viewModel);
         MainWindow = window;
         Services.Tray.Attach(window);
-        Services.Activity.Start();
+        if (!Services.Activity.Start())
+            viewModel.ShowHookFailure();
         Services.Failsafe.Start();
 
         window.Show();

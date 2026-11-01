@@ -11,9 +11,10 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     private readonly ClickerSettings _settings;
     private readonly Dispatcher _dispatcher;
     private readonly Random _rng = new();
-    private readonly object _holdGate = new();
+    private readonly object _gate = new();
+    private readonly HoldSession _hold = new();
     private CancellationTokenSource? _cts;
-    private bool _holding;
+    private int _generation;
 
     public ClickerEngine(ClickerSettings settings, Dispatcher dispatcher)
     {
@@ -23,55 +24,65 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
     [ObservableProperty] private bool _isEnabled;
     [ObservableProperty] private EngineStatus _status = EngineStatus.Stopped;
+    [ObservableProperty] private PauseReason _pauseReason;
     [ObservableProperty] private int _clickCount;
+    [ObservableProperty] private bool _inputFault;
 
     public void Start()
     {
-        if (_cts is not null)
-            return;
+        CancellationTokenSource cts;
+        int generation;
+        lock (_gate)
+        {
+            _cts?.Cancel();
+            generation = ++_generation;
+            _cts = cts = new CancellationTokenSource();
+        }
 
-        _cts = new CancellationTokenSource();
         ClickCount = 0;
-        SetState(true, EngineStatus.Running);
-        _ = RunAsync(_cts.Token);
+        Publish(true, EngineStatus.Running, PauseReason.None, fault: false);
+        _ = RunAsync(cts, generation);
     }
 
     public void Stop()
     {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = null;
+        lock (_gate)
+        {
+            _generation++;
+            try
+            {
+                _cts?.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // the loop already finished this source
+            }
+
+            _cts = null;
+        }
+
         ReleaseHold();
-        SetState(false, EngineStatus.Stopped);
+        Publish(false, EngineStatus.Stopped, PauseReason.None, fault: null);
     }
 
     public void Dispose() => Stop();
 
-    private async Task RunAsync(CancellationToken token)
+    private async Task RunAsync(CancellationTokenSource cts, int generation)
     {
+        var token = cts.Token;
+        var cancelled = false;
         try
         {
             if (_settings.StartDelayMs > 0)
             {
-                SetState(true, EngineStatus.Paused);
+                Publish(true, EngineStatus.Paused, PauseReason.StartDelay, fault: null);
                 await Task.Delay(_settings.StartDelayMs, token);
-                SetState(true, EngineStatus.Running);
+                Publish(true, EngineStatus.Running, PauseReason.None, fault: null);
             }
 
             if (_settings.Action == ClickAction.Hold)
             {
-                MoveIfNeeded();
-                lock (_holdGate)
-                {
-                    MouseInput.Down(_settings.Button);
-                    _holding = true;
-                }
-
-                if (_settings.RepeatMode == RepeatMode.Duration)
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Max(1, _settings.DurationSeconds)), token);
-                else
-                    await Task.Delay(Timeout.Infinite, token);
-
+                await RunHoldAsync(token);
                 return;
             }
 
@@ -79,14 +90,14 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             var burstCounter = 0;
             var clicks = 0;
 
-            while (!token.IsCancellationRequested)
+            while (!token.IsCancellationRequested && IsCurrent(generation))
             {
                 if (IsFinished(started, clicks))
                     break;
 
-                SetState(true, EngineStatus.Running);
-                MoveIfNeeded();
-                MouseInput.Click(_settings.Button, _settings.Action);
+                if (!MoveIfNeeded() || !MouseInput.Click(_settings.Button, _settings.Action))
+                    NoteFault();
+
                 clicks++;
                 var displayed = clicks;
                 _ = _dispatcher.BeginInvoke(() => ClickCount = displayed);
@@ -104,13 +115,44 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         }
         catch (OperationCanceledException)
         {
-            // stop requested
+            cancelled = true;
         }
         finally
         {
             ReleaseHold();
-            if (!token.IsCancellationRequested)
+            if (!cancelled && IsCurrent(generation))
                 _dispatcher.Invoke(Stop);
+            try
+            {
+                cts.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // already disposed
+            }
+        }
+    }
+
+    private async Task RunHoldAsync(CancellationToken token)
+    {
+        var plan = HoldPlan.For(_settings.RepeatMode, _settings.RepeatCount, _settings.DurationSeconds, _settings.IntervalMs);
+        var button = _settings.Button;
+        for (var i = 0; i < plan.Cycles; i++)
+        {
+            token.ThrowIfCancellationRequested();
+            MoveIfNeeded();
+            Press(button);
+            if (plan.UntilCancelled)
+                await Task.Delay(Timeout.Infinite, token);
+            else
+                await Task.Delay(plan.ActiveHold, token);
+
+            ReleaseHold();
+            if (i + 1 >= plan.Cycles)
+                break;
+
+            var delay = IntervalCalculator.NextDelayMs(_settings.IntervalMs, _settings.JitterMs, _rng);
+            await Task.Delay(delay, token);
         }
     }
 
@@ -124,29 +166,61 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         };
     }
 
-    private void MoveIfNeeded()
+    private bool MoveIfNeeded()
     {
-        if (_settings.PositionMode == ClickPositionMode.Fixed)
-            MouseInput.MoveAbsolute(_settings.FixedX, _settings.FixedY);
+        if (_settings.PositionMode != ClickPositionMode.Fixed)
+            return true;
+        return MouseInput.MoveAbsolute(_settings.FixedX, _settings.FixedY);
+    }
+
+    private void Press(ClickButton button)
+    {
+        lock (_hold)
+        {
+            if (_hold.IsHolding)
+                ReleaseHold();
+            if (!MouseInput.Down(button))
+                NoteFault();
+            _hold.Press(button);
+        }
     }
 
     private void ReleaseHold()
     {
-        lock (_holdGate)
+        lock (_hold)
         {
-            if (!_holding)
+            var pressed = _hold.Release();
+            if (pressed is not ClickButton button)
                 return;
-            MouseInput.Up(_settings.Button);
-            _holding = false;
+            if (!MouseInput.Up(button))
+                NoteFault();
         }
     }
 
-    private void SetState(bool enabled, EngineStatus status)
+    private bool IsCurrent(int generation)
+    {
+        lock (_gate)
+            return generation == _generation;
+    }
+
+    private void NoteFault()
+    {
+        void Apply() => InputFault = true;
+        if (_dispatcher.CheckAccess())
+            Apply();
+        else
+            _dispatcher.BeginInvoke(Apply);
+    }
+
+    private void Publish(bool enabled, EngineStatus status, PauseReason reason, bool? fault)
     {
         void Apply()
         {
             IsEnabled = enabled;
             Status = status;
+            PauseReason = reason;
+            if (fault is bool value)
+                InputFault = value;
         }
 
         if (_dispatcher.CheckAccess())

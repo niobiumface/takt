@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Takt.Helpers;
 using Takt.Models;
 
 namespace Takt.Services;
@@ -34,6 +35,8 @@ public sealed class SettingsService : IDisposable
 
     public event EventHandler? Changed;
 
+    public bool LastLoadReset { get; private set; }
+
     public void Load()
     {
         try
@@ -48,9 +51,11 @@ public sealed class SettingsService : IDisposable
         }
         catch
         {
+            LastLoadReset = true;
             try
             {
-                File.Copy(_path, _path + ".bak", overwrite: true);
+                if (File.Exists(_path))
+                    File.Copy(_path, _path + ".bak", overwrite: true);
             }
             catch
             {
@@ -61,7 +66,8 @@ public sealed class SettingsService : IDisposable
         EnsureNested();
         Wire(Current);
         _wired = true;
-        if (!File.Exists(_path))
+        SettingsNormalizer.ApplyAll(Current);
+        if (!File.Exists(_path) || LastLoadReset)
             SaveNow();
     }
 
@@ -142,7 +148,10 @@ public sealed class SettingsService : IDisposable
                 Wire(child);
         }
 
-        if (_wired)
-            QueueSave();
+        if (!_wired)
+            return;
+
+        SettingsNormalizer.ApplyChanged(sender, e.PropertyName);
+        QueueSave();
     }
 }

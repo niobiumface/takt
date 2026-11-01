@@ -22,12 +22,14 @@ internal sealed class UserActivityMonitor : IDisposable
 
     public DateTime LastPhysicalUtc { get; private set; }
 
+    public bool IsInstalled { get; private set; }
+
     public TimeSpan IdleTime => DateTime.UtcNow - LastPhysicalUtc;
 
-    public void Start()
+    public bool Start()
     {
         if (_mouseHook != nint.Zero)
-            return;
+            return IsInstalled;
 
         var module = Win32.GetModuleHandle(null);
         if (module == nint.Zero)
@@ -35,6 +37,10 @@ internal sealed class UserActivityMonitor : IDisposable
 
         _mouseHook = Win32.SetWindowsHookEx(Win32.WhMouseLl, _mouseProc, module, 0);
         _keyboardHook = Win32.SetWindowsHookEx(Win32.WhKeyboardLl, _keyboardProc, module, 0);
+        IsInstalled = _mouseHook != nint.Zero && _keyboardHook != nint.Zero;
+        if (!IsInstalled)
+            Dispose();
+        return IsInstalled;
     }
 
     public void Dispose()

@@ -19,12 +19,16 @@ internal partial class MainViewModel : ObservableObject
         {
             if (e.PropertyName is nameof(JigglerEngine.IsEnabled))
                 OnPropertyChanged(nameof(JigglerOn));
+            if (e.PropertyName is nameof(JigglerEngine.InputFault) && Jiggler.InputFault)
+                ShowInputFault();
             RefreshTray();
         };
         Clicker.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(ClickerEngine.IsEnabled))
                 OnPropertyChanged(nameof(ClickerOn));
+            if (e.PropertyName is nameof(ClickerEngine.InputFault) && Clicker.InputFault)
+                ShowInputFault();
             RefreshTray();
         };
         _services.Hotkeys.Pressed += OnHotkey;
@@ -165,6 +169,16 @@ internal partial class MainViewModel : ObservableObject
     }
 
     public void AttachHotkeys(Window window) => _services.Hotkeys.Attach(window);
+
+    public void ShowHookFailure() =>
+        StatusMessage = LocalizationService.Text(
+            "Status.HookFailed",
+            "Could not watch keyboard and mouse. Idle pause will not work.");
+
+    private void ShowInputFault() =>
+        StatusMessage = LocalizationService.Text(
+            "Status.SendInputFailed",
+            "Input was rejected. An elevated window may be blocking it.");
 
     public void RefreshChoices()
     {

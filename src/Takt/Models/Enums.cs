@@ -62,3 +62,13 @@ public enum EngineStatus
     Running,
     Paused
 }
+
+public enum PauseReason
+{
+    None,
+    Schedule,
+    Fullscreen,
+    WaitingForIdle,
+    UserInput,
+    StartDelay
+}

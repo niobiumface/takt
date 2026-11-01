@@ -10,6 +10,8 @@
     <sys:String x:Key="Status.Running">Active</sys:String>
     <sys:String x:Key="Status.Paused">Paused</sys:String>
     <sys:String x:Key="Status.Panic">Stopped.</sys:String>
+    <sys:String x:Key="Status.SendInputFailed">Input was rejected. An elevated window may be blocking it.</sys:String>
+    <sys:String x:Key="Status.HookFailed">Could not watch keyboard and mouse. Idle pause will not work.</sys:String>
     <sys:String x:Key="Action.Settings">Settings</sys:String>
     <sys:String x:Key="Action.Panic">Stop all</sys:String>
     <sys:String x:Key="Label.Mode">Mode</sys:String>

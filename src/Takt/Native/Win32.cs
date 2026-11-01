@@ -45,6 +45,7 @@ internal static class Win32
     public const int WmXButtonUp = 0x020C;
     public const int WmMouseHWheel = 0x020E;
 
+    public const uint MonitorDefaultToNull = 0;
     public const uint MonitorDefaultToNearest = 2;
     public const int HwndBroadcast = 0xFFFF;
     public const uint ModAlt = 0x0001;
@@ -198,6 +199,9 @@ internal static class Win32
 
     [DllImport("user32.dll")]
     public static extern nint MonitorFromWindow(nint hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    public static extern nint MonitorFromPoint(POINT pt, uint dwFlags);
 
     [DllImport("user32.dll")]
     public static extern bool GetMonitorInfo(nint hMonitor, ref MONITORINFO lpmi);

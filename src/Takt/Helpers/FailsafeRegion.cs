@@ -11,11 +11,18 @@ public static class FailsafeRegion
         FailsafeCorner corner,
         int size)
     {
+        return IsInCorner(x, y, PixelRect.FromScreen(screen), corner, size);
+    }
+
+    public static bool IsInCorner(int x, int y, PixelRect monitor, FailsafeCorner corner, int size)
+    {
         var edge = Math.Max(size, 1);
-        var left = screen.Left;
-        var top = screen.Top;
-        var right = screen.Left + screen.Width;
-        var bottom = screen.Top + screen.Height;
+        var left = monitor.Left;
+        var top = monitor.Top;
+        var right = monitor.Right;
+        var bottom = monitor.Bottom;
+        if (x < left || y < top || x >= right || y >= bottom)
+            return false;
 
         return corner switch
         {
