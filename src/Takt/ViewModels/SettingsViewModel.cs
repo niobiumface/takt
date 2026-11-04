@@ -30,8 +30,15 @@ internal partial class SettingsViewModel : ObservableObject
         Settings.Hotkeys.ToggleMacro.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.ToggleTyper.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         _services.Hotkeys.RegistrationFailed += name => RefreshHotkeyRows(name);
+        Settings.Appearance.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AppearanceSettings.AccentHex))
+                OnPropertyChanged(nameof(AccentValid));
+        };
         BuildCatalog();
     }
+
+    public bool AccentValid => FieldFormat.IsHex(Settings.Appearance.AccentHex);
 
     [RelayCommand]
     private void SaveProfile()

@@ -26,11 +26,58 @@
                     <TextBlock Text="{DynamicResource Nav.General}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <Button Style="{StaticResource GhostButton}" Command="{Binding OpenWizardCommand}" HorizontalAlignment="Left" Margin="0,0,0,12" Content="{DynamicResource Wizard.Reopen}" ToolTip="{DynamicResource Tip.Wizard}" />
                     <TextBlock Text="{DynamicResource Appearance.Theme}" Style="{StaticResource FieldLabel}" />
-                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Theme}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="theme" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding Themes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Appearance.Theme}" /></DockPanel>
+                    <DockPanel x:Name="SetTheme" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Theme}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="theme" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding Themes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Appearance.Theme}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Appearance.Language}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Language}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="language" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding Languages}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Appearance.Language}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Appearance.Accent}" Style="{StaticResource FieldLabel}" />
-                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Accent}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="accent" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Appearance.AccentHex, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <ItemsControl ItemsSource="{Binding AccentPresets}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Accent}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.SelectAccentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" Width="32" Height="32" Margin="0,0,8,0" Padding="0"
+                                        Style="{StaticResource IconButton}" AutomationProperties.Name="{Binding}">
+                                    <Border Width="28" Height="28" CornerRadius="14" Padding="3" BorderThickness="2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource HexEquals}">
+                                                                <Binding />
+                                                                <Binding Path="DataContext.Settings.Appearance.AccentHex" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource TextBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Border CornerRadius="10" Background="{Binding Converter={StaticResource HexToBrush}}" />
+                                    </Border>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <DockPanel x:Name="SetAccent" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Accent}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="accent" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" />
+                        <TextBox Text="{Binding Settings.Appearance.AccentHex, UpdateSourceTrigger=LostFocus}">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AccentValid}" Value="False">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Autostart}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="autostart" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.StartWithWindows}" Content="{DynamicResource General.Autostart}" /></DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.StartMin}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="min" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.StartMinimized}" Content="{DynamicResource General.StartMin}" /></DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Top}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="top" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.Appearance.AlwaysOnTop}" Content="{DynamicResource Appearance.Topmost}" /></DockPanel>
@@ -77,24 +124,35 @@
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Button}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="button" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding ClickButtons}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Clicker.Button}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Clicker.Action}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Action}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="action" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding ClickActions}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Clicker.Action}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Group.Timing}" Style="{StaticResource GroupLabel}" />
                     <TextBlock Text="{DynamicResource Label.Interval}" Style="{StaticResource FieldLabel}" />
-                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Interval}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="interval" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.IntervalMs, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <DockPanel x:Name="SetInterval" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Interval}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="interval" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.IntervalMs, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Clicker.JitterPercent}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Jitter}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="jitter" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.JitterPercent, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Clicker.HoldFor}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Hold}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="hold" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.HoldDurationMs, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Clicker.Repeat}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Repeat}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="repeat" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding RepeatModes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Clicker.RepeatMode}" /></DockPanel>
-                    <TextBlock Text="{DynamicResource Clicker.Count}" Style="{StaticResource FieldLabel}" />
-                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Count}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="count" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.RepeatCount, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Clicker.Count}" Style="{StaticResource FieldLabel}" Visibility="{Binding Settings.Clicker.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Count}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Count}" Visibility="{Binding Settings.Clicker.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Count}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="count" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.RepeatCount, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Clicker.Duration}" Style="{StaticResource FieldLabel}" Visibility="{Binding Settings.Clicker.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Duration}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Duration}" Visibility="{Binding Settings.Clicker.RepeatMode, Converter={StaticResource EnumVis}, ConverterParameter=Duration}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="duration" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.DurationSeconds, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Clicker.Delay}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Delay}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="delay" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.StartDelayMs, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Precise}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="precise" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.Clicker.PreciseTiming}" Content="{DynamicResource Clicker.Precise}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Clicker.Burst}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Burst}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="burst" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.BurstSize, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Clicker.BurstPause}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel x:Name="SetBurstPause" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.BurstPause}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="burst-pause" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.BurstPauseMs, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Group.Position}" Style="{StaticResource GroupLabel}" />
                     <TextBlock Text="{DynamicResource Clicker.Position}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Position}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="position" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding PositionModes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Clicker.PositionMode}" /></DockPanel>
-                    <Button Style="{StaticResource GhostButton}" Command="{Binding PickPositionCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Clicker.Pick}" ToolTip="{DynamicResource Tip.Pick}" />
+                    <StackPanel Margin="0,0,0,8" Visibility="{Binding Settings.Clicker.PositionMode, Converter={StaticResource EnumVis}, ConverterParameter=Fixed}">
+                        <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Fixed}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="fixed-x" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.FixedX, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                        <DockPanel ToolTip="{DynamicResource Tip.Fixed}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="fixed-y" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.FixedY, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding PickPositionCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" Content="{DynamicResource Clicker.Pick}" ToolTip="{DynamicResource Tip.Pick}" />
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding Settings.Clicker.PositionMode, Converter={StaticResource EnumVis}, ConverterParameter=Sequence}">
                     <TextBlock Text="{DynamicResource Clicker.Sequence}" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{DynamicResource Clicker.SequenceHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" />
                     <Button Style="{StaticResource GhostButton}" Command="{Binding AddPointCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Clicker.AddPoint}" ToolTip="{DynamicResource Tip.Sequence}" />
@@ -114,8 +172,11 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Style="{StaticResource GhostButton}" Command="{Binding MovePointCommand}" CommandParameter="up" Margin="0,0,8,0" Content="{DynamicResource Macro.Up}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding MovePointCommand}" CommandParameter="down" Margin="0,0,8,0" Content="{DynamicResource Macro.Down}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding ResetPointCommand}" Margin="0,0,8,0" Content="{DynamicResource Settings.Reset}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding RemovePointCommand}" Content="{DynamicResource Profile.Delete}" />
                     </StackPanel>
+                    </StackPanel>
+                    <TextBlock Text="{DynamicResource Group.Safety}" Style="{StaticResource GroupLabel}" />
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Failsafe}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="failsafe" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.FailsafeEnabled}" Content="{DynamicResource General.Failsafe}" /></DockPanel>
                     <TextBlock Text="{DynamicResource General.Corner}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Corner}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="corner" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding Corners}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.General.FailsafeCorner}" /></DockPanel>
@@ -176,8 +237,29 @@
                                             <DataTemplate>
                                                 <DockPanel Margin="0,4,0,0">
                                                     <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Profile.Delete}" Command="{Binding DataContext.RemoveWindowCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                                    <TextBox Width="80" Text="{Binding Start, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" />
-                                                    <TextBox Width="80" Text="{Binding End, UpdateSourceTrigger=LostFocus}" />
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Content="{DynamicResource Settings.Reset}" Command="{Binding DataContext.ResetWindowCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                    <TextBox Width="80" Text="{Binding Start, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0">
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Start, Converter={StaticResource ClockValid}}" Value="False">
+                                                                        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                    </TextBox>
+                                                    <TextBox Width="80" Text="{Binding End, UpdateSourceTrigger=LostFocus}">
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding End, Converter={StaticResource ClockValid}}" Value="False">
+                                                                        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                    </TextBox>
                                                 </DockPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -216,7 +298,7 @@
                     <TextBlock Text="{DynamicResource Clicker.Count}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Count}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="typer-count" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.RepeatCount, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Typer.DateFormat}" Style="{StaticResource FieldLabel}" />
-                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Date}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="date-format" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.DateFormat, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <DockPanel x:Name="SetDateFormat" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Date}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="date-format" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.DateFormat, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Typer.TimeFormat}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Time}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="time-format" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.TimeFormat, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Typer.DateTimeFormat}" Style="{StaticResource FieldLabel}" />
@@ -231,7 +313,10 @@
                     <TextBox Text="{Binding SnippetName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Snippet}" />
                     <TextBlock Text="{DynamicResource Typer.SnippetText}" Style="{StaticResource FieldLabel}" />
                     <TextBox Text="{Binding SnippetText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="48" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Snippet}" />
-                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding AddSnippetCommand}" HorizontalAlignment="Left" Content="{DynamicResource Typer.SaveSnippet}" Margin="0,0,0,8" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding AddSnippetCommand}" Margin="0,0,8,0" Content="{DynamicResource Typer.SaveSnippet}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding ResetSnippetDraftCommand}" Content="{DynamicResource Settings.Reset}" />
+                    </StackPanel>
                     <ItemsControl ItemsSource="{Binding Settings.Typer.Snippets}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -256,7 +341,10 @@
                     </StackPanel>
                     <ListBox ItemsSource="{Binding Settings.Macro.Events}" SelectedItem="{Binding SelectedMacro}" MinHeight="120" DisplayMemberPath="Kind" ToolTip="{DynamicResource Tip.Macro}" />
                     <TextBlock Text="{DynamicResource Macro.Delay}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
-                    <TextBox Text="{Binding SelectedMacro.DelayMs, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Wait}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Wait}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetMacroStepCommand}" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" />
+                        <TextBox Text="{Binding SelectedMacro.DelayMs, UpdateSourceTrigger=LostFocus}" />
+                    </DockPanel>
                     <TextBlock Text="{DynamicResource Macro.Kind}" Style="{StaticResource FieldLabel}" />
                     <TextBox Text="{Binding SelectedMacro.Kind, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Macro}" />
                     <TextBlock Text="{DynamicResource Macro.Button}" Style="{StaticResource FieldLabel}" />
@@ -290,7 +378,7 @@
                 <StackPanel x:Name="SectionHealth" Visibility="{Binding ShowHealth, Converter={StaticResource BoolVis}}">
                     <TextBlock Text="{DynamicResource Nav.Health}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" />
-                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.StopMinutes}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stop-minutes" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <DockPanel x:Name="SetStopMinutes" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.StopMinutes}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stop-minutes" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.StopTime}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stop-time" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.StopAtTime, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.AutoProfile}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="auto-profile" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.AutoProfile}" Content="{DynamicResource Profile.Auto}" /></DockPanel>
@@ -306,6 +394,7 @@
                             <DataTemplate>
                                 <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Rule}">
                                     <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Profile.Delete}" Command="{Binding DataContext.RemoveRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Content="{DynamicResource Settings.Reset}" Command="{Binding DataContext.ResetRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                     <CheckBox IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                     <TextBlock VerticalAlignment="Center"><Run Text="{Binding ProcessName, Mode=OneWay}" /><Run Text=" → " /><Run Text="{Binding ProfileName, Mode=OneWay}" /></TextBlock>
                                 </DockPanel>

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
@@ -21,6 +22,7 @@ public partial class MainWindow : Window
         viewModel.AttachHotkeys(this);
         Closing += OnClosing;
         StateChanged += OnStateChanged;
+        SizeChanged += OnSizeChanged;
         SourceInitialized += (_, _) =>
         {
             ApplyTitleBar();
@@ -73,6 +75,36 @@ public partial class MainWindow : Window
     private bool ShouldHideToTray()
     {
         return DataContext is MainViewModel vm && vm.Settings.General.CloseBehavior != CloseBehavior.Exit;
+    }
+
+    private bool _stacked;
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (e.NewSize.Width < 1)
+            return;
+        ArrangeCards(e.NewSize.Width < 500);
+    }
+
+    private void ArrangeCards(bool stack)
+    {
+        if (stack == _stacked || CardHost is null)
+            return;
+        _stacked = stack;
+        CardHost.ColumnDefinitions[0].MinWidth = stack ? 0 : 220;
+        CardHost.ColumnDefinitions[2].MinWidth = stack ? 0 : 220;
+        CardHost.ColumnDefinitions[1].Width = new GridLength(stack ? 0 : 12);
+        CardHost.RowDefinitions[0].Height = stack ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
+        CardHost.RowDefinitions[3].Height = new GridLength(stack ? 12 : 0);
+
+        Grid.SetColumn(JigglerCard, 0);
+        Grid.SetColumnSpan(JigglerCard, stack ? 3 : 1);
+        Grid.SetColumn(ClickerCard, stack ? 0 : 2);
+        Grid.SetColumnSpan(ClickerCard, stack ? 3 : 1);
+        Grid.SetRow(ClickerCard, stack ? 2 : 0);
+        Grid.SetRow(TyperCard, stack ? 4 : 2);
+        Grid.SetColumn(TyperCard, 0);
+        Grid.SetColumnSpan(TyperCard, 3);
     }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)

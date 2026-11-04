@@ -492,8 +492,57 @@ internal partial class SettingsViewModel
             DiagnosisReport.LockPolicy(Takt.Native.SystemQuery.PolicyLockTimeoutSeconds()),
             DiagnosisReport.Screensaver(Takt.Native.SystemQuery.PolicyForcesScreensaver())
         };
-        DiagnosisText = string.Join(Environment.NewLine, checks.Select(check =>
-            $"{check.Mark.ToString().ToUpperInvariant()}  {check.Explanation}"));
+        DiagnosisText = string.Join(Environment.NewLine, checks.Select(FormatCheck));
+    }
+
+    private static string FormatCheck(CheckResult check)
+    {
+        var mark = check.Mark switch
+        {
+            CheckMark.Pass => T("Diagnosis.Pass", "PASS"),
+            CheckMark.Warn => T("Diagnosis.Warn", "WARN"),
+            _ => T("Diagnosis.Fail", "FAIL")
+        };
+        var template = T(check.TextKey, check.Fallback);
+        var sentence = check.Args is { Length: > 0 }
+            ? string.Format(System.Globalization.CultureInfo.CurrentCulture, template, check.Args)
+            : template;
+        return mark + "  " + sentence;
+    }
+
+    [RelayCommand]
+    private void ResetPoint()
+    {
+        if (SelectedPoint is not null)
+            RowDefaults.Point(SelectedPoint);
+    }
+
+    [RelayCommand]
+    private void ResetWindow(TimeSpanWindow? window)
+    {
+        if (window is not null)
+            RowDefaults.Window(window);
+    }
+
+    [RelayCommand]
+    private void ResetMacroStep()
+    {
+        if (SelectedMacro is not null)
+            RowDefaults.MacroDelay(SelectedMacro);
+    }
+
+    [RelayCommand]
+    private void ResetRule(AppRule? rule)
+    {
+        if (rule is not null)
+            RowDefaults.Rule(rule);
+    }
+
+    [RelayCommand]
+    private void ResetSnippetDraft()
+    {
+        SnippetName = "";
+        SnippetText = "";
     }
 
     private static AppSettings ToSnapshot(ActivityProfile profile)

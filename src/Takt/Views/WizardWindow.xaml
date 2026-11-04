@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{DynamicResource Wizard.Title}"
-        Width="460" Height="360"
+        Width="520" Height="560"
+        PreviewKeyDown="OnPreviewKeyDown"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource WindowBackgroundBrush}">
@@ -16,8 +17,35 @@
         </DockPanel>
         <StackPanel x:Name="StepHotkeys">
             <TextBlock Text="{DynamicResource Wizard.HotkeysTitle}" Style="{StaticResource TitleText}" />
-            <TextBlock Text="{DynamicResource Wizard.HotkeysBody}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,8,0,8" />
-            <TextBlock Text="{Binding PanicHotkeyText}" FontWeight="SemiBold" />
+            <TextBlock Text="{DynamicResource Wizard.HotkeysBody}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,8,0,4" />
+            <TextBlock Text="{DynamicResource Wizard.HotkeyEdit}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" />
+            <TextBlock Text="{DynamicResource Hotkey.Listening}" Style="{StaticResource HintText}" Visibility="{Binding CapturingHotkey, Converter={StaticResource NullToVis}}" Margin="0,0,0,8" />
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="280">
+                <ItemsControl ItemsSource="{Binding HotkeyRows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Label}" />
+                                    <TextBlock Text="{Binding Display}" Style="{StaticResource HintText}" />
+                                    <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Style="{StaticResource GhostButton}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Command="{Binding DataContext.CaptureHotkeyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding CaptureId}" Content="{DynamicResource Hotkey.Record}" />
+                                <Button Grid.Column="2" Style="{StaticResource GhostButton}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Command="{Binding DataContext.ResetHotkeyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" Content="{DynamicResource Settings.Reset}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </StackPanel>
         <StackPanel x:Name="StepHours" Visibility="Collapsed">
             <TextBlock Text="{DynamicResource Wizard.HoursTitle}" Style="{StaticResource TitleText}" />

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using Takt.Helpers;
 using Takt.Models;
 
 namespace Takt.Converters;
@@ -113,6 +114,15 @@ public sealed class HexEqualsConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();
+}
+
+public sealed class ClockValidConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        FieldFormat.IsClock(value as string);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        Binding.DoNothing;
 }
 
 public sealed class NullToVisibilityConverter : IValueConverter

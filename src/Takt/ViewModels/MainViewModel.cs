@@ -106,7 +106,17 @@ internal partial class MainViewModel : ObservableObject
         _services.DeadlineChanged += text =>
         {
             DeadlineText = text;
+            var detail = string.IsNullOrWhiteSpace(text) ? PresenceStatusText : text;
+            _services.Tray.SetDetail(detail);
+            if (DateTime.UtcNow - _weekUi < TimeSpan.FromSeconds(1))
+                return;
+            _weekUi = DateTime.UtcNow;
             OnPropertyChanged(nameof(WeekSummary));
+        };
+        Settings.Clicker.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(ClickerSettings.Button) or nameof(ClickerSettings.Action) or nameof(ClickerSettings.RepeatMode))
+                OnPropertyChanged(nameof(ClickSummary));
         };
         _services.TimerDue += () =>
             StatusMessage = LocalizationService.Text("Status.Timer", "Stopped by the timer.");
@@ -159,6 +169,14 @@ internal partial class MainViewModel : ObservableObject
             Settings.Typer.Text = value.Text ?? "";
     }
     public AppServices Services => _services;
+    private SettingsViewModel? _editor;
+    private DateTime _weekUi;
+    internal SettingsViewModel Editor => _editor ??= new SettingsViewModel(_services, this);
+
+    public string ClickSummary => ClickSummaryText.Format(
+        ChoiceLabel(Settings.Clicker.Button),
+        ChoiceLabel(Settings.Clicker.Action),
+        ChoiceLabel(Settings.Clicker.RepeatMode));
 
     [ObservableProperty] private string _jigglerHotkeyText = "F6";
     [ObservableProperty] private string _clickerHotkeyText = "F7";
@@ -342,7 +360,7 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenSettings() => ShowSettings(null);
 
-    public void ShowSettings(string? section)
+    public void ShowSettings(string? section, string? target = null)
     {
         SettingsWindow? window = null;
         foreach (Window open in Application.Current.Windows)
@@ -359,18 +377,16 @@ internal partial class MainViewModel : ObservableObject
             window = new SettingsWindow
             {
                 Owner = Application.Current.MainWindow,
-                DataContext = new SettingsViewModel(_services, this)
+                DataContext = Editor
             };
             window.Show();
         }
 
-        if (!string.IsNullOrWhiteSpace(section) && window.DataContext is SettingsViewModel vm)
-        {
+        if (window.DataContext is SettingsViewModel vm && !string.IsNullOrWhiteSpace(section))
             vm.SelectedSection = section;
-            window.FocusSection(section);
-        }
 
         window.Activate();
+        window.Dispatcher.BeginInvoke(() => window.FocusTarget(section, target));
     }
 
     [RelayCommand]
@@ -570,6 +586,7 @@ internal partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(TyperStatusText));
             OnPropertyChanged(nameof(TyperWpm));
             OnPropertyChanged(nameof(PresenceStatusText));
+            OnPropertyChanged(nameof(ClickSummary));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -617,6 +634,31 @@ internal partial class MainViewModel : ObservableObject
         Settings.General.FirstRunDismissed = true;
         OnPropertyChanged(nameof(ShowFirstRunHint));
     }
+
+    private string ChoiceLabel(ClickButton button) => button switch
+    {
+        ClickButton.Right => LocalizationService.Text("Button.Right", "Right"),
+        ClickButton.Middle => LocalizationService.Text("Button.Middle", "Middle"),
+        ClickButton.X1 => LocalizationService.Text("Button.X1", "X1"),
+        ClickButton.X2 => LocalizationService.Text("Button.X2", "X2"),
+        ClickButton.WheelUp => LocalizationService.Text("Button.WheelUp", "Wheel up"),
+        ClickButton.WheelDown => LocalizationService.Text("Button.WheelDown", "Wheel down"),
+        _ => LocalizationService.Text("Button.Left", "Left")
+    };
+
+    private string ChoiceLabel(ClickAction action) => action switch
+    {
+        ClickAction.Double => LocalizationService.Text("Action.Double", "Double"),
+        ClickAction.Hold => LocalizationService.Text("Action.Hold", "Hold"),
+        _ => LocalizationService.Text("Action.Single", "Single")
+    };
+
+    private string ChoiceLabel(RepeatMode mode) => mode switch
+    {
+        RepeatMode.Count => LocalizationService.Text("Repeat.Count", "Count"),
+        RepeatMode.Duration => LocalizationService.Text("Repeat.Duration", "Duration"),
+        _ => LocalizationService.Text("Repeat.Infinite", "Infinite")
+    };
 
     private string CornerLabel() => Settings.General.FailsafeCorner switch
     {
@@ -671,7 +713,7 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenWizard()
     {
-        var wizard = new WizardWindow { Owner = Application.Current.MainWindow, DataContext = this };
+        var wizard = new WizardWindow { Owner = Application.Current.MainWindow, DataContext = Editor };
         wizard.ShowDialog();
     }
 

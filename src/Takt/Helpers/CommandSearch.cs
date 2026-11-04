@@ -1,6 +1,6 @@
 namespace Takt.Helpers;
 
-public readonly record struct CommandEntry(string Id, string Title, string Keywords, string Section);
+public readonly record struct CommandEntry(string Id, string Title, string Keywords, string Section, string Target = "");
 
 public static class CommandSearch
 {

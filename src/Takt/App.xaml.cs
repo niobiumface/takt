@@ -70,7 +70,7 @@ public partial class App : Application
 
         window.Show();
         if (!Services.Settings.Current.General.WizardCompleted)
-            new WizardWindow { Owner = window, DataContext = viewModel }.ShowDialog();
+            new WizardWindow { Owner = window, DataContext = viewModel.Editor }.ShowDialog();
         if (Services.Settings.Current.General.StartMinimized)
             window.Hide();
     }
@@ -95,7 +95,7 @@ public partial class App : Application
         if (_restarted)
         {
             MessageBox.Show(
-                "Takt hit an error again and will not restart a second time.",
+                LocalizationService.Text("Crash.Again", "Takt hit an error again and will not restart a second time."),
                 "Takt",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
@@ -103,7 +103,7 @@ public partial class App : Application
         }
 
         var answer = MessageBox.Show(
-            "Takt hit an error. Restart it now? Held keys and buttons were released.",
+            LocalizationService.Text("Crash.Restart", "Takt hit an error. Restart it now? Held keys and buttons were released."),
             "Takt",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);

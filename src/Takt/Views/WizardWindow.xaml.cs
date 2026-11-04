@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using Takt.ViewModels;
 
 namespace Takt.Views;
@@ -7,7 +8,21 @@ public partial class WizardWindow : Window
 {
     private int _step;
 
-    public WizardWindow() => InitializeComponent();
+    public WizardWindow()
+    {
+        InitializeComponent();
+        Closed += (_, _) =>
+        {
+            if (DataContext is SettingsViewModel viewModel)
+                viewModel.CancelCapture();
+        };
+    }
+
+    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is SettingsViewModel viewModel)
+            viewModel.TryCompleteCapture(e);
+    }
 
     private void OnSkip(object sender, RoutedEventArgs e) => Finish();
 
@@ -41,7 +56,7 @@ public partial class WizardWindow : Window
 
     private void Finish()
     {
-        if (DataContext is MainViewModel viewModel)
+        if (DataContext is SettingsViewModel viewModel)
             viewModel.Settings.General.WizardCompleted = true;
         DialogResult = true;
         Close();

@@ -55,6 +55,7 @@ If the clicker uses **cursor position** and the jiggler is in a **visible** move
 - Daily stats, when not opted out, are only `%AppData%\Takt\stats.json`
 - A crash handler releases held buttons and modifier keys, clears execution state, ends the 1 ms timer, logs, and offers a single restart (`--restarted` prevents a loop)
 - Mica (`DWMWA_SYSTEMBACKDROP_TYPE`) and rounded corners are requested on Windows 11 and ignored when the call fails, so Windows 10 keeps the solid theme background
+- The main window stacks its cards under about 500 px. Settings show count, duration, and fixed coordinates only for the mode that uses them. The command palette can focus one named setting. Diagnosis text and the crash prompt use the string resources
 - The compact window, command palette, first-run wizard, and per-setting reset live in the WPF views. Engines still do not reference WPF controls. Placeholder expansion, deadlines, profile matching, stats totals, diagnosis marks, and undo snapshots are plain helpers with tests
 - `dotnet publish -c Release -r win-x64 --self-contained false` is the default small build
 - Document self-contained as an optional larger build

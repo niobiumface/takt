@@ -70,7 +70,7 @@ public partial class CommandPaletteWindow : Window
             case "wizard": viewModel.OpenWizardCommand.Execute(null); break;
             case "settings": viewModel.ShowSettings(null); break;
             default:
-                viewModel.ShowSettings(entry.Section);
+                viewModel.ShowSettings(entry.Section, string.IsNullOrEmpty(entry.Target) ? null : entry.Target);
                 break;
         }
 
@@ -98,7 +98,13 @@ public partial class CommandPaletteWindow : Window
             new("section-typer", T("Nav.Typer", "Typer"), "date clipboard", "typer"),
             new("section-macro", T("Nav.Macro", "Macro"), "loop json", "macro"),
             new("section-system", T("Nav.System", "Notifications"), "sound log", "system"),
-            new("section-health", T("Nav.Health", "Stats"), "diagnosis timer", "health")
+            new("section-health", T("Nav.Health", "Stats"), "diagnosis timer", "health"),
+            new("go-theme", T("Appearance.Theme", "Theme"), "dark light system", "general", "SetTheme"),
+            new("go-accent", T("Appearance.Accent", "Accent"), "color hex", "general", "SetAccent"),
+            new("go-interval", T("Label.Interval", "Interval"), "click ms", "clicker", "SetInterval"),
+            new("go-burst-pause", T("Clicker.BurstPause", "Burst pause"), "burst", "clicker", "SetBurstPause"),
+            new("go-stop", T("Timer.After", "Stop after"), "timer minutes", "health", "SetStopMinutes"),
+            new("go-date", T("Typer.DateFormat", "Date format"), "placeholder", "typer", "SetDateFormat")
         ];
     }
 }

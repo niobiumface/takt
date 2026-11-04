@@ -42,6 +42,16 @@ public partial class SettingsWindow : Window
         panel?.BringIntoView();
     }
 
+    public void FocusTarget(string? section, string? target)
+    {
+        if (!string.IsNullOrWhiteSpace(section))
+            FocusSection(section);
+        if (string.IsNullOrWhiteSpace(target) || FindName(target) is not FrameworkElement element)
+            return;
+        element.BringIntoView();
+        element.Focus();
+    }
+
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && DataContext is SettingsViewModel undo)

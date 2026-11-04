@@ -10,7 +10,8 @@ Takt should feel like a small professional utility, not a game overlay and not a
 ## Main window
 
 - Compact (about 520×700 once the typer card is present), no giant dashboard
-- Two equal cards on the first row: Jiggler | Clicker. Typer is a full-width card under them
+- Two equal cards on the first row: Jiggler | Clicker. Typer is a full-width card under them. Below about 500 px the cards stack in one column
+- A running card uses an accent stripe, a paused card an amber stripe. The clicker card shows button, action, and repeat on one line
 - Each card: accent stripe and status pill while running, amber while paused, primary toggle, the live controls, hotkey hint
 - Path icons for stop and settings. No emoji glyphs
 - Themed checkbox, slider, scrollbar, and an accent focus ring

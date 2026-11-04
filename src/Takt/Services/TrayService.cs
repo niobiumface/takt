@@ -18,6 +18,8 @@ internal sealed class TrayService : IDisposable
 {
     private readonly WinForms.NotifyIcon _icon;
     private Icon? _currentIcon;
+    private ActivityTone _tone = ActivityTone.Idle;
+    private string? _painted;
 
     public TrayService()
     {
@@ -46,7 +48,22 @@ internal sealed class TrayService : IDisposable
 
     public void Refresh(string accentHex, ActivityTone tone, string? detail = null)
     {
-        ApplyIcon(accentHex, tone);
+        _tone = tone;
+        var paint = ActivityTonePicker.Hex(tone, accentHex);
+        if (_painted != paint)
+        {
+            ApplyIcon(accentHex, tone);
+            _painted = paint;
+        }
+
+        ApplyText(tone, detail);
+        RebuildMenu();
+    }
+
+    public void SetDetail(string? detail) => ApplyText(_tone, detail);
+
+    private void ApplyText(ActivityTone tone, string? detail)
+    {
         var state = tone switch
         {
             ActivityTone.Paused => LocalizationService.Text("Tray.Paused", "Paused"),
@@ -57,7 +74,6 @@ internal sealed class TrayService : IDisposable
         };
         var text = string.IsNullOrWhiteSpace(detail) ? $"Takt — {state}" : $"Takt — {detail}";
         _icon.Text = text.Length <= 127 ? text : text[..127];
-        RebuildMenu();
     }
 
     public void Notify(string message)

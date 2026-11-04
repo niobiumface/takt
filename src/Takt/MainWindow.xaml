@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{DynamicResource App.Title}"
         Width="520" Height="740"
-        MinWidth="500" MinHeight="560"
+        MinWidth="380" MinHeight="560"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBackgroundBrush}"
@@ -22,13 +22,7 @@
             <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"
                      Fill="{Binding ActivityHex, Converter={StaticResource HexToBrush}}"
                      ToolTip="{Binding DeadlineText}" />
-            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock Text="{DynamicResource App.Title}" Style="{StaticResource TitleText}" />
-                <ComboBox ItemsSource="{Binding Settings.Profiles}" DisplayMemberPath="Name"
-                          SelectedItem="{Binding ActiveProfile}" MaxWidth="180" HorizontalAlignment="Left"
-                          shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                          ToolTip="{DynamicResource Tip.Profile}" />
-            </StackPanel>
+            <TextBlock Grid.Column="1" Text="{DynamicResource App.Title}" Style="{StaticResource TitleText}" VerticalAlignment="Center" />
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Style="{StaticResource IconButton}" Command="{Binding ToggleCompactCommand}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
@@ -52,6 +46,13 @@
             </StackPanel>
         </Grid>
         <DockPanel Margin="16">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <ComboBox DockPanel.Dock="Right" Width="180" VerticalAlignment="Center"
+                      ItemsSource="{Binding Settings.Profiles}" DisplayMemberPath="Name"
+                      SelectedItem="{Binding ActiveProfile}"
+                      ToolTip="{DynamicResource Tip.Profile}" />
+            <TextBlock Text="{DynamicResource App.Subtitle}" Style="{StaticResource HintText}" VerticalAlignment="Center" />
+        </DockPanel>
 
         <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
             <Border Margin="0,0,0,8" Padding="10,8" CornerRadius="8"
@@ -76,10 +77,12 @@
         </StackPanel>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid MinHeight="280">
+            <Grid x:Name="CardHost" MinHeight="280">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="0" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
@@ -88,23 +91,9 @@
                     <ColumnDefinition Width="*" MinWidth="220" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Padding="14" CornerRadius="8" Background="{DynamicResource SurfaceBrush}">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Jiggler.Status}" Value="Running">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                    <Setter Property="BorderThickness" Value="3,1,1,1" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Jiggler.Status}" Value="Paused">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}" />
-                                    <Setter Property="BorderThickness" Value="3,1,1,1" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
+                <Border x:Name="JigglerCard" Grid.Column="0" Padding="14" CornerRadius="8" ClipToBounds="True"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -112,6 +101,21 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
+                        <Border Grid.RowSpan="4" Width="3" HorizontalAlignment="Left" Margin="-14,-14,0,-14" IsHitTestVisible="False">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Jiggler.Status}" Value="Running">
+                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Jiggler.Status}" Value="Paused">
+                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
                         <Grid Margin="0,0,0,10">
                             <TextBlock Text="{DynamicResource Card.Jiggler}" Style="{StaticResource TitleText}" Margin="0,0,52,0" />
                             <ToggleButton Style="{StaticResource SwitchToggle}" HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -165,7 +169,7 @@
                                 <TextBox Text="{Binding Settings.Jiggler.IntervalMs, Converter={StaticResource MsToSec}, UpdateSourceTrigger=LostFocus}" />
                                 <TextBlock Grid.Column="1" Text="{DynamicResource Label.Seconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
                             </Grid>
-                            <TextBlock Text="{DynamicResource Jiggler.Radius}" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="{DynamicResource Card.Radius}" Style="{StaticResource FieldLabel}" />
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -191,23 +195,9 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Column="2" Padding="14" CornerRadius="8" Background="{DynamicResource SurfaceBrush}">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Clicker.Status}" Value="Running">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                    <Setter Property="BorderThickness" Value="3,1,1,1" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Clicker.Status}" Value="Paused">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}" />
-                                    <Setter Property="BorderThickness" Value="3,1,1,1" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
+                <Border x:Name="ClickerCard" Grid.Column="2" Padding="14" CornerRadius="8" ClipToBounds="True"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -215,6 +205,21 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
+                        <Border Grid.RowSpan="4" Width="3" HorizontalAlignment="Left" Margin="-14,-14,0,-14" IsHitTestVisible="False">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Clicker.Status}" Value="Running">
+                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Clicker.Status}" Value="Paused">
+                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
                         <Grid Margin="0,0,0,10">
                             <TextBlock Text="{DynamicResource Card.Clicker}" Style="{StaticResource TitleText}" Margin="0,0,52,0" />
                             <ToggleButton Style="{StaticResource SwitchToggle}" HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -262,6 +267,7 @@
                                 <TextBox Text="{Binding Settings.Clicker.IntervalMs, UpdateSourceTrigger=LostFocus}" />
                                 <TextBlock Grid.Column="1" Text="{DynamicResource Label.Milliseconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
                             </Grid>
+                            <TextBlock Text="{Binding ClickSummary}" Style="{StaticResource HintText}" Margin="0,0,0,10" TextWrapping="Wrap" />
                             <Button Style="{StaticResource GhostButton}" Command="{Binding PickPositionCommand}"
                                     HorizontalAlignment="Stretch" Padding="10,8">
                                 <TextBlock Text="{DynamicResource Clicker.Pick}" TextWrapping="NoWrap" TextAlignment="Center" />
@@ -288,29 +294,30 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Row="2" Grid.ColumnSpan="3" Padding="14" CornerRadius="8" Background="{DynamicResource SurfaceBrush}">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Typer.Status}" Value="Running">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                    <Setter Property="BorderThickness" Value="3,1,1,1" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Typer.Status}" Value="Paused">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}" />
-                                    <Setter Property="BorderThickness" Value="3,1,1,1" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
+                <Border x:Name="TyperCard" Grid.Row="2" Grid.ColumnSpan="3" Padding="14" CornerRadius="8" ClipToBounds="True"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="12" />
                             <ColumnDefinition Width="160" />
                         </Grid.ColumnDefinitions>
+                        <Border Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-14,-14,0,-14" IsHitTestVisible="False">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Typer.Status}" Value="Running">
+                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Typer.Status}" Value="Paused">
+                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
                         <StackPanel>
                             <Grid Margin="0,0,0,8">
                                 <TextBlock Text="{DynamicResource Card.Typer}" Style="{StaticResource TitleText}" />

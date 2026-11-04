@@ -28,6 +28,10 @@ public static class SettingReset
             case "count": settings.Clicker.RepeatCount = defaults.Clicker.RepeatCount; break;
             case "delay": settings.Clicker.StartDelayMs = defaults.Clicker.StartDelayMs; break;
             case "burst": settings.Clicker.BurstSize = defaults.Clicker.BurstSize; break;
+            case "burst-pause": settings.Clicker.BurstPauseMs = defaults.Clicker.BurstPauseMs; break;
+            case "duration": settings.Clicker.DurationSeconds = defaults.Clicker.DurationSeconds; break;
+            case "fixed-x": settings.Clicker.FixedX = defaults.Clicker.FixedX; break;
+            case "fixed-y": settings.Clicker.FixedY = defaults.Clicker.FixedY; break;
             case "position": settings.Clicker.PositionMode = defaults.Clicker.PositionMode; break;
             case "failsafe": settings.General.FailsafeEnabled = defaults.General.FailsafeEnabled; break;
             case "corner": settings.General.FailsafeCorner = defaults.General.FailsafeCorner; break;

@@ -219,6 +219,48 @@ public class ActivityToneTests
     }
 }
 
+public class FieldFormatTests
+{
+    [Fact]
+    public void AcceptsHexAndClockValues()
+    {
+        Assert.True(FieldFormat.IsHex("#5B8DEF"));
+        Assert.True(FieldFormat.IsHex("5b8def"));
+        Assert.False(FieldFormat.IsHex("blue"));
+        Assert.False(FieldFormat.IsHex("#FFF"));
+        Assert.True(FieldFormat.IsClock("08:00"));
+        Assert.True(FieldFormat.IsClock("8:00"));
+        Assert.False(FieldFormat.IsClock("25:00"));
+        Assert.Equal("Left  ·  Single  ·  Infinite", ClickSummaryText.Format("Left", "Single", "Infinite"));
+    }
+
+    [Fact]
+    public void ResetsRowFieldsWithoutDroppingTheRow()
+    {
+        var point = new ClickPoint { X = 12, Y = 40, DelayMs = 80, CustomButton = true, Button = ClickButton.Right };
+        RowDefaults.Point(point);
+        Assert.Equal(12, point.X);
+        Assert.Equal(0, point.DelayMs);
+        Assert.False(point.CustomButton);
+        Assert.Equal(ClickButton.Left, point.Button);
+
+        var window = new TimeSpanWindow { Start = "01:00", End = "02:00" };
+        RowDefaults.Window(window);
+        Assert.Equal("08:00", window.Start);
+        Assert.Equal("17:00", window.End);
+
+        var step = new MacroEvent { DelayMs = 400, X = 9 };
+        RowDefaults.MacroDelay(step);
+        Assert.Equal(0, step.DelayMs);
+        Assert.Equal(9, step.X);
+
+        var rule = new AppRule { Enabled = false, ProcessName = "code" };
+        RowDefaults.Rule(rule);
+        Assert.True(rule.Enabled);
+        Assert.Equal("code", rule.ProcessName);
+    }
+}
+
 public class SettingsUndoServiceTests
 {
     [Fact]
