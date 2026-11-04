@@ -72,7 +72,7 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 
 ## Settings
 
-The main window keeps two cards side by side, and stacks them when the window is narrower than about 500 px. A running or paused card shows a stripe in the accent or amber color. The clicker card states button, action, and repeat. Ctrl+K jumps to an action or to a single setting. Count, duration, and the fixed point are shown only for the mode that uses them, and burst pause has its own field.
+The main window keeps two cards side by side, and stacks them when the window is narrower than about 500 px. Pace chips set a jiggler interval, a click interval, or a typing speed in one click. The last seven days are a row of counts. A running or paused card shows a stripe in the accent or amber color. The clicker card states button, action, and repeat. Ctrl+K jumps to an action or to a single setting. Count, duration, and the fixed point are shown only for the mode that uses them, and burst pause has its own field.
 
 The gear button and the tray menu open a settings window. A sidebar lists the sections, and the search box filters them. Changes apply immediately and are saved in `%AppData%\Takt\settings.json` (never next to the exe). Each value has its own reset, Ctrl+Z undoes the last saved change, and the whole file can be exported, imported, or restored after a confirmation. Tooltips explain the controls. If the theme is System, Takt follows a Windows theme change while it is open.
 

@@ -29,7 +29,7 @@ Put density behind a gear and the tray menu. The settings window uses a left sid
 - Accent color user-selectable (used on toggles, status-running, primary buttons)
 - Status: muted = idle, accent = running, amber = paused (idle-wait / schedule)
 - Type: Segoe UI; 12–13 px body, 11 px hints, 16–18 px card titles
-- Spacing: 8/12/16; corner radius 8 on cards
+- Spacing: 8/12/16; corner radius 10 on cards. Settings sections sit on surface cards. The sidebar selection uses an accent bar. Pace chips and the 7-day count row live on the main window. The compact window uses the same switches as the cards
 - No neon, no rainbow, no fake acrylic clutter
 
 Themes live in `Themes/Dark.xaml` and `Themes/Light.xaml`. Swap `MergedDictionaries` at runtime; keep DynamicResource for colors.

@@ -388,4 +388,18 @@
     <sys:String x:Key="Diagnosis.SaverPass">Keine erzwungene Bildschirmschoner-Richtlinie gefunden.</sys:String>
     <sys:String x:Key="Crash.Again">Takt ist erneut auf einen Fehler gelaufen und startet nicht ein zweites Mal neu.</sys:String>
     <sys:String x:Key="Crash.Restart">Takt ist auf einen Fehler gelaufen. Jetzt neu starten? Gehaltene Tasten und Maustasten wurden gelöst.</sys:String>
+    <sys:String x:Key="Pace.Quiet">Ruhig</sys:String>
+    <sys:String x:Key="Pace.Normal">Normal</sys:String>
+    <sys:String x:Key="Pace.Fast">Schnell</sys:String>
+    <sys:String x:Key="Pace.Rapid">Rasant</sys:String>
+    <sys:String x:Key="Pace.J5">5 s</sys:String>
+    <sys:String x:Key="Pace.J15">15 s</sys:String>
+    <sys:String x:Key="Pace.J30">30 s</sys:String>
+    <sys:String x:Key="Pace.J60">60 s</sys:String>
+    <sys:String x:Key="Pace.SlowType">Langsam</sys:String>
+    <sys:String x:Key="Pace.NormalType">Normal</sys:String>
+    <sys:String x:Key="Pace.FastType">Schnell</sys:String>
+    <sys:String x:Key="Sound.Preview">Ton abspielen</sys:String>
+    <sys:String x:Key="Wizard.Step">{0} / {1}</sys:String>
+    <sys:String x:Key="Stats.WeekHint">Klicks pro Tag. Der Hinweis zeigt auch getippte Zeichen und Präsenzsekunden.</sys:String>
 </ResourceDictionary>

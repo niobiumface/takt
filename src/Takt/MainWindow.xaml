@@ -24,19 +24,19 @@
                      ToolTip="{Binding DeadlineText}" />
             <TextBlock Grid.Column="1" Text="{DynamicResource App.Title}" Style="{StaticResource TitleText}" VerticalAlignment="Center" />
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource IconButton}" Command="{Binding ToggleCompactCommand}"
+                <Button Style="{StaticResource CaptionButton}" Command="{Binding ToggleCompactCommand}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
                         ToolTip="{DynamicResource Compact.Title}" Margin="0,0,8,0"
                         AutomationProperties.Name="{DynamicResource Compact.Title}">
                     <Path Data="{StaticResource Icon.Compact}" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.2" Width="14" Height="14" Stretch="Uniform" />
                 </Button>
-                <Button Style="{StaticResource IconButton}" Command="{Binding PanicCommand}"
+                <Button Style="{StaticResource CaptionButton}" Command="{Binding PanicCommand}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
                         ToolTip="{Binding PanicHotkeyText}" Margin="0,0,8,0"
                         AutomationProperties.Name="{DynamicResource Action.Panic}">
                     <Path Data="{StaticResource Icon.Stop}" Fill="{DynamicResource TextBrush}" Width="10" Height="10" Stretch="Fill" />
                 </Button>
-                <Button Style="{StaticResource IconButton}" Command="{Binding OpenSettingsCommand}"
+                <Button Style="{StaticResource CaptionButton}" Command="{Binding OpenSettingsCommand}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
                         ToolTip="{DynamicResource Action.Settings}"
                         AutomationProperties.Name="{DynamicResource Action.Settings}">
@@ -72,8 +72,28 @@
             </Border>
             <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
             <TextBlock Text="{Binding DeadlineText}" Style="{StaticResource HintText}" Margin="0,4,0,0" ToolTip="{DynamicResource Tip.StopMinutes}" />
-            <TextBlock Text="{Binding WeekSummary}" Style="{StaticResource HintText}" Margin="0,4,0,0" TextWrapping="Wrap" ToolTip="{DynamicResource Tip.Stats}" />
-            <TextBlock Text="{Binding SafetyHint}" Style="{StaticResource HintText}" Margin="0,4,0,0" />
+            <TextBlock Text="{Binding WeekSummary}" Style="{StaticResource HintText}" Margin="0,8,0,6"
+                       Visibility="{Binding HideWeek, Converter={StaticResource BoolVis}}" />
+            <ItemsControl ItemsSource="{Binding WeekCells}" Margin="0,4,0,0"
+                          Visibility="{Binding ShowWeek, Converter={StaticResource BoolVis}}"
+                          ToolTip="{DynamicResource Stats.WeekHint}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4,6" Margin="2,0" ToolTip="{Binding Detail}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Day}" Style="{StaticResource HintText}" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Clicks}" HorizontalAlignment="Center" FontWeight="SemiBold" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="{Binding SafetyHint}" Style="{StaticResource HintText}" Margin="0,8,0,0" HorizontalAlignment="Center" />
         </StackPanel>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -91,7 +111,7 @@
                     <ColumnDefinition Width="*" MinWidth="220" />
                 </Grid.ColumnDefinitions>
 
-                <Border x:Name="JigglerCard" Grid.Column="0" Padding="14" CornerRadius="8" ClipToBounds="True"
+                <Border x:Name="JigglerCard" Grid.Column="0" Padding="14" CornerRadius="10" ClipToBounds="True"
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
@@ -169,6 +189,33 @@
                                 <TextBox Text="{Binding Settings.Jiggler.IntervalMs, Converter={StaticResource MsToSec}, UpdateSourceTrigger=LostFocus}" />
                                 <TextBlock Grid.Column="1" Text="{DynamicResource Label.Seconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
                             </Grid>
+                            <ItemsControl ItemsSource="{Binding JigglePaces}" Margin="0,0,0,4">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Label}" Command="{Binding DataContext.SetJigglePaceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Value}" ToolTip="{DynamicResource Tip.JInterval}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource ChipButton}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Value="True">
+                                                            <DataTrigger.Binding>
+                                                                <MultiBinding Converter="{StaticResource HexEquals}">
+                                                                    <Binding Path="DataContext.Settings.Jiggler.IntervalMs" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                                    <Binding Path="Value" />
+                                                                </MultiBinding>
+                                                            </DataTrigger.Binding>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource AccentMutedBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <TextBlock Text="{DynamicResource Card.Radius}" Style="{StaticResource FieldLabel}" />
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
@@ -195,7 +242,7 @@
                     </Grid>
                 </Border>
 
-                <Border x:Name="ClickerCard" Grid.Column="2" Padding="14" CornerRadius="8" ClipToBounds="True"
+                <Border x:Name="ClickerCard" Grid.Column="2" Padding="14" CornerRadius="10" ClipToBounds="True"
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
@@ -267,6 +314,33 @@
                                 <TextBox Text="{Binding Settings.Clicker.IntervalMs, UpdateSourceTrigger=LostFocus}" />
                                 <TextBlock Grid.Column="1" Text="{DynamicResource Label.Milliseconds}" Style="{StaticResource HintText}" Margin="8,0,0,0" VerticalAlignment="Center" />
                             </Grid>
+                            <ItemsControl ItemsSource="{Binding ClickPaces}" Margin="0,0,0,4">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Label}" Command="{Binding DataContext.SetClickPaceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Value}" ToolTip="{DynamicResource Tip.Interval}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource ChipButton}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Value="True">
+                                                            <DataTrigger.Binding>
+                                                                <MultiBinding Converter="{StaticResource HexEquals}">
+                                                                    <Binding Path="DataContext.Settings.Clicker.IntervalMs" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                                    <Binding Path="Value" />
+                                                                </MultiBinding>
+                                                            </DataTrigger.Binding>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource AccentMutedBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <TextBlock Text="{Binding ClickSummary}" Style="{StaticResource HintText}" Margin="0,0,0,10" TextWrapping="Wrap" />
                             <Button Style="{StaticResource GhostButton}" Command="{Binding PickPositionCommand}"
                                     HorizontalAlignment="Stretch" Padding="10,8">
@@ -294,7 +368,7 @@
                     </Grid>
                 </Border>
 
-                <Border x:Name="TyperCard" Grid.Row="2" Grid.ColumnSpan="3" Padding="14" CornerRadius="8" ClipToBounds="True"
+                <Border x:Name="TyperCard" Grid.Row="2" Grid.ColumnSpan="3" Padding="14" CornerRadius="10" ClipToBounds="True"
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
@@ -345,6 +419,33 @@
                             </Border>
                             <TextBlock Text="{DynamicResource Typer.Speed}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding Settings.Typer.CharactersPerMinute, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,4" />
+                            <ItemsControl ItemsSource="{Binding TyperPaces}" Margin="0,0,0,4">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Label}" Command="{Binding DataContext.SetTyperPaceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Value}" ToolTip="{DynamicResource Tip.Cpm}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource ChipButton}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Value="True">
+                                                            <DataTrigger.Binding>
+                                                                <MultiBinding Converter="{StaticResource HexEquals}">
+                                                                    <Binding Path="DataContext.Settings.Typer.CharactersPerMinute" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                                    <Binding Path="Value" />
+                                                                </MultiBinding>
+                                                            </DataTrigger.Binding>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource AccentMutedBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <TextBlock Text="{Binding TyperWpm}" Style="{StaticResource HintText}" Margin="0,0,0,8" />
                             <ComboBox ItemsSource="{Binding Settings.Typer.Snippets}" DisplayMemberPath="Name"
                                       SelectedItem="{Binding SelectedSnippet}" Margin="0,0,0,8" />

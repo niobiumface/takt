@@ -14,6 +14,7 @@
                 <Button Style="{StaticResource GhostButton}" Click="OnBack" Margin="0,0,8,0" Content="{DynamicResource Wizard.Back}" />
                 <Button x:Name="NextButton" Style="{StaticResource PrimaryButton}" Click="OnNext" Content="{DynamicResource Wizard.Next}" />
             </StackPanel>
+            <TextBlock x:Name="StepLabel" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource HintText}" />
         </DockPanel>
         <StackPanel x:Name="StepHotkeys">
             <TextBlock Text="{DynamicResource Wizard.HotkeysTitle}" Style="{StaticResource TitleText}" />

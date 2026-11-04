@@ -13,16 +13,20 @@
             <ColumnDefinition Width="12" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <DockPanel Grid.Column="0">
-            <TextBox DockPanel.Dock="Top" Margin="0,0,0,8"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="{DynamicResource Tip.Search}" />
-            <ListBox ItemsSource="{Binding Navigation}" SelectedValuePath="Id" SelectedValue="{Binding SelectedSection}"
-                     DisplayMemberPath="Title" BorderThickness="0" Background="Transparent" ToolTip="{DynamicResource Tip.Search}" />
-        </DockPanel>
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="10">
+            <DockPanel>
+                <TextBox DockPanel.Dock="Top" Margin="0,0,0,10"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="{DynamicResource Tip.Search}" />
+                <ListBox ItemsSource="{Binding Navigation}" SelectedValuePath="Id" SelectedValue="{Binding SelectedSection}"
+                         DisplayMemberPath="Title" BorderThickness="0" Background="Transparent" Padding="0"
+                         ItemContainerStyle="{StaticResource NavItem}" ToolTip="{DynamicResource Tip.Search}" />
+            </DockPanel>
+        </Border>
         <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="4,0,8,12">
-                <StackPanel x:Name="SectionGeneral" Visibility="{Binding ShowGeneral, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowGeneral, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionGeneral">
                     <TextBlock Text="{DynamicResource Nav.General}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <Button Style="{StaticResource GhostButton}" Command="{Binding OpenWizardCommand}" HorizontalAlignment="Left" Margin="0,0,0,12" Content="{DynamicResource Wizard.Reopen}" ToolTip="{DynamicResource Tip.Wizard}" />
                     <TextBlock Text="{DynamicResource Appearance.Theme}" Style="{StaticResource FieldLabel}" />
@@ -93,8 +97,10 @@
                     </StackPanel>
                     <ListBox ItemsSource="{Binding Settings.Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Name" MinHeight="72" ToolTip="{DynamicResource Tip.Profile}" />
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionHotkeys" Visibility="{Binding ShowHotkeys, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowHotkeys, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionHotkeys">
                     <TextBlock Text="{DynamicResource Nav.Hotkeys}" Style="{StaticResource TitleText}" Margin="0,0,0,8" />
                     <TextBlock Text="{DynamicResource Hotkey.Listening}" Style="{StaticResource HintText}" Visibility="{Binding CapturingHotkey, Converter={StaticResource NullToVis}}" Margin="0,0,0,8" />
                     <ItemsControl ItemsSource="{Binding HotkeyRows}">
@@ -117,8 +123,10 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionClicker" Visibility="{Binding ShowClicker, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowClicker, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionClicker">
                     <TextBlock Text="{DynamicResource Nav.Clicker}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Clicker.Button}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Button}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="button" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding ClickButtons}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Clicker.Button}" /></DockPanel>
@@ -183,8 +191,10 @@
                     <TextBlock Text="{DynamicResource General.CornerSize}" Style="{StaticResource FieldLabel}" />
                     <DockPanel ToolTip="{DynamicResource Tip.CornerSize}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="corner-size" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.FailsafeSize, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionJiggler" Visibility="{Binding ShowJiggler, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowJiggler, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionJiggler">
                     <TextBlock Text="{DynamicResource Nav.Jiggler}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Label.Mode}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.JMode}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="jiggler-mode" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding JigglerModes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Jiggler.Mode}" /></DockPanel>
@@ -218,8 +228,10 @@
                     <TextBlock Text="{DynamicResource Jiggler.IdleSeconds}" Style="{StaticResource FieldLabel}" />
                     <DockPanel ToolTip="{DynamicResource Tip.Resume}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="jiggler-resume" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Jiggler.ResumeIdleSeconds, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionSchedule" Visibility="{Binding ShowSchedule, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowSchedule, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionSchedule">
                     <TextBlock Text="{DynamicResource Nav.Schedule}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Work}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="work" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.Work.Enabled}" Content="{DynamicResource Schedule.Enabled}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Schedule.Outside}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
@@ -281,8 +293,10 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionTyper" Visibility="{Binding ShowTyper, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowTyper, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionTyper">
                     <TextBlock Text="{DynamicResource Nav.Typer}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Typer.Speed}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Cpm}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="cpm" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.CharactersPerMinute, UpdateSourceTrigger=LostFocus}" /></DockPanel>
@@ -328,8 +342,10 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionMacro" Visibility="{Binding ShowMacro, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowMacro, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionMacro">
                     <TextBlock Text="{DynamicResource Nav.Macro}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Macro.Loop}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Loop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="loop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Macro.LoopCount, UpdateSourceTrigger=LostFocus}" /></DockPanel>
@@ -354,11 +370,14 @@
                         <Button Style="{StaticResource GhostButton}" Command="{Binding LoadMacroFileCommand}" Content="{DynamicResource Macro.Load}" ToolTip="{DynamicResource Tip.MacroFile}" />
                     </StackPanel>
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionSystem" Visibility="{Binding ShowSystem, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowSystem, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionSystem">
                     <TextBlock Text="{DynamicResource Nav.System}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Sound}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="sound" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.PlaySoundOnFinish}" Content="{DynamicResource General.Sound}" /></DockPanel>
                     <DockPanel Margin="0,8,0,8" ToolTip="{DynamicResource Tip.Sound}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="sound-name" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding Sounds}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.General.SoundName}" /></DockPanel>
+                    <Button Style="{StaticResource GhostButton}" Command="{Binding PreviewSoundCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Sound.Preview}" ToolTip="{DynamicResource Tip.Sound}" />
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Notify}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="notify-finish" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.NotifyOnFinish}" Content="{DynamicResource Notify.Finish}" /></DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Notify}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="notify-failsafe" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.NotifyOnFailsafe}" Content="{DynamicResource Notify.Failsafe}" /></DockPanel>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Notify}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="notify-presence" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.NotifyOnPresence}" Content="{DynamicResource Notify.Presence}" /></DockPanel>
@@ -374,8 +393,10 @@
                     <Button Style="{StaticResource GhostButton}" Command="{Binding UndoSettingsCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Settings.Undo}" ToolTip="{DynamicResource Tip.Undo}" />
                     <Button Style="{StaticResource PrimaryButton}" Command="{Binding ResetAllCommand}" HorizontalAlignment="Left" Content="{DynamicResource Settings.ResetAll}" />
                 </StackPanel>
+                </Border>
 
-                <StackPanel x:Name="SectionHealth" Visibility="{Binding ShowHealth, Converter={StaticResource BoolVis}}">
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowHealth, Converter={StaticResource BoolVis}}">
+                    <StackPanel x:Name="SectionHealth">
                     <TextBlock Text="{DynamicResource Nav.Health}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" />
                     <DockPanel x:Name="SetStopMinutes" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.StopMinutes}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stop-minutes" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
@@ -402,7 +423,21 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <TextBlock Text="{DynamicResource Stats.Title}" Style="{StaticResource FieldLabel}" Margin="0,12,0,0" />
-                    <TextBlock Text="{Binding MainWindow.DataContext.WeekSummary, Source={x:Static Application.Current}}" TextWrapping="Wrap" Margin="0,4,0,8" ToolTip="{DynamicResource Tip.Stats}" />
+                    <ItemsControl ItemsSource="{Binding MainWindow.DataContext.WeekCells, Source={x:Static Application.Current}}" Margin="0,4,0,8" ToolTip="{DynamicResource Tip.Stats}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="4,6" Margin="2,0" ToolTip="{Binding Detail}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Day}" Style="{StaticResource HintText}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Clicks}" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.StatsOpt}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stats-opt" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.StatsOptOut}" Content="{DynamicResource Stats.OptOut}" /></DockPanel>
                     <Button Style="{StaticResource GhostButton}" Command="{Binding ResetStatsCommand}" HorizontalAlignment="Left" Margin="0,8,0,12" Content="{DynamicResource Stats.Reset}" ToolTip="{DynamicResource Tip.Stats}" />
                     <TextBlock Text="{DynamicResource Diagnosis.Title}" Style="{StaticResource FieldLabel}" />
@@ -410,6 +445,7 @@
                     <Button Style="{StaticResource PrimaryButton}" Command="{Binding RunDiagnosisCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Diagnosis.Run}" ToolTip="{DynamicResource Tip.Diagnosis}" />
                     <TextBlock Text="{Binding DiagnosisText}" TextWrapping="Wrap" />
                 </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>

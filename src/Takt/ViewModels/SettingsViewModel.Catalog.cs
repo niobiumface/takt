@@ -539,6 +539,9 @@ internal partial class SettingsViewModel
     }
 
     [RelayCommand]
+    private void PreviewSound() => CompletionFeedback.PlaySound(Settings.General.SoundName);
+
+    [RelayCommand]
     private void ResetSnippetDraft()
     {
         SnippetName = "";

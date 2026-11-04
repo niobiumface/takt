@@ -111,7 +111,7 @@ internal partial class MainViewModel : ObservableObject
             if (DateTime.UtcNow - _weekUi < TimeSpan.FromSeconds(1))
                 return;
             _weekUi = DateTime.UtcNow;
-            OnPropertyChanged(nameof(WeekSummary));
+            NotifyWeek();
         };
         Settings.Clicker.PropertyChanged += (_, e) =>
         {
@@ -120,7 +120,7 @@ internal partial class MainViewModel : ObservableObject
         };
         _services.TimerDue += () =>
             StatusMessage = LocalizationService.Text("Status.Timer", "Stopped by the timer.");
-        _services.Settings.Changed += (_, _) => OnPropertyChanged(nameof(WeekSummary));
+        _services.Settings.Changed += (_, _) => NotifyWeek();
         _services.Settings.Current.Hotkeys.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleJiggler.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleClicker.PropertyChanged += (_, _) => RefreshHotkeyLabels();
@@ -133,6 +133,9 @@ internal partial class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<ChoiceOption> JigglerModes { get; } = [];
+    public ObservableCollection<PaceChoice> ClickPaces { get; } = [];
+    public ObservableCollection<PaceChoice> JigglePaces { get; } = [];
+    public ObservableCollection<PaceChoice> TyperPaces { get; } = [];
     public AppSettings Settings => _services.Settings.Current;
     public JigglerEngine Jiggler => _services.Jiggler;
     public ClickerEngine Clicker => _services.Clicker;
@@ -192,10 +195,22 @@ internal partial class MainViewModel : ObservableObject
         {
             if (Settings.General.StatsOptOut)
                 return LocalizationService.Text("Stats.Off", "Local stats are off.");
-            var days = StatsBook.LastDays(_services.Stats.Days, DateTime.Today, 7);
-            return string.Join("   ", days.Select(day =>
-                $"{day.Date[5..]}  {day.Clicks}/{day.Typed}/{day.PresenceSeconds}s"));
+            return string.Join("   ", WeekCells.Select(cell => $"{cell.Day}  {cell.Detail}"));
         }
+    }
+
+    public bool ShowWeek => !Settings.General.StatsOptOut;
+    public bool HideWeek => Settings.General.StatsOptOut;
+
+    public IReadOnlyList<WeekCell> WeekCells =>
+        WeekStrip.Build(StatsBook.LastDays(_services.Stats.Days, DateTime.Today, 7));
+
+    private void NotifyWeek()
+    {
+        OnPropertyChanged(nameof(WeekSummary));
+        OnPropertyChanged(nameof(WeekCells));
+        OnPropertyChanged(nameof(ShowWeek));
+        OnPropertyChanged(nameof(HideWeek));
     }
 
     public bool JigglerOn
@@ -510,7 +525,26 @@ internal partial class MainViewModel : ObservableObject
         JigglerModes.Add(new ChoiceOption(JigglerMode.Figure8, LocalizationService.Text("Mode.Figure8", "Figure-8")));
         JigglerModes.Add(new ChoiceOption(JigglerMode.Random, LocalizationService.Text("Mode.Random", "Random")));
         JigglerModes.Add(new ChoiceOption(JigglerMode.Invisible, LocalizationService.Text("Mode.Invisible", "Invisible")));
+        FillPaces(ClickPaces, PaceCatalog.Click);
+        FillPaces(JigglePaces, PaceCatalog.Jiggle);
+        FillPaces(TyperPaces, PaceCatalog.Typer);
     }
+
+    private static void FillPaces(ObservableCollection<PaceChoice> target, IEnumerable<PacePreset> presets)
+    {
+        target.Clear();
+        foreach (var preset in presets)
+            target.Add(new PaceChoice(preset.Value, LocalizationService.Text(preset.Key, preset.Fallback)));
+    }
+
+    [RelayCommand]
+    private void SetClickPace(int value) => Settings.Clicker.IntervalMs = value;
+
+    [RelayCommand]
+    private void SetJigglePace(int value) => Settings.Jiggler.IntervalMs = value;
+
+    [RelayCommand]
+    private void SetTyperPace(int value) => Settings.Typer.CharactersPerMinute = value;
 
     public void RefreshHotkeyLabels()
     {
@@ -608,6 +642,8 @@ internal partial class MainViewModel : ObservableObject
             Settings.General.MinimizeToTray = Settings.General.CloseBehavior == CloseBehavior.ToTray;
         if (e.PropertyName == nameof(GeneralSettings.CheckForUpdates) && Settings.General.CheckForUpdates)
             _ = CheckForUpdateAsync();
+        if (e.PropertyName == nameof(GeneralSettings.StatsOptOut))
+            NotifyWeek();
         if (e.PropertyName is nameof(GeneralSettings.FailsafeCorner) or nameof(GeneralSettings.FirstRunDismissed))
         {
             OnPropertyChanged(nameof(SafetyHint));
@@ -679,7 +715,7 @@ internal partial class MainViewModel : ObservableObject
         ActivityHex = ActivityTonePicker.Hex(tone, Settings.Appearance.AccentHex);
         var detail = string.IsNullOrWhiteSpace(DeadlineText) ? PresenceStatusText : DeadlineText;
         _services.Tray.Refresh(Settings.Appearance.AccentHex, tone, detail);
-        OnPropertyChanged(nameof(WeekSummary));
+        NotifyWeek();
     }
 
     [RelayCommand]
@@ -720,7 +756,7 @@ internal partial class MainViewModel : ObservableObject
     public void NotifySummaries()
     {
         OnPropertyChanged(nameof(MacroSummary));
-        OnPropertyChanged(nameof(WeekSummary));
+        NotifyWeek();
         OnPropertyChanged(nameof(RecordLabel));
         OnPropertyChanged(nameof(PlayLabel));
     }

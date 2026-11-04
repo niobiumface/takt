@@ -261,6 +261,33 @@ public class FieldFormatTests
     }
 }
 
+public class PaceAndWeekTests
+{
+    [Fact]
+    public void PresetsMatchOnlyTheExactValue()
+    {
+        Assert.True(PaceCatalog.Matches(100, 100));
+        Assert.False(PaceCatalog.Matches(101, 100));
+        Assert.Equal(4, PaceCatalog.Click.Length);
+        Assert.Equal(3, PaceCatalog.Typer.Length);
+    }
+
+    [Fact]
+    public void WeekStripUsesTheDayNumberAndKeepsTheDetail()
+    {
+        var days = StatsBook.LastDays(
+            [new DayStat { Date = "2026-11-05", Clicks = 4, Typed = 2, PresenceSeconds = 9 }],
+            new DateTime(2026, 11, 5),
+            7);
+        var cells = WeekStrip.Build(days);
+        Assert.Equal(7, cells.Count);
+        Assert.Equal("05", cells[^1].Day);
+        Assert.Equal(4, cells[^1].Clicks);
+        Assert.Equal("4/2/9s", cells[^1].Detail);
+        Assert.Equal(0, cells[0].Clicks);
+    }
+}
+
 public class SettingsUndoServiceTests
 {
     [Fact]

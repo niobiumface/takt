@@ -16,6 +16,7 @@ public partial class WizardWindow : Window
             if (DataContext is SettingsViewModel viewModel)
                 viewModel.CancelCapture();
         };
+        Loaded += (_, _) => ShowStep();
     }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
@@ -52,6 +53,7 @@ public partial class WizardWindow : Window
         StepHours.Visibility = _step == 1 ? Visibility.Visible : Visibility.Collapsed;
         StepPresence.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
         NextButton.Content = _step == 2 ? FindResource("Wizard.Finish") : FindResource("Wizard.Next");
+        StepLabel.Text = string.Format(FindResource("Wizard.Step") as string ?? "{0} / {1}", _step + 1, 3);
     }
 
     private void Finish()
