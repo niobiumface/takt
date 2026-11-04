@@ -52,6 +52,10 @@ If the clicker uses **cursor position** and the jiggler is in a **visible** move
 
 - Autosave settings on change (debounce ~400 ms)
 - Settings schema version is `AppSettings.CurrentVersion` (currently 2). `SettingsMigration` carries older files forward. Do not write settings next to the exe
+- Daily stats, when not opted out, are only `%AppData%\Takt\stats.json`
+- A crash handler releases held buttons and modifier keys, clears execution state, ends the 1 ms timer, logs, and offers a single restart (`--restarted` prevents a loop)
+- Mica (`DWMWA_SYSTEMBACKDROP_TYPE`) and rounded corners are requested on Windows 11 and ignored when the call fails, so Windows 10 keeps the solid theme background
+- The compact window, command palette, first-run wizard, and per-setting reset live in the WPF views. Engines still do not reference WPF controls. Placeholder expansion, deadlines, profile matching, stats totals, diagnosis marks, and undo snapshots are plain helpers with tests
 - `dotnet publish -c Release -r win-x64 --self-contained false` is the default small build
 - Document self-contained as an optional larger build
 - DPI is `PerMonitorV2` via `ApplicationHighDpiMode` in the csproj and `SetHighDpiMode` before the first window. The .NET 8 SDK warns (WFAC010) if `app.manifest` repeats that declaration, so the manifest does not duplicate it. Pickers are one window per monitor, sized with that monitor's DPI

@@ -75,6 +75,32 @@ internal static class SystemQuery
         return null;
     }
 
+    public static bool PolicyForcesScreensaver()
+    {
+        foreach (var root in new[] { Microsoft.Win32.Registry.CurrentUser, Microsoft.Win32.Registry.LocalMachine })
+        {
+            if (ReadString(root, @"Software\Policies\Microsoft\Windows\Control Panel\Desktop", "ScreenSaveActive") == "1")
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool ClientAreaAnimationEnabled()
+    {
+        try
+        {
+            var value = 0;
+            if (!Win32.SystemParametersInfo(0x1042, 0, ref value, 0))
+                return true;
+            return value != 0;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
     private static int? ReadDword(Microsoft.Win32.RegistryKey root, string path, string name)
     {
         try

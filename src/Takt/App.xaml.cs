@@ -1,6 +1,8 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 using Takt.Services;
 using Takt.ViewModels;
+using Takt.Views;
 
 namespace Takt;
 
@@ -8,10 +10,13 @@ public partial class App : Application
 {
     private Mutex? _mutex;
     private bool _mutexOwned;
+    private bool _restarted;
+    private bool _restartOffered;
     internal AppServices? Services { get; private set; }
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _restarted = e.Args.Any(arg => string.Equals(arg, "--restarted", StringComparison.OrdinalIgnoreCase));
         _mutex = new Mutex(true, "Takt.SingleInstance", out _mutexOwned);
         if (!_mutexOwned)
         {
@@ -24,17 +29,21 @@ public partial class App : Application
         {
             AppLog.Error("UI exception", args.Exception);
             args.Handled = true;
+            OfferRestart();
         };
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
             if (args.ExceptionObject is Exception exception)
                 AppLog.Error("Unhandled exception", exception);
+            SafetyNet.Release(Services);
         };
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
             AppLog.Error("Unobserved task", args.Exception);
             args.SetObserved();
+            SafetyNet.Release(Services);
         };
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += OnUserPreference;
 
         System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
 
@@ -60,12 +69,57 @@ public partial class App : Application
             Services.Presence.Start();
 
         window.Show();
+        if (!Services.Settings.Current.General.WizardCompleted)
+            new WizardWindow { Owner = window, DataContext = viewModel }.ShowDialog();
         if (Services.Settings.Current.General.StartMinimized)
             window.Hide();
     }
 
+    private void OnUserPreference(object? sender, Microsoft.Win32.UserPreferenceChangedEventArgs e)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (Services is null)
+                return;
+            if (Services.Settings.Current.Appearance.Theme == Models.ThemeMode.System)
+                Services.Theme.Apply(Services.Settings.Current);
+        });
+    }
+
+    private void OfferRestart()
+    {
+        SafetyNet.Release(Services);
+        if (_restartOffered)
+            return;
+        _restartOffered = true;
+        if (_restarted)
+        {
+            MessageBox.Show(
+                "Takt hit an error again and will not restart a second time.",
+                "Takt",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        var answer = MessageBox.Show(
+            "Takt hit an error. Restart it now? Held keys and buttons were released.",
+            "Takt",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (answer != MessageBoxResult.Yes)
+            return;
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(exe))
+            return;
+        Process.Start(exe, "--restarted");
+        Shutdown();
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnUserPreference;
+        SafetyNet.Release(Services);
         Services?.Dispose();
         if (_mutexOwned)
             _mutex?.ReleaseMutex();

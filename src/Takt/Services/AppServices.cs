@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Threading;
 using Takt.Helpers;
 using Takt.Models;
@@ -19,16 +20,29 @@ internal sealed class AppServices : IDisposable
     public TrayService Tray { get; }
     public ThemeService Theme { get; } = new();
     public LocalizationService Localization { get; } = new();
+    public StatsStore Stats { get; } = new();
+
+    public event Action<string>? ProfileRequested;
+    public event Action? TimerDue;
+    public event Action<string>? DeadlineChanged;
+
+    private readonly Dispatcher _dispatcher;
+    private readonly RunClockGate _clock = new();
+    private readonly ProfileSwitchGate _profiles = new();
+    private readonly CancellationTokenSource _housekeeping = new();
+    private DateTime _presenceTick = DateTime.UtcNow;
 
     public AppServices(Dispatcher dispatcher)
     {
+        _dispatcher = dispatcher;
         Settings = new SettingsService();
         Settings.Load();
+        Stats.Load();
         Activity = new UserActivityMonitor();
         Jiggler = new JigglerEngine(Settings.Current.Jiggler, Activity, dispatcher);
         Clicker = new ClickerEngine(Settings.Current.Clicker, dispatcher);
         Macro = new MacroEngine(Settings.Current.Macro, Activity, dispatcher);
-        Typer = new TyperEngine(Settings.Current.Typer, dispatcher);
+        Typer = new TyperEngine(Settings.Current.Typer, dispatcher, ReadClipboard);
         Presence = new PresenceEngine(Settings.Current.Presence, Activity, dispatcher);
         Failsafe = new FailsafeMonitor(Settings.Current, Panic);
         Hotkeys = new HotkeyService(Settings.Current.Hotkeys);
@@ -59,6 +73,29 @@ internal sealed class AppServices : IDisposable
             if (e.PropertyName is nameof(PresenceEngine.IsEnabled))
                 UpdateArmed();
         };
+        _ = HousekeepingAsync(_housekeeping.Token);
+    }
+
+    public void StopForTimer()
+    {
+        Jiggler.Stop();
+        Clicker.Stop();
+        Macro.Stop();
+        Typer.Stop();
+        Presence.Stop();
+        TimerDue?.Invoke();
+    }
+
+    public void ApplyNamedProfile(string name)
+    {
+        var profile = Settings.Current.Profiles.FirstOrDefault(item =>
+            string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (profile is null)
+            return;
+        ProfileApplicator.Apply(profile, Settings.Current);
+        Theme.Apply(Settings.Current);
+        Hotkeys.Rebind();
+        ProfileRequested?.Invoke(name);
     }
 
     public event Action? Stopped;
@@ -76,6 +113,16 @@ internal sealed class AppServices : IDisposable
 
     public void Dispose()
     {
+        _housekeeping.Cancel();
+        try
+        {
+            Stats.Flush();
+        }
+        catch
+        {
+            AppLog.Error("Stats file could not be saved.");
+        }
+
         Failsafe.Dispose();
         Activity.Dispose();
         Jiggler.Dispose();
@@ -91,4 +138,66 @@ internal sealed class AppServices : IDisposable
 
     private void UpdateArmed() =>
         Failsafe.IsArmed = Jiggler.IsEnabled || Clicker.IsEnabled || Typer.IsEnabled || Presence.IsEnabled;
+
+    private static string ReadClipboard()
+    {
+        try
+        {
+            return Clipboard.ContainsText() ? Clipboard.GetText() : "";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    private bool AnyRunning() =>
+        Jiggler.IsEnabled || Clicker.IsEnabled || Typer.IsEnabled || Presence.IsEnabled || Macro.IsPlaying || Macro.IsRecording;
+
+    private async Task HousekeepingAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(250, token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            var general = Settings.Current.General;
+            var now = DateTime.Now;
+            var running = AnyRunning();
+            var due = _clock.Tick(running, now, general.StopAfterMinutes, general.StopAtTime);
+            var label = running ? _clock.Label(now, general.StopAfterMinutes, general.StopAtTime) : "";
+            var rules = general.AppRules.Select(rule => (rule.ProcessName, rule.ProfileName, rule.Enabled)).ToArray();
+            var profile = _profiles.Tick(general.AutoProfile, ForegroundProcess.TryGetName(), rules, DateTime.UtcNow, general.ProfileDebounceMs);
+            if (!general.StatsOptOut && Presence.IsEnabled && Presence.Status == EngineStatus.Running &&
+                DateTime.UtcNow - _presenceTick >= TimeSpan.FromSeconds(1))
+            {
+                _presenceTick = DateTime.UtcNow;
+                Stats.Add(now, 0, 0, 1);
+            }
+
+            try
+            {
+                Stats.Flush();
+            }
+            catch
+            {
+                AppLog.Error("Stats file could not be saved.");
+            }
+
+            _ = _dispatcher.BeginInvoke(() =>
+            {
+                DeadlineChanged?.Invoke(label);
+                if (due)
+                    StopForTimer();
+                if (!string.IsNullOrEmpty(profile))
+                    ApplyNamedProfile(profile);
+            });
+        }
+    }
 }

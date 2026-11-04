@@ -1,0 +1,26 @@
+<Window x:Class="Takt.Views.CompactWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Takt"
+        Width="240"
+        SizeToContent="Height"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Closing="OnClosing"
+        LocationChanged="OnMoved">
+    <StackPanel Margin="12">
+        <DockPanel Margin="0,0,0,8">
+            <Ellipse DockPanel.Dock="Right" Width="8" Height="8" Margin="8,0,0,0"
+                     Fill="{Binding ActivityHex, Converter={StaticResource HexToBrush}}" />
+            <TextBlock Text="{DynamicResource Compact.Title}" FontWeight="SemiBold" />
+        </DockPanel>
+        <CheckBox Content="{DynamicResource Card.Jiggler}" IsChecked="{Binding JigglerOn, Mode=TwoWay}" Margin="0,2" ToolTip="{DynamicResource Tip.Jiggler}" />
+        <CheckBox Content="{DynamicResource Card.Clicker}" IsChecked="{Binding ClickerOn, Mode=TwoWay}" Margin="0,2" ToolTip="{DynamicResource Tip.Clicker}" />
+        <CheckBox Content="{DynamicResource Card.Typer}" IsChecked="{Binding TyperOn, Mode=TwoWay}" Margin="0,2" ToolTip="{DynamicResource Tip.Typer}" />
+        <CheckBox Content="{DynamicResource Presence.Toggle}" IsChecked="{Binding PresenceOn, Mode=TwoWay}" Margin="0,2" ToolTip="{DynamicResource Tip.Presence}" />
+        <TextBlock Text="{Binding DeadlineText}" Style="{StaticResource HintText}" Margin="0,8,0,0" />
+    </StackPanel>
+</Window>

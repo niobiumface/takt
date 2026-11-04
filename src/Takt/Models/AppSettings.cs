@@ -24,21 +24,25 @@ public partial class ClickPoint : ObservableObject
 {
     [ObservableProperty] private int _x;
     [ObservableProperty] private int _y;
+    [ObservableProperty] private int _delayMs;
+    [ObservableProperty] private bool _customButton;
+    [ObservableProperty] private ClickButton _button = ClickButton.Left;
 }
 
-public partial class MacroEvent
+public partial class MacroEvent : ObservableObject
 {
-    public int DelayMs { get; set; }
-    public int X { get; set; }
-    public int Y { get; set; }
-    public string Kind { get; set; } = "move";
-    public string Button { get; set; } = "Left";
-    public int WheelDelta { get; set; }
+    [ObservableProperty] private int _delayMs;
+    [ObservableProperty] private int _x;
+    [ObservableProperty] private int _y;
+    [ObservableProperty] private string _kind = "move";
+    [ObservableProperty] private string _button = "Left";
+    [ObservableProperty] private int _wheelDelta;
 }
 
 public partial class MacroSettings : ObservableObject
 {
     [ObservableProperty] private ObservableCollection<MacroEvent> _events = new();
+    [ObservableProperty] private int _loopCount = 1;
 }
 
 public partial class ActivityProfile : ObservableObject
@@ -69,6 +73,9 @@ public partial class TyperSettings : ObservableObject
     [ObservableProperty] private int _punctuationPauseMs = 120;
     [ObservableProperty] private bool _simulateTypos;
     [ObservableProperty] private int _typoPercent = 2;
+    [ObservableProperty] private string _dateFormat = "yyyy-MM-dd";
+    [ObservableProperty] private string _timeFormat = "HH:mm";
+    [ObservableProperty] private string _dateTimeFormat = "yyyy-MM-dd HH:mm";
     [ObservableProperty] private int _startDelayMs;
     [ObservableProperty] private RepeatMode _repeatMode = RepeatMode.Count;
     [ObservableProperty] private int _repeatCount = 1;
@@ -165,6 +172,7 @@ public partial class HotkeySettings : ObservableObject
     [ObservableProperty] private HotkeyBinding _togglePresence = HotkeyBinding.Vk(0x7C);
     [ObservableProperty] private HotkeyBinding _recordMacro = HotkeyBinding.Vk(0x7B, 0x0002);
     [ObservableProperty] private HotkeyBinding _showWindow = HotkeyBinding.Vk(0x54, 0x0001 | 0x0002);
+    [ObservableProperty] private HotkeyBinding _toggleCompact = HotkeyBinding.Vk(0x4D, 0x0002 | 0x0004);
 }
 
 public partial class AppearanceSettings : ObservableObject
@@ -193,6 +201,22 @@ public partial class GeneralSettings : ObservableObject
     [ObservableProperty] private bool _notifyOnHotkey;
     [ObservableProperty] private LogLevel _logLevel = LogLevel.Info;
     [ObservableProperty] private CloseBehavior _closeBehavior = CloseBehavior.ToTray;
+    [ObservableProperty] private bool _wizardCompleted;
+    [ObservableProperty] private bool _statsOptOut;
+    [ObservableProperty] private int _stopAfterMinutes;
+    [ObservableProperty] private string _stopAtTime = "";
+    [ObservableProperty] private double? _compactLeft;
+    [ObservableProperty] private double? _compactTop;
+    [ObservableProperty] private bool _autoProfile;
+    [ObservableProperty] private int _profileDebounceMs = 800;
+    [ObservableProperty] private ObservableCollection<AppRule> _appRules = new();
+}
+
+public partial class AppRule : ObservableObject
+{
+    [ObservableProperty] private bool _enabled = true;
+    [ObservableProperty] private string _processName = "";
+    [ObservableProperty] private string _profileName = "";
 }
 
 public partial class WorkScheduleSettings : ObservableObject

@@ -11,6 +11,13 @@
         KeyDown="OnKeyDown"
         MouseLeftButtonDown="OnClick">
     <Grid>
+        <Canvas Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+            <Line X1="0" Y1="20" X2="16" Y2="20" Stroke="White" StrokeThickness="1.5" />
+            <Line X1="24" Y1="20" X2="40" Y2="20" Stroke="White" StrokeThickness="1.5" />
+            <Line X1="20" Y1="0" X2="20" Y2="16" Stroke="White" StrokeThickness="1.5" />
+            <Line X1="20" Y1="24" X2="20" Y2="40" Stroke="White" StrokeThickness="1.5" />
+            <Ellipse Canvas.Left="17" Canvas.Top="17" Width="6" Height="6" Stroke="White" StrokeThickness="1.5" />
+        </Canvas>
         <TextBlock Text="{DynamicResource Picker.Hint}"
                    Foreground="White"
                    FontSize="18"

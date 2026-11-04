@@ -16,7 +16,8 @@ internal enum HotkeyAction
     ToggleTyper = 7,
     TogglePresence = 8,
     ShowWindow = 9,
-    RecordMacro = 10
+    RecordMacro = 10,
+    ToggleCompact = 11
 }
 
 internal sealed class HotkeyService : IDisposable
@@ -29,6 +30,7 @@ internal sealed class HotkeyService : IDisposable
     private nint _hwnd;
     private bool _suspended;
     private readonly HashSet<int> _registered = [];
+    public int RejectedCount { get; private set; }
 
     public HotkeyService(HotkeySettings settings) => _settings = settings;
 
@@ -93,6 +95,7 @@ internal sealed class HotkeyService : IDisposable
 
     private void TryRegisterAll()
     {
+        RejectedCount = 0;
         var seen = new HashSet<(int Modifiers, int VirtualKey)>();
         TryRegister(HotkeyAction.ToggleJiggler, _settings.ToggleJiggler, seen);
         TryRegister(HotkeyAction.ToggleClicker, _settings.ToggleClicker, seen);
@@ -104,6 +107,7 @@ internal sealed class HotkeyService : IDisposable
         TryRegister(HotkeyAction.TogglePresence, _settings.TogglePresence, seen);
         TryRegister(HotkeyAction.ShowWindow, _settings.ShowWindow, seen);
         TryRegister(HotkeyAction.RecordMacro, _settings.RecordMacro, seen);
+        TryRegister(HotkeyAction.ToggleCompact, _settings.ToggleCompact, seen);
     }
 
     private void TryRegister(HotkeyAction action, HotkeyBinding binding, HashSet<(int Modifiers, int VirtualKey)> seen)
@@ -113,6 +117,7 @@ internal sealed class HotkeyService : IDisposable
 
         if (!seen.Add((binding.Modifiers, binding.VirtualKey)))
         {
+            RejectedCount++;
             RegistrationFailed?.Invoke(action.ToString());
             return;
         }
@@ -124,6 +129,7 @@ internal sealed class HotkeyService : IDisposable
             return;
         }
 
+        RejectedCount++;
         RegistrationFailed?.Invoke(action.ToString());
     }
 

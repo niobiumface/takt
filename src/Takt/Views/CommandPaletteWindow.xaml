@@ -1,0 +1,26 @@
+<Window x:Class="Takt.Views.CommandPaletteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource Palette.Title}"
+        Width="440" Height="380"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        PreviewKeyDown="OnPreviewKeyDown">
+    <DockPanel Margin="12">
+        <TextBox x:Name="QueryBox" DockPanel.Dock="Top" Margin="0,0,0,8"
+                 TextChanged="OnQueryChanged"
+                 ToolTip="{DynamicResource Tip.Palette}" />
+        <ListBox x:Name="Results" MouseDoubleClick="OnPick" KeyDown="OnListKey">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="0,2">
+                        <TextBlock Text="{Binding Title}" />
+                        <TextBlock Text="{Binding Section}" Style="{StaticResource HintText}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

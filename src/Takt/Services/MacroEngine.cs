@@ -115,12 +115,23 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
         var cancelled = false;
         try
         {
-            foreach (var item in _settings.Events.ToArray())
+            var events = _settings.Events.ToArray();
+            var loops = Math.Max(1, _settings.LoopCount);
+            for (var pass = 0; pass < loops; pass++)
             {
-                token.ThrowIfCancellationRequested();
-                if (item.DelayMs > 0)
-                    await Task.Delay(Math.Min(item.DelayMs, 2000), token);
-                Play(item);
+                foreach (var item in events)
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (item.DelayMs > 0)
+                    {
+                        var cap = MacroEdit.IsWait(item.Kind) ? 60_000 : 2_000;
+                        await Task.Delay(Math.Min(item.DelayMs, cap), token);
+                    }
+
+                    if (MacroEdit.IsWait(item.Kind))
+                        continue;
+                    Play(item);
+                }
             }
         }
         catch (OperationCanceledException)

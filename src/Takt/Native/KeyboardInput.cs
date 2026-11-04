@@ -13,6 +13,15 @@ internal static class KeyboardInput
     public static bool TapVirtualKey(ushort virtualKey) =>
         Key(virtualKey, up: false) && Key(virtualKey, up: true);
 
+    public static void ReleaseModifiers()
+    {
+        Key(0x10, up: true);
+        Key(0x11, up: true);
+        Key(0x12, up: true);
+        Key(0x5B, up: true);
+        Key(0x5C, up: true);
+    }
+
     private static bool Key(ushort virtualKey, bool up)
     {
         var input = new Win32.INPUT

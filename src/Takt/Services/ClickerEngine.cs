@@ -20,6 +20,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     private int _faultLogged;
     private int _sequenceIndex;
     private bool _timerHeld;
+    private ClickButton _stepButton;
+    private int _pointDelay;
 
     public event Action? CompletedNaturally;
 
@@ -85,6 +87,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         Publish(false, EngineStatus.Stopped, PauseReason.None, fault: null);
     }
 
+    public void ReleaseHeldButton() => ReleaseHold();
+
     public void Dispose() => Stop();
 
     private async Task RunAsync(CancellationTokenSource cts, int generation)
@@ -115,7 +119,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                 if (IsFinished(started, clicks))
                     break;
 
-                if (!MoveIfNeeded() || !MouseInput.Click(_settings.Button, _settings.Action))
+                if (!MoveIfNeeded() || !MouseInput.Click(_stepButton, _settings.Action))
                     NoteFault();
 
                 clicks++;
@@ -129,10 +133,12 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                     await Task.Delay(Math.Max(1, _settings.BurstPauseMs), token);
                 }
 
-                var delay = IntervalCalculator.NextDelayMs(
-                    _settings.IntervalMs,
-                    ClickerTiming.JitterMilliseconds(_settings.IntervalMs, _settings.JitterMs, _settings.JitterPercent),
-                    _rng);
+                var delay = _pointDelay > 0
+                    ? _pointDelay
+                    : IntervalCalculator.NextDelayMs(
+                        _settings.IntervalMs,
+                        ClickerTiming.JitterMilliseconds(_settings.IntervalMs, _settings.JitterMs, _settings.JitterPercent),
+                        _rng);
                 await Task.Delay(delay, token);
             }
         }
@@ -171,12 +177,11 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             _settings.DurationSeconds,
             _settings.IntervalMs,
             _settings.HoldDurationMs);
-        var button = _settings.Button;
         for (var i = 0; i < plan.Cycles; i++)
         {
             token.ThrowIfCancellationRequested();
             MoveIfNeeded();
-            Press(button);
+            Press(_stepButton);
             if (plan.UntilCancelled)
                 await Task.Delay(Timeout.Infinite, token);
             else
@@ -203,6 +208,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
     private bool MoveIfNeeded()
     {
+        _stepButton = _settings.Button;
+        _pointDelay = 0;
         switch (_settings.PositionMode)
         {
             case ClickPositionMode.Fixed:
@@ -213,6 +220,9 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                     return true;
                 var index = _sequenceIndex % points.Count;
                 var point = points[index];
+                var step = SequencePlan.For(point, _settings.Button);
+                _stepButton = step.Button;
+                _pointDelay = step.UsePointDelay ? step.PointDelayMs : 0;
                 _sequenceIndex = ClickSequence.NextIndex(index, points.Count);
                 return MouseInput.MoveAbsolute(point.X, point.Y);
             default:

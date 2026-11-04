@@ -14,6 +14,10 @@ namespace Takt.ViewModels;
 internal partial class MainViewModel : ObservableObject
 {
     private readonly AppServices _services;
+    private bool _ignoreProfile;
+    private int _statsClicks;
+    private int _statsTyped;
+    private CompactWindow? _compact;
 
     public MainViewModel(AppServices services)
     {
@@ -37,6 +41,8 @@ internal partial class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(ClickerStatusText));
             if (e.PropertyName is nameof(ClickerEngine.ClickCount) or nameof(ClickerEngine.Status))
                 OnPropertyChanged(nameof(ClickerProgress));
+            if (e.PropertyName is nameof(ClickerEngine.ClickCount))
+                NoteClicks(Clicker.ClickCount);
             if (e.PropertyName is nameof(ClickerEngine.InputFault) && Clicker.InputFault)
                 ShowInputFault();
             if (e.PropertyName is nameof(ClickerEngine.IsEnabled) or nameof(ClickerEngine.Status))
@@ -58,7 +64,10 @@ internal partial class MainViewModel : ObservableObject
             if (e.PropertyName is nameof(TyperEngine.Status) or nameof(TyperEngine.PauseReason) or nameof(TyperEngine.IsEnabled))
                 OnPropertyChanged(nameof(TyperStatusText));
             if (e.PropertyName is nameof(TyperEngine.TypedCount))
+            {
                 OnPropertyChanged(nameof(TyperProgress));
+                NoteTyped(Typer.TypedCount);
+            }
             if (e.PropertyName is nameof(TyperEngine.InputFault) && Typer.InputFault)
                 ShowInputFault();
             if (e.PropertyName is nameof(TyperEngine.IsEnabled) or nameof(TyperEngine.Status))
@@ -91,7 +100,17 @@ internal partial class MainViewModel : ObservableObject
         _services.Tray.ToggleClickerRequested += () => ToggleClicker();
         _services.Tray.PanicRequested += Panic;
         _services.Tray.ExitRequested += ExitApp;
-        _services.Tray.SettingsRequested += () => OpenSettings();
+        _services.Tray.SettingsRequested += () => ShowSettings(null);
+        _services.Tray.ToggleCompactRequested += () => ToggleCompact();
+        _services.ProfileRequested += SelectProfileByName;
+        _services.DeadlineChanged += text =>
+        {
+            DeadlineText = text;
+            OnPropertyChanged(nameof(WeekSummary));
+        };
+        _services.TimerDue += () =>
+            StatusMessage = LocalizationService.Text("Status.Timer", "Stopped by the timer.");
+        _services.Settings.Changed += (_, _) => OnPropertyChanged(nameof(WeekSummary));
         _services.Settings.Current.Hotkeys.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleJiggler.PropertyChanged += (_, _) => RefreshHotkeyLabels();
         _services.Settings.Current.Hotkeys.ToggleClicker.PropertyChanged += (_, _) => RefreshHotkeyLabels();
@@ -116,11 +135,22 @@ internal partial class MainViewModel : ObservableObject
 
     partial void OnActiveProfileChanged(ActivityProfile? value)
     {
-        if (value is null)
+        if (value is null || _ignoreProfile)
             return;
         ProfileApplicator.Apply(value, Settings);
         _services.Theme.Apply(Settings);
         RefreshHotkeyLabels();
+    }
+
+    public void SelectProfileByName(string name)
+    {
+        var profile = Settings.Profiles.FirstOrDefault(item =>
+            string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (profile is null)
+            return;
+        _ignoreProfile = true;
+        ActiveProfile = profile;
+        _ignoreProfile = false;
     }
 
     partial void OnSelectedSnippetChanged(TextSnippet? value)
@@ -135,6 +165,20 @@ internal partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _panicHotkeyText = "F9";
     [ObservableProperty] private string _typerHotkeyText = "F11";
     [ObservableProperty] private string _statusMessage = "";
+    [ObservableProperty] private string _deadlineText = "";
+    [ObservableProperty] private string _activityHex = "#78808C";
+
+    public string WeekSummary
+    {
+        get
+        {
+            if (Settings.General.StatsOptOut)
+                return LocalizationService.Text("Stats.Off", "Local stats are off.");
+            var days = StatsBook.LastDays(_services.Stats.Days, DateTime.Today, 7);
+            return string.Join("   ", days.Select(day =>
+                $"{day.Date[5..]}  {day.Clicks}/{day.Typed}/{day.PresenceSeconds}s"));
+        }
+    }
 
     public bool JigglerOn
     {
@@ -296,23 +340,37 @@ internal partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings()
+    private void OpenSettings() => ShowSettings(null);
+
+    public void ShowSettings(string? section)
     {
-        foreach (Window window in Application.Current.Windows)
+        SettingsWindow? window = null;
+        foreach (Window open in Application.Current.Windows)
         {
-            if (window is SettingsWindow existing)
+            if (open is SettingsWindow existing)
             {
-                existing.Activate();
-                return;
+                window = existing;
+                break;
             }
         }
 
-        var settings = new SettingsWindow
+        if (window is null)
         {
-            Owner = Application.Current.MainWindow,
-            DataContext = new SettingsViewModel(_services, this)
-        };
-        settings.Show();
+            window = new SettingsWindow
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new SettingsViewModel(_services, this)
+            };
+            window.Show();
+        }
+
+        if (!string.IsNullOrWhiteSpace(section) && window.DataContext is SettingsViewModel vm)
+        {
+            vm.SelectedSection = section;
+            window.FocusSection(section);
+        }
+
+        window.Activate();
     }
 
     [RelayCommand]
@@ -486,6 +544,9 @@ internal partial class MainViewModel : ObservableObject
                 case HotkeyAction.RecordMacro:
                     ToggleRecord();
                     break;
+                case HotkeyAction.ToggleCompact:
+                    ToggleCompact();
+                    break;
             }
         });
     }
@@ -567,16 +628,81 @@ internal partial class MainViewModel : ObservableObject
 
     private void RefreshTray()
     {
-        var presence = TrayPresence.Off;
-        if (Macro.IsRecording || Macro.IsPlaying ||
-            Jiggler.Status == EngineStatus.Running || Clicker.Status == EngineStatus.Running ||
-            Typer.Status == EngineStatus.Running || Presence.Status == EngineStatus.Running)
-            presence = TrayPresence.Active;
-        else if (Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused ||
-                 Typer.Status == EngineStatus.Paused || Presence.Status == EngineStatus.Paused)
-            presence = TrayPresence.Paused;
-        var detail = Presence.Status == EngineStatus.Running ? PresenceStatusText : null;
-        _services.Tray.Refresh(Settings.Appearance.AccentHex, presence, detail);
+        var tone = ActivityTonePicker.Choose(
+            Typer.Status == EngineStatus.Running,
+            Clicker.Status == EngineStatus.Running,
+            Jiggler.Status == EngineStatus.Running || Presence.Status == EngineStatus.Running || Macro.IsPlaying || Macro.IsRecording,
+            Jiggler.Status == EngineStatus.Paused || Clicker.Status == EngineStatus.Paused ||
+            Typer.Status == EngineStatus.Paused || Presence.Status == EngineStatus.Paused);
+        ActivityHex = ActivityTonePicker.Hex(tone, Settings.Appearance.AccentHex);
+        var detail = string.IsNullOrWhiteSpace(DeadlineText) ? PresenceStatusText : DeadlineText;
+        _services.Tray.Refresh(Settings.Appearance.AccentHex, tone, detail);
+        OnPropertyChanged(nameof(WeekSummary));
+    }
+
+    [RelayCommand]
+    private void ToggleCompact()
+    {
+        if (_compact is { IsVisible: true })
+        {
+            _compact.Hide();
+            return;
+        }
+
+        _compact ??= new CompactWindow { DataContext = this };
+        if (Settings.General.CompactLeft is double left && Settings.General.CompactTop is double top)
+        {
+            _compact.WindowStartupLocation = WindowStartupLocation.Manual;
+            _compact.Left = left;
+            _compact.Top = top;
+        }
+
+        _compact.Show();
+        _compact.Activate();
+    }
+
+    [RelayCommand]
+    private void OpenPalette()
+    {
+        var palette = new CommandPaletteWindow { Owner = Application.Current.MainWindow, DataContext = this };
+        palette.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void OpenWizard()
+    {
+        var wizard = new WizardWindow { Owner = Application.Current.MainWindow, DataContext = this };
+        wizard.ShowDialog();
+    }
+
+    public void NotifySummaries()
+    {
+        OnPropertyChanged(nameof(MacroSummary));
+        OnPropertyChanged(nameof(WeekSummary));
+        OnPropertyChanged(nameof(RecordLabel));
+        OnPropertyChanged(nameof(PlayLabel));
+    }
+
+    public void RememberCompact(double left, double top)
+    {
+        Settings.General.CompactLeft = left;
+        Settings.General.CompactTop = top;
+    }
+
+    private void NoteClicks(int count)
+    {
+        var delta = count >= _statsClicks ? count - _statsClicks : count;
+        _statsClicks = count;
+        if (delta > 0 && !Settings.General.StatsOptOut)
+            _services.Stats.Add(DateTime.Now, delta, 0, 0);
+    }
+
+    private void NoteTyped(int count)
+    {
+        var delta = count >= _statsTyped ? count - _statsTyped : count;
+        _statsTyped = count;
+        if (delta > 0 && !Settings.General.StatsOptOut)
+            _services.Stats.Add(DateTime.Now, 0, delta, 0);
     }
 
     private static void ShowMainWindow()

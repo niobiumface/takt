@@ -34,24 +34,37 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Interval, jitter, burst, start delay
 - Repeat forever, N clicks, or a duration
 - Click at the cursor, at one picked point, or through a sequence of points
+- Sequence points keep their own delay and button. The picker is a crosshair on each monitor; Esc cancels
 - Optional sound and tray notice when a run finishes
+- A timer can stop every running function after a number of minutes or at a clock time. The remaining time is in the status line
 
 **Typer**
 
 - Types text you enter or save as snippets. It does not read the keyboard
 - Characters per minute with variation, start delay, and repeat by count or duration
 - Unicode input via `SendInput`
+- Placeholders `{date}`, `{time}`, `{datetime}`, and `{clipboard}`, with formats in Settings
+- Import the clipboard or a `.txt` file into the text box. The typer still only sends text you put there
 
 **Macro**
 
 - Records your own pointer and plays it back in the open window
-- Stops with panic. Nothing is hidden and no target process is chosen
+- The editor lists steps so you can edit, delete, reorder, insert a delay, and set a loop count
+- Save or load that list as a JSON file
+- Stops with panic. Nothing is hidden and no target process is chosen. Recording starts only when you start it
 
 **App**
 
 - Global hotkeys (customizable), including while recording a new one
-- Tray icon that shows off, running, and paused
-- Named profiles in the same settings file
+- Tray icon colored by state: idle, paused, clicker, jiggler or presence, and typer
+- Compact always-on-top window with a start/stop switch per function, from the main window, the tray, or Ctrl+Shift+M. Its position is remembered
+- Named profiles in the same settings file, including optional switching when a foreground app you name is in front
+- Command palette with Ctrl+K
+- A skippable first-run wizard, reopened from Settings
+- Windows 11 Mica and rounded corners when the system supports them, with the normal theme background otherwise
+- Local daily stats in `%AppData%\Takt\stats.json` (clicks, typed characters, presence time), a 7-day view, reset, and an opt-out
+- A self-check for hotkeys, idle reset, and lock or screensaver policy. Policy is reported and not bypassed
+- On a crash, held buttons and keys are released, execution state and the 1 ms timer are restored, the error is logged, and one restart is offered
 - Start with Windows, start minimized, always on top
 - Dark/light theme and accent color, dark title bar in the dark theme
 - English by default; German under Settings → Appearance → Language
@@ -59,15 +72,17 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 
 ## Settings
 
-The gear button and the tray menu open a settings window. A sidebar lists seven sections, and the search box filters them. Changes apply immediately and are saved in `%AppData%\Takt\settings.json` (never next to the exe). Each value can be reset, and the whole file can be exported, imported, or restored after a confirmation.
+The gear button and the tray menu open a settings window. A sidebar lists the sections, and the search box filters them. Ctrl+K on the main window jumps to an action or a section. Changes apply immediately and are saved in `%AppData%\Takt\settings.json` (never next to the exe). Each value has its own reset, Ctrl+Z undoes the last saved change, and the whole file can be exported, imported, or restored after a confirmation. Tooltips explain the controls. If the theme is System, Takt follows a Windows theme change while it is open.
 
 - **General:** light, dark, or Windows theme, accent, German or English, autostart, start minimized, close to tray or exit, always on top, profiles.
 - **Hotkeys:** record, clear, or reset each shortcut. Duplicates and shortcuts Windows refuses are shown on the row.
 - **Clicker:** interval, jitter percent, button including X1/X2, single or double, hold duration, count, start delay, failsafe corner, precise timing.
 - **Jiggler and presence:** interval 5–120 s, movement (invisible nudge, small move, small circle), fallback key F15, Shift, Ctrl, or off, screensaver, display, and sleep separately, pause while you are active.
 - **Working hours:** several windows per weekday, days off, and outside those hours pause, stop, or only show a hint. Presence and the jiggler follow it.
-- **Typer:** speed, jitter, a pause after punctuation, optional typos that are corrected, start delay, repeat count, and saved snippets.
-- **Notifications:** end sound, tray notices, log level, open the log folder, update check.
+- **Typer:** speed, jitter, a pause after punctuation, optional typos that are corrected, start delay, repeat count, placeholder formats, and saved snippets.
+- **Macro:** loop count, step list, inserted delays, save and load.
+- **Notifications:** end sound, tray notices, log level, open the log folder, update check, undo.
+- **Stats and checks:** stop timer, app rules, 7-day stats, self-check.
 
 Profiles such as office and home store a full copy of these settings. Switch them from the main window or from settings. Older settings files are migrated to version 2. A status you set yourself in Teams is not changed, and Takt does not bypass a group-policy lock.
 - Optional update check against GitHub releases. It does not run unless you turn it on
@@ -91,6 +106,7 @@ Takt is a desktop utility. Using an autoclicker in a game or online service may 
 | Pick click position | `F10` |
 | Toggle typer | `F11` |
 | Play macro | `F12` |
+| Compact window | `Ctrl+Shift+M` |
 
 Rebind them in Settings → Hotkeys.
 

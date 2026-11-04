@@ -65,6 +65,12 @@ internal partial class SettingsViewModel : ObservableObject
         SelectedProfile = null;
     }
 
+    [ObservableProperty] private MacroEvent? _selectedMacro;
+    [ObservableProperty] private ClickPoint? _selectedPoint;
+    [ObservableProperty] private string _diagnosisText = "";
+    [ObservableProperty] private string _ruleProcess = "";
+    [ObservableProperty] private string _ruleProfile = "";
+
     public AppSettings Settings { get; }
     public string[] AccentPresets => ThemeService.AccentPresets;
 
@@ -107,9 +113,6 @@ internal partial class SettingsViewModel : ObservableObject
 
     [RelayCommand]
     private void AddPoint() => _main.AddSequencePointCommand.Execute(null);
-
-    [RelayCommand]
-    private void RemovePoint(ClickPoint? point) => _main.RemoveSequencePointCommand.Execute(point);
 
     [RelayCommand]
     private void PickRadius() => _main.PickRadiusCommand.Execute(null);
@@ -162,6 +165,7 @@ internal partial class SettingsViewModel : ObservableObject
             "presence" => Settings.Hotkeys.TogglePresence,
             "record" => Settings.Hotkeys.RecordMacro,
             "show" => Settings.Hotkeys.ShowWindow,
+            "compact" => Settings.Hotkeys.ToggleCompact,
             _ => null
         };
 

@@ -10,16 +10,18 @@ internal sealed partial class TyperEngine : ObservableObject, IDisposable
 {
     private readonly TyperSettings _settings;
     private readonly Dispatcher _dispatcher;
+    private readonly Func<string?>? _clipboard;
     private readonly Random _rng = new();
     private readonly object _gate = new();
     private CancellationTokenSource? _cts;
     private int _generation;
     private int _faultLogged;
 
-    public TyperEngine(TyperSettings settings, Dispatcher dispatcher)
+    public TyperEngine(TyperSettings settings, Dispatcher dispatcher, Func<string?>? clipboard = null)
     {
         _settings = settings;
         _dispatcher = dispatcher;
+        _clipboard = clipboard;
     }
 
     public event Action? CompletedNaturally;
@@ -89,7 +91,23 @@ internal sealed partial class TyperEngine : ObservableObject, IDisposable
                 if (IsFinished(started, passes))
                     break;
 
-                var text = _settings.Text ?? "";
+                string clip;
+                try
+                {
+                    clip = _clipboard?.Invoke() ?? "";
+                }
+                catch
+                {
+                    clip = "";
+                }
+
+                var text = TyperTemplates.Expand(
+                    _settings.Text,
+                    DateTime.Now,
+                    clip,
+                    _settings.DateFormat,
+                    _settings.TimeFormat,
+                    _settings.DateTimeFormat);
                 if (text.Length == 0)
                 {
                     await Task.Delay(200, token);

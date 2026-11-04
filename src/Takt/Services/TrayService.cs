@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows;
+using Takt.Helpers;
 using Takt.Native;
 using WinForms = System.Windows.Forms;
 
@@ -27,7 +28,7 @@ internal sealed class TrayService : IDisposable
         };
         _icon.MouseClick += OnClick;
         RebuildMenu();
-        ApplyIcon("#5B8DEF", TrayPresence.Off);
+        ApplyIcon("#5B8DEF", ActivityTone.Idle);
     }
 
     public event Action? ShowWindowRequested;
@@ -36,17 +37,23 @@ internal sealed class TrayService : IDisposable
     public event Action? PanicRequested;
     public event Action? ExitRequested;
     public event Action? SettingsRequested;
+    public event Action? ToggleCompactRequested;
 
     public void Attach(Window window) => _ = window;
 
-    public void Refresh(string accentHex, TrayPresence presence, string? detail = null)
+    public void Refresh(string accentHex, TrayPresence presence, string? detail = null) =>
+        Refresh(accentHex, presence == TrayPresence.Paused ? ActivityTone.Paused : presence == TrayPresence.Active ? ActivityTone.Motion : ActivityTone.Idle, detail);
+
+    public void Refresh(string accentHex, ActivityTone tone, string? detail = null)
     {
-        ApplyIcon(accentHex, presence);
-        var state = presence switch
+        ApplyIcon(accentHex, tone);
+        var state = tone switch
         {
-            TrayPresence.Active => LocalizationService.Text("Tray.Active", "Active"),
-            TrayPresence.Paused => LocalizationService.Text("Tray.Paused", "Paused"),
-            _ => LocalizationService.Text("Tray.Idle", "Ready")
+            ActivityTone.Paused => LocalizationService.Text("Tray.Paused", "Paused"),
+            ActivityTone.Idle => LocalizationService.Text("Tray.Idle", "Ready"),
+            ActivityTone.Typer => LocalizationService.Text("Tray.ToneTyper", "Typer"),
+            ActivityTone.Clicker => LocalizationService.Text("Tray.ToneClicker", "Clicker"),
+            _ => LocalizationService.Text("Tray.Active", "Active")
         };
         var text = string.IsNullOrWhiteSpace(detail) ? $"Takt — {state}" : $"Takt — {detail}";
         _icon.Text = text.Length <= 127 ? text : text[..127];
@@ -74,6 +81,7 @@ internal sealed class TrayService : IDisposable
         menu.Items.Add(LocalizationService.Text("Tray.Settings", "Settings"), null, (_, _) => SettingsRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Jiggler", "Toggle jiggler"), null, (_, _) => ToggleJigglerRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Clicker", "Toggle clicker"), null, (_, _) => ToggleClickerRequested?.Invoke());
+        menu.Items.Add(LocalizationService.Text("Tray.Compact", "Compact window"), null, (_, _) => ToggleCompactRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Panic", "Stop all"), null, (_, _) => PanicRequested?.Invoke());
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add(LocalizationService.Text("Tray.Exit", "Exit"), null, (_, _) => ExitRequested?.Invoke());
@@ -88,24 +96,19 @@ internal sealed class TrayService : IDisposable
             ShowWindowRequested?.Invoke();
     }
 
-    private void ApplyIcon(string hex, TrayPresence presence)
+    private void ApplyIcon(string hex, ActivityTone tone)
     {
-        var color = ThemeService.Parse(hex);
+        var color = ThemeService.Parse(ActivityTonePicker.Hex(tone, hex));
         var accent = System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
-        var created = CreateIcon(accent, presence);
+        var created = CreateIcon(accent);
         _icon.Icon = created;
         _currentIcon?.Dispose();
         _currentIcon = created;
     }
 
-    private static Icon CreateIcon(Color accent, TrayPresence presence)
+    private static Icon CreateIcon(Color accent)
     {
-        var fillColor = presence switch
-        {
-            TrayPresence.Active => accent,
-            TrayPresence.Paused => Color.FromArgb(224, 178, 93),
-            _ => Color.FromArgb(120, 128, 140)
-        };
+        var fillColor = accent;
         using var bmp = new Bitmap(32, 32);
         using var g = Graphics.FromImage(bmp);
         g.SmoothingMode = SmoothingMode.AntiAlias;

@@ -86,6 +86,9 @@ public static class ProfileApplicator
         to.RepeatMode = from.RepeatMode;
         to.RepeatCount = from.RepeatCount;
         to.DurationSeconds = from.DurationSeconds;
+        to.DateFormat = string.IsNullOrWhiteSpace(from.DateFormat) ? "yyyy-MM-dd" : from.DateFormat;
+        to.TimeFormat = string.IsNullOrWhiteSpace(from.TimeFormat) ? "HH:mm" : from.TimeFormat;
+        to.DateTimeFormat = string.IsNullOrWhiteSpace(from.DateTimeFormat) ? "yyyy-MM-dd HH:mm" : from.DateTimeFormat;
         to.Snippets ??= new();
         to.Snippets.Clear();
         if (from.Snippets is null)
@@ -139,7 +142,14 @@ public static class ProfileApplicator
         if (from.Points is null)
             return;
         foreach (var point in from.Points)
-            to.Points.Add(new ClickPoint { X = point.X, Y = point.Y });
+            to.Points.Add(new ClickPoint
+            {
+                X = point.X,
+                Y = point.Y,
+                DelayMs = point.DelayMs,
+                CustomButton = point.CustomButton,
+                Button = point.Button
+            });
     }
 
     public static void CopyHotkeys(HotkeySettings from, HotkeySettings to)
@@ -154,10 +164,12 @@ public static class ProfileApplicator
         CopyBinding(from.TogglePresence, to.TogglePresence);
         CopyBinding(from.RecordMacro, to.RecordMacro);
         CopyBinding(from.ShowWindow, to.ShowWindow);
+        CopyBinding(from.ToggleCompact, to.ToggleCompact);
     }
 
     public static void CopyMacro(MacroSettings from, MacroSettings to)
     {
+        to.LoopCount = Math.Max(1, from.LoopCount);
         to.Events ??= new();
         to.Events.Clear();
         if (from.Events is null)
@@ -196,6 +208,27 @@ public static class ProfileApplicator
         to.LogLevel = from.LogLevel;
         to.CloseBehavior = from.CloseBehavior;
         to.FirstRunDismissed = from.FirstRunDismissed;
+        to.WizardCompleted = from.WizardCompleted;
+        to.StatsOptOut = from.StatsOptOut;
+        to.StopAfterMinutes = from.StopAfterMinutes;
+        to.StopAtTime = from.StopAtTime ?? "";
+        to.CompactLeft = from.CompactLeft;
+        to.CompactTop = from.CompactTop;
+        to.AutoProfile = from.AutoProfile;
+        to.ProfileDebounceMs = from.ProfileDebounceMs;
+        to.AppRules ??= new();
+        to.AppRules.Clear();
+        if (from.AppRules is null)
+            return;
+        foreach (var rule in from.AppRules)
+        {
+            to.AppRules.Add(new AppRule
+            {
+                Enabled = rule.Enabled,
+                ProcessName = rule.ProcessName,
+                ProfileName = rule.ProfileName
+            });
+        }
     }
 
     public static void CopyAppearance(AppearanceSettings from, AppearanceSettings to)

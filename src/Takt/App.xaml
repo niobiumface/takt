@@ -19,6 +19,7 @@
             <conv:HexEqualsConverter x:Key="HexEquals" />
             <BooleanToVisibilityConverter x:Key="BoolVis" />
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Icons.xaml" />
                 <ResourceDictionary Source="Themes/Dark.xaml" />
                 <ResourceDictionary Source="Themes/Controls.xaml" />
                 <ResourceDictionary Source="Resources/Strings.en.xaml" />

@@ -11,6 +11,18 @@ public static class SettingsNormalizer
         ApplyTyper(settings.Typer);
         ApplyPresence(settings.Presence);
         settings.General.FailsafeSize = SettingsLimits.ClampFailsafe(settings.General.FailsafeSize);
+        settings.General.StopAfterMinutes = Math.Clamp(settings.General.StopAfterMinutes, 0, 24 * 60);
+        settings.General.ProfileDebounceMs = Math.Clamp(settings.General.ProfileDebounceMs, 0, 60_000);
+        if (string.IsNullOrWhiteSpace(settings.General.StopAtTime) || !TimeSpan.TryParse(settings.General.StopAtTime, out _))
+            settings.General.StopAtTime = "";
+        if (settings.Macro is not null)
+            settings.Macro.LoopCount = Math.Clamp(settings.Macro.LoopCount, 1, 9_999);
+        if (string.IsNullOrWhiteSpace(settings.Typer.DateFormat))
+            settings.Typer.DateFormat = "yyyy-MM-dd";
+        if (string.IsNullOrWhiteSpace(settings.Typer.TimeFormat))
+            settings.Typer.TimeFormat = "HH:mm";
+        if (string.IsNullOrWhiteSpace(settings.Typer.DateTimeFormat))
+            settings.Typer.DateTimeFormat = "yyyy-MM-dd HH:mm";
     }
 
     public static void ApplyJiggler(JigglerSettings settings)

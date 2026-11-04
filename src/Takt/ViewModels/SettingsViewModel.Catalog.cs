@@ -43,6 +43,12 @@ internal sealed partial class HotkeyEditorRow : ObservableObject
     }
 }
 
+internal sealed class MacroFile
+{
+    public int LoopCount { get; set; } = 1;
+    public List<MacroEvent>? Events { get; set; }
+}
+
 internal sealed class SettingsNavItem
 {
     public required string Id { get; init; }
@@ -84,7 +90,9 @@ internal partial class SettingsViewModel
     [ObservableProperty] private bool _showJiggler;
     [ObservableProperty] private bool _showSchedule;
     [ObservableProperty] private bool _showTyper;
+    [ObservableProperty] private bool _showMacro;
     [ObservableProperty] private bool _showSystem;
+    [ObservableProperty] private bool _showHealth;
 
     partial void OnSearchTextChanged(string value) => UpdateSectionVisibility();
     partial void OnSelectedSectionChanged(string value) => UpdateSectionVisibility();
@@ -97,8 +105,10 @@ internal partial class SettingsViewModel
         Navigation.Add(new() { Id = "clicker", Title = T("Nav.Clicker", "Clicker"), Keywords = "intervall taste halten failsafe timing" });
         Navigation.Add(new() { Id = "jiggler", Title = T("Nav.Jiggler", "Jiggler"), Keywords = "präsenz f15 schlaf bildschirm" });
         Navigation.Add(new() { Id = "schedule", Title = T("Nav.Schedule", "Hours"), Keywords = "arbeitszeit feiertag pause fenster" });
-        Navigation.Add(new() { Id = "typer", Title = T("Nav.Typer", "Typer"), Keywords = "text tippen baustein tempo" });
+        Navigation.Add(new() { Id = "typer", Title = T("Nav.Typer", "Typer"), Keywords = "text tippen baustein tempo datum clipboard" });
+        Navigation.Add(new() { Id = "macro", Title = T("Nav.Macro", "Macro"), Keywords = "makro schritte wartezeit schleife json" });
         Navigation.Add(new() { Id = "system", Title = T("Nav.System", "System"), Keywords = "ton log update export" });
+        Navigation.Add(new() { Id = "health", Title = T("Nav.Health", "Stats"), Keywords = "statistik diagnose timer profil prozess" });
         Replace(CloseBehaviors,
             new(CloseBehavior.ToTray, T("Close.Tray", "Close to tray")),
             new(CloseBehavior.Exit, T("Close.Exit", "Exit")));
@@ -135,6 +145,7 @@ internal partial class SettingsViewModel
         AddRow("macro", nameof(HotkeyAction.ToggleMacro), T("Hotkey.Macro", "Play macro"), Settings.Hotkeys.ToggleMacro, 0x7B, 0);
         AddRow("panic", nameof(HotkeyAction.Panic), T("Hotkey.Panic", "Panic stop"), Settings.Hotkeys.Panic, 0x78, 0);
         AddRow("show", nameof(HotkeyAction.ShowWindow), T("Hotkey.Show", "Show or hide"), Settings.Hotkeys.ShowWindow, 0x54, 0x0003);
+        AddRow("compact", nameof(HotkeyAction.ToggleCompact), T("Hotkey.Compact", "Compact window"), Settings.Hotkeys.ToggleCompact, 0x4D, 0x0006);
         RefreshHotkeyRows(null);
     }
 
@@ -175,27 +186,8 @@ internal partial class SettingsViewModel
     [RelayCommand]
     private void ResetSetting(string? key)
     {
-        var defaults = new AppSettings();
-        switch (key)
-        {
-            case "theme": Settings.Appearance.Theme = defaults.Appearance.Theme; break;
-            case "accent": Settings.Appearance.AccentHex = defaults.Appearance.AccentHex; break;
-            case "language": Settings.Appearance.Language = defaults.Appearance.Language; break;
-            case "top": Settings.Appearance.AlwaysOnTop = defaults.Appearance.AlwaysOnTop; break;
-            case "autostart": Settings.General.StartWithWindows = defaults.General.StartWithWindows; break;
-            case "min": Settings.General.StartMinimized = defaults.General.StartMinimized; break;
-            case "close": Settings.General.CloseBehavior = defaults.General.CloseBehavior; break;
-            case "interval": Settings.Clicker.IntervalMs = defaults.Clicker.IntervalMs; break;
-            case "jitter": Settings.Clicker.JitterPercent = defaults.Clicker.JitterPercent; break;
-            case "hold": Settings.Clicker.HoldDurationMs = defaults.Clicker.HoldDurationMs; break;
-            case "precise": Settings.Clicker.PreciseTiming = defaults.Clicker.PreciseTiming; break;
-            case "presence-interval": Settings.Presence.IntervalMs = defaults.Presence.IntervalMs; break;
-            case "presence-jitter": Settings.Presence.JitterMs = defaults.Presence.JitterMs; break;
-            case "cpm": Settings.Typer.CharactersPerMinute = defaults.Typer.CharactersPerMinute; break;
-            case "typo": Settings.Typer.TypoPercent = defaults.Typer.TypoPercent; break;
-            case "punct": Settings.Typer.PunctuationPauseMs = defaults.Typer.PunctuationPauseMs; break;
-        }
-
+        if (!SettingReset.Apply(Settings, key))
+            return;
         _services.Theme.Apply(Settings);
         _main.RefreshHotkeyLabels();
     }
@@ -308,7 +300,9 @@ internal partial class SettingsViewModel
         ShowJiggler = SectionVisible("jiggler");
         ShowSchedule = SectionVisible("schedule");
         ShowTyper = SectionVisible("typer");
+        ShowMacro = SectionVisible("macro");
         ShowSystem = SectionVisible("system");
+        ShowHealth = SectionVisible("health");
     }
 
     private bool SectionVisible(string id)
@@ -333,6 +327,173 @@ internal partial class SettingsViewModel
             _main.RefreshHotkeyLabels();
             RefreshHotkeyRows(null);
         };
+    }
+
+    [RelayCommand]
+    private void UndoSettings()
+    {
+        if (!_services.Settings.TryUndo())
+            return;
+        _services.Theme.Apply(Settings);
+        _main.RefreshHotkeyLabels();
+        BuildCatalog();
+    }
+
+    [RelayCommand]
+    private void OpenWizard() => _main.OpenWizardCommand.Execute(null);
+
+    [RelayCommand]
+    private void RemovePoint()
+    {
+        if (SelectedPoint is not null)
+            _main.RemoveSequencePointCommand.Execute(SelectedPoint);
+    }
+
+    [RelayCommand]
+    private void ImportClipboard()
+    {
+        try
+        {
+            if (System.Windows.Clipboard.ContainsText())
+                Settings.Typer.Text = System.Windows.Clipboard.GetText();
+        }
+        catch
+        {
+            DiagnosisText = T("Typer.ClipboardFail", "Clipboard could not be read.");
+        }
+    }
+
+    [RelayCommand]
+    private void ImportTextFile()
+    {
+        var dialog = new OpenFileDialog { Filter = "Text|*.txt" };
+        if (dialog.ShowDialog() != true)
+            return;
+        Settings.Typer.Text = File.ReadAllText(dialog.FileName);
+    }
+
+    [RelayCommand]
+    private void SaveMacroFile()
+    {
+        var dialog = new SaveFileDialog { Filter = "JSON|*.json", FileName = "takt-macro.json" };
+        if (dialog.ShowDialog() != true)
+            return;
+        var payload = new MacroFile { LoopCount = Settings.Macro.LoopCount, Events = Settings.Macro.Events.ToList() };
+        File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(payload, SettingsService.JsonOptions));
+    }
+
+    [RelayCommand]
+    private void LoadMacroFile()
+    {
+        var dialog = new OpenFileDialog { Filter = "JSON|*.json" };
+        if (dialog.ShowDialog() != true)
+            return;
+        var loaded = JsonSerializer.Deserialize<MacroFile>(File.ReadAllText(dialog.FileName), SettingsService.JsonOptions);
+        if (loaded?.Events is null)
+            return;
+        Settings.Macro.LoopCount = Math.Max(1, loaded.LoopCount);
+        Settings.Macro.Events.Clear();
+        foreach (var item in loaded.Events)
+            Settings.Macro.Events.Add(item);
+        _main.NotifySummaries();
+    }
+
+    [RelayCommand]
+    private void InsertDelay()
+    {
+        var wait = MacroEdit.Wait(500);
+        var index = SelectedMacro is null ? -1 : Settings.Macro.Events.IndexOf(SelectedMacro);
+        if (index >= 0)
+            Settings.Macro.Events.Insert(index + 1, wait);
+        else
+            Settings.Macro.Events.Add(wait);
+        SelectedMacro = wait;
+    }
+
+    [RelayCommand]
+    private void MoveMacro(string? direction)
+    {
+        if (SelectedMacro is null)
+            return;
+        var index = Settings.Macro.Events.IndexOf(SelectedMacro);
+        MacroEdit.Move(Settings.Macro.Events, index, direction == "up" ? -1 : 1);
+    }
+
+    [RelayCommand]
+    private void DeleteMacroStep()
+    {
+        if (SelectedMacro is null)
+            return;
+        Settings.Macro.Events.Remove(SelectedMacro);
+        SelectedMacro = null;
+    }
+
+    [RelayCommand]
+    private void MovePoint(string? direction)
+    {
+        if (SelectedPoint is null)
+            return;
+        var index = Settings.Clicker.Points.IndexOf(SelectedPoint);
+        MacroEdit.Move(Settings.Clicker.Points, index, direction == "up" ? -1 : 1);
+    }
+
+    [RelayCommand]
+    private void AddRule()
+    {
+        if (string.IsNullOrWhiteSpace(RuleProcess) || string.IsNullOrWhiteSpace(RuleProfile))
+            return;
+        Settings.General.AppRules.Add(new AppRule
+        {
+            Enabled = true,
+            ProcessName = RuleProcess.Trim(),
+            ProfileName = RuleProfile.Trim()
+        });
+        RuleProcess = "";
+        RuleProfile = "";
+    }
+
+    [RelayCommand]
+    private void RemoveRule(AppRule? rule)
+    {
+        if (rule is not null)
+            Settings.General.AppRules.Remove(rule);
+    }
+
+    [RelayCommand]
+    private void ResetStats()
+    {
+        _services.Stats.Reset();
+        _main.NotifySummaries();
+    }
+
+    [RelayCommand]
+    private void RunDiagnosis()
+    {
+        bool? idle = null;
+        try
+        {
+            var beforeOk = Takt.Native.SystemQuery.TryGetIdleTime(out var before);
+            Takt.Native.MouseInput.PulseRelative(1, 0);
+            Takt.Native.MouseInput.PulseRelative(-1, 0);
+            System.Threading.Thread.Sleep(60);
+            var afterOk = Takt.Native.SystemQuery.TryGetIdleTime(out var after);
+            idle = beforeOk && afterOk ? IdleVerification.InputRegistered(after) && after <= before : null;
+        }
+        catch
+        {
+            idle = null;
+        }
+
+        var duplicates = HotkeyConflicts.DuplicateIds(HotkeyRows.Select(row => (row.FailureName, row.Binding.Modifiers, row.Binding.VirtualKey))).Count;
+        var checks = new[]
+        {
+            DiagnosisReport.Idle(idle),
+            DiagnosisReport.Hotkeys(duplicates, _services.Hotkeys.RejectedCount),
+            DiagnosisReport.LockPolicy(Takt.Native.SystemQuery.PolicyLockTimeoutSeconds()),
+            DiagnosisReport.Screensaver(Takt.Native.SystemQuery.PolicyForcesScreensaver())
+        };
+        DiagnosisText = string.Join(Environment.NewLine, checks.Select(check =>
+            $"{check.Mark.ToString().ToUpperInvariant()}  {check.Explanation}"));
     }
 
     private static AppSettings ToSnapshot(ActivityProfile profile)
