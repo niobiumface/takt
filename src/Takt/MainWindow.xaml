@@ -71,7 +71,9 @@
                 </DockPanel>
             </Border>
             <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource HintText}" TextWrapping="Wrap" />
+            <Button Style="{StaticResource GhostButton}" Command="{Binding TogglePauseCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" Content="{Binding PauseLabel}" ToolTip="{DynamicResource Tip.Pause}" />
             <TextBlock Text="{Binding DeadlineText}" Style="{StaticResource HintText}" Margin="0,4,0,0" ToolTip="{DynamicResource Tip.StopMinutes}" />
+            <TextBlock Text="{Binding RemainderText}" Style="{StaticResource HintText}" Margin="0,4,0,0" TextWrapping="Wrap" ToolTip="{DynamicResource Tip.Remain}" />
             <TextBlock Text="{Binding WeekSummary}" Style="{StaticResource HintText}" Margin="0,8,0,6"
                        Visibility="{Binding HideWeek, Converter={StaticResource BoolVis}}" />
             <ItemsControl ItemsSource="{Binding WeekCells}" Margin="0,4,0,0"
@@ -341,7 +343,8 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <TextBlock Text="{Binding ClickSummary}" Style="{StaticResource HintText}" Margin="0,0,0,10" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding ClickSummary}" Style="{StaticResource HintText}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding TestClickCommand}" HorizontalAlignment="Left" Margin="0,0,0,10" Content="{DynamicResource Clicker.Test}" ToolTip="{DynamicResource Tip.TestClick}" />
                             <Button Style="{StaticResource GhostButton}" Command="{Binding PickPositionCommand}"
                                     HorizontalAlignment="Stretch" Padding="10,8">
                                 <TextBlock Text="{DynamicResource Clicker.Pick}" TextWrapping="NoWrap" TextAlignment="Center" />
@@ -402,6 +405,7 @@
                             </Grid>
                             <TextBox Text="{Binding Settings.Typer.Text, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" VerticalContentAlignment="Top" />
+                            <Button Style="{StaticResource GhostButton}" Command="{Binding TestTypeCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" Content="{DynamicResource Typer.Test}" ToolTip="{DynamicResource Tip.TestType}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2">
                             <Border HorizontalAlignment="Left" CornerRadius="8" Padding="8,2" Margin="0,0,0,8">

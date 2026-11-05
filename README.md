@@ -33,36 +33,36 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Single, double, or hold (hold releases the button that was pressed)
 - Interval, jitter, burst, start delay
 - Repeat forever, N clicks, or a duration
-- Click at the cursor, at one picked point, or through a sequence of points
+- Click at the cursor, at one picked point, or through a sequence of points. Sequences can be saved by name. Test one click runs a single click and stops
 - Sequence points keep their own delay and button. The picker is a crosshair on each monitor; Esc cancels
 - Optional sound and tray notice when a run finishes
-- A timer can stop every running function after a number of minutes or at a clock time. The remaining time is in the status line
+- A timer can stop every running function after a number of minutes or at a clock time. The remaining time is in the status line. A count or duration run also shows how many clicks, passes, or seconds are left
 
 **Typer**
 
 - Types text you enter or save as snippets. It does not read the keyboard
 - Characters per minute with variation, start delay, and repeat by count or duration
 - Unicode input via `SendInput`
-- Placeholders `{date}`, `{time}`, `{datetime}`, and `{clipboard}`, with formats in Settings
+- Placeholders `{date}`, `{time}`, `{datetime}`, and `{clipboard}`, with formats in Settings. Test once types the current text a single time
 - Import the clipboard or a `.txt` file into the text box. The typer still only sends text you put there
 
 **Macro**
 
 - Records your own pointer and plays it back in the open window
-- The editor lists steps so you can edit, delete, reorder, insert a delay, and set a loop count
+- The editor lists steps so you can edit, delete, reorder, insert a delay or a text step, and set a loop count. Playback speed is 0.5×, 1×, or 2×. Show path draws the recorded points and does not click. Each point keeps an offset from the foreground window at record time and playback follows that window when it is still open. Several named macros can be stored the same way as text snippets
 - Save or load that list as a JSON file
 - Stops with panic. Nothing is hidden and no target process is chosen. Recording starts only when you start it
 
 **App**
 
-- Global hotkeys (customizable), including while recording a new one
+- Global hotkeys (customizable), including while recording a new one. Pause (default `F5`) remembers which functions were running and starts those again. Panic still stops everything
 - Tray icon colored by state: idle, paused, clicker, jiggler or presence, and typer
 - Compact always-on-top window with a start/stop switch per function, from the main window, the tray, or Ctrl+Shift+M. Its position is remembered
 - Named profiles in the same settings file, including optional switching when a foreground app you name is in front
 - Command palette with Ctrl+K
 - A skippable first-run wizard, reopened from Settings
 - Windows 11 Mica and rounded corners when the system supports them, with the normal theme background otherwise
-- Local daily stats in `%AppData%\Takt\stats.json` (clicks, typed characters, presence time), a 7-day view, reset, and an opt-out
+- Local daily stats in `%AppData%\Takt\stats.json` (clicks, typed characters, presence time), a 7-day view, reset, a CSV export, and an opt-out. The last three settings files are kept next to `settings.json` in AppData before each real change. Import brings named profiles along when the file contains them
 - A self-check for hotkeys, idle reset, and lock or screensaver policy. Policy is reported and not bypassed
 - On a crash, held buttons and keys are released, execution state and the 1 ms timer are restored, the error is logged, and one restart is offered
 - Start with Windows, start minimized, always on top
@@ -105,6 +105,7 @@ Takt is a desktop utility. Using an autoclicker in a game or online service may 
 | Toggle clicker | `F7` |
 | Toggle both | `F8` |
 | Panic stop | `F9` |
+| Pause and resume | `F5` |
 | Pick click position | `F10` |
 | Toggle typer | `F11` |
 | Play macro | `F12` |

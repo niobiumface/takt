@@ -177,6 +177,14 @@
                         <ComboBox Margin="8,0,0,0" ItemsSource="{Binding ClickButtons}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SelectedPoint.Button}" />
                         <CheckBox IsChecked="{Binding SelectedPoint.CustomButton}" Content="{DynamicResource Clicker.CustomButton}" VerticalAlignment="Center" />
                     </DockPanel>
+                    <TextBlock Text="{DynamicResource Sequence.Name}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
+                    <TextBox Text="{Binding SequenceName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Sequence}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding SaveNamedSequenceCommand}" Margin="0,0,8,0" Content="{DynamicResource Sequence.Save}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding LoadNamedSequenceCommand}" Margin="0,0,8,0" Content="{DynamicResource Macro.LoadNamed}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding DeleteNamedSequenceCommand}" Content="{DynamicResource Profile.Delete}" />
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding Settings.Clicker.SavedSequences}" SelectedItem="{Binding SelectedSavedSequence}" DisplayMemberPath="Name" MinHeight="56" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Sequence}" />
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Style="{StaticResource GhostButton}" Command="{Binding MovePointCommand}" CommandParameter="up" Margin="0,0,8,0" Content="{DynamicResource Macro.Up}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding MovePointCommand}" CommandParameter="down" Margin="0,0,8,0" Content="{DynamicResource Macro.Down}" />
@@ -349,6 +357,8 @@
                     <TextBlock Text="{DynamicResource Nav.Macro}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
                     <TextBlock Text="{DynamicResource Macro.Loop}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Loop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="loop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Macro.LoopCount, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Macro.Speed}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.MacroSpeed}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="macro-speed" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding MacroSpeeds}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Macro.Speed}" /></DockPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Style="{StaticResource GhostButton}" Command="{Binding InsertDelayCommand}" Margin="0,0,8,0" Content="{DynamicResource Macro.InsertDelay}" ToolTip="{DynamicResource Tip.Wait}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding MoveMacroCommand}" CommandParameter="up" Margin="0,0,8,0" Content="{DynamicResource Macro.Up}" />
@@ -365,6 +375,40 @@
                     <TextBox Text="{Binding SelectedMacro.Kind, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Macro}" />
                     <TextBlock Text="{DynamicResource Macro.Button}" Style="{StaticResource FieldLabel}" />
                     <TextBox Text="{Binding SelectedMacro.Button, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,8" />
+                    <TextBlock Text="{DynamicResource Macro.Text}" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding MacroStepText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="48" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.MacroText}" />
+                    <Button Style="{StaticResource GhostButton}" Command="{Binding InsertTextStepCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Macro.InsertText}" ToolTip="{DynamicResource Tip.MacroText}" />
+                    <TextBox Text="{Binding SelectedMacro.Text, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.MacroText}" />
+                    <Button Style="{StaticResource GhostButton}" Command="{Binding PreviewMacroCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Macro.Preview}" ToolTip="{DynamicResource Tip.MacroPreview}" />
+                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Width="220" Height="88" HorizontalAlignment="Left" Margin="0,0,0,8" ClipToBounds="True" Visibility="{Binding HasMacroPreview, Converter={StaticResource BoolVis}}">
+                        <ItemsControl ItemsSource="{Binding MacroPreview}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas Width="220" Height="88" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                    <TextBlock Text="{DynamicResource Macro.PreviewEmpty}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" Visibility="{Binding HideMacroPreview, Converter={StaticResource BoolVis}}" />
+                    <TextBlock Text="{DynamicResource Macro.Saved}" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding MacroName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Macro}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding SaveNamedMacroCommand}" Margin="0,0,8,0" Content="{DynamicResource Macro.SaveNamed}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding LoadNamedMacroCommand}" Margin="0,0,8,0" Content="{DynamicResource Macro.LoadNamed}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding DeleteNamedMacroCommand}" Content="{DynamicResource Profile.Delete}" />
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding Settings.Macro.Saved}" SelectedItem="{Binding SelectedSavedMacro}" DisplayMemberPath="Name" MinHeight="56" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Macro}" />
                     <StackPanel Orientation="Horizontal">
                         <Button Style="{StaticResource GhostButton}" Command="{Binding SaveMacroFileCommand}" Margin="0,0,8,0" Content="{DynamicResource Macro.Save}" ToolTip="{DynamicResource Tip.MacroFile}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding LoadMacroFileCommand}" Content="{DynamicResource Macro.Load}" ToolTip="{DynamicResource Tip.MacroFile}" />
@@ -390,6 +434,7 @@
                         <Button Style="{StaticResource GhostButton}" Command="{Binding ExportSettingsCommand}" Margin="0,0,8,0" Content="{DynamicResource Settings.Export}" ToolTip="{DynamicResource Tip.Export}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding ImportSettingsCommand}" Content="{DynamicResource Settings.Import}" ToolTip="{DynamicResource Tip.Export}" />
                     </StackPanel>
+                    <TextBlock Text="{DynamicResource Settings.BackupHint}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" />
                     <Button Style="{StaticResource GhostButton}" Command="{Binding UndoSettingsCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Settings.Undo}" ToolTip="{DynamicResource Tip.Undo}" />
                     <Button Style="{StaticResource PrimaryButton}" Command="{Binding ResetAllCommand}" HorizontalAlignment="Left" Content="{DynamicResource Settings.ResetAll}" />
                 </StackPanel>
@@ -439,7 +484,10 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.StatsOpt}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stats-opt" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.StatsOptOut}" Content="{DynamicResource Stats.OptOut}" /></DockPanel>
-                    <Button Style="{StaticResource GhostButton}" Command="{Binding ResetStatsCommand}" HorizontalAlignment="Left" Margin="0,8,0,12" Content="{DynamicResource Stats.Reset}" ToolTip="{DynamicResource Tip.Stats}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,12">
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding ResetStatsCommand}" Margin="0,0,8,0" Content="{DynamicResource Stats.Reset}" ToolTip="{DynamicResource Tip.Stats}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding ExportStatsCommand}" Content="{DynamicResource Stats.Export}" ToolTip="{DynamicResource Tip.StatsCsv}" />
+                    </StackPanel>
                     <TextBlock Text="{DynamicResource Diagnosis.Title}" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{DynamicResource Diagnosis.Hint}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" />
                     <Button Style="{StaticResource PrimaryButton}" Command="{Binding RunDiagnosisCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Diagnosis.Run}" ToolTip="{DynamicResource Tip.Diagnosis}" />
