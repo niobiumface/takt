@@ -26,6 +26,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
     public event Action? CompletedNaturally;
 
+    public Func<bool>? AllowRun { get; set; }
+
     public ClickerEngine(ClickerSettings settings, Dispatcher dispatcher)
     {
         _settings = settings;
@@ -133,6 +135,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                     break;
                 if (IsFinished(started, clicks))
                     break;
+                if (!await WaitUntilAllowed(token))
+                    break;
 
                 if (!MoveIfNeeded() || !MouseInput.Click(_stepButton, _settings.Action))
                     NoteFault();
@@ -190,6 +194,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     {
         var started = DateTime.UtcNow;
         PublishStarted(started);
+        if (!await WaitUntilAllowed(token))
+            return;
         if (_once)
         {
             MoveIfNeeded();
@@ -210,6 +216,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         for (var i = 0; i < plan.Cycles; i++)
         {
             token.ThrowIfCancellationRequested();
+            if (!await WaitUntilAllowed(token))
+                return;
             MoveIfNeeded();
             Press(_stepButton);
             if (plan.UntilCancelled)
@@ -225,6 +233,37 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
             var delay = IntervalCalculator.NextDelayMs(_settings.IntervalMs, _settings.JitterMs, _rng);
             await Task.Delay(delay, token);
+        }
+    }
+
+    private async Task<bool> WaitUntilAllowed(CancellationToken token)
+    {
+        if (MayRun())
+            return true;
+        Publish(true, EngineStatus.Paused, PauseReason.Focus, fault: null);
+        while (!token.IsCancellationRequested)
+        {
+            if (MayRun())
+            {
+                Publish(true, EngineStatus.Running, PauseReason.None, fault: null);
+                return true;
+            }
+
+            await Task.Delay(250, token);
+        }
+
+        return false;
+    }
+
+    private bool MayRun()
+    {
+        try
+        {
+            return AllowRun?.Invoke() ?? true;
+        }
+        catch
+        {
+            return true;
         }
     }
 

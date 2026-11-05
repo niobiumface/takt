@@ -17,10 +17,9 @@ public static class WorkScheduleEvaluator
     {
         if (holidays is null)
             return false;
-        var key = localNow.ToString("yyyy-MM-dd");
         foreach (var holiday in holidays)
         {
-            if (string.Equals(holiday?.Trim(), key, StringComparison.Ordinal))
+            if (HolidayCalendar.Matches(localNow, holiday))
                 return true;
         }
 

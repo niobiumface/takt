@@ -20,6 +20,7 @@ internal sealed class TrayService : IDisposable
     private Icon? _currentIcon;
     private ActivityTone _tone = ActivityTone.Idle;
     private string? _painted;
+    private string[] _profileNames = [];
 
     public TrayService()
     {
@@ -41,6 +42,16 @@ internal sealed class TrayService : IDisposable
     public event Action? SettingsRequested;
     public event Action? ToggleCompactRequested;
     public event Action? PauseRequested;
+    public event Action<string>? ProfileChosen;
+
+    public void SetProfiles(IEnumerable<string>? names)
+    {
+        var next = names?.Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray() ?? [];
+        if (_profileNames.SequenceEqual(next, StringComparer.OrdinalIgnoreCase))
+            return;
+        _profileNames = next;
+        RebuildMenu();
+    }
 
     public void Attach(Window window) => _ = window;
 
@@ -101,6 +112,16 @@ internal sealed class TrayService : IDisposable
         menu.Items.Add(LocalizationService.Text("Tray.Compact", "Compact window"), null, (_, _) => ToggleCompactRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Pause", "Pause or resume"), null, (_, _) => PauseRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Panic", "Stop all"), null, (_, _) => PanicRequested?.Invoke());
+        if (_profileNames.Length > 0)
+        {
+            menu.Items.Add(new WinForms.ToolStripSeparator());
+            foreach (var name in _profileNames)
+            {
+                var profile = name;
+                menu.Items.Add(profile, null, (_, _) => ProfileChosen?.Invoke(profile));
+            }
+        }
+
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add(LocalizationService.Text("Tray.Exit", "Exit"), null, (_, _) => ExitRequested?.Invoke());
         var previous = _icon.ContextMenuStrip;

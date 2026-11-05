@@ -70,6 +70,8 @@ public static class ProfileApplicator
         to.PreventSleep = from.PreventSleep;
         to.PauseOnUserInput = from.PauseOnUserInput;
         to.ResumeIdleSeconds = from.ResumeIdleSeconds;
+        to.StopAfterMinutes = from.StopAfterMinutes;
+        to.StopAtTime = from.StopAtTime ?? "";
     }
 
     public static void CopyTyper(TyperSettings from, TyperSettings to)
@@ -89,12 +91,22 @@ public static class ProfileApplicator
         to.DateFormat = string.IsNullOrWhiteSpace(from.DateFormat) ? "yyyy-MM-dd" : from.DateFormat;
         to.TimeFormat = string.IsNullOrWhiteSpace(from.TimeFormat) ? "HH:mm" : from.TimeFormat;
         to.DateTimeFormat = string.IsNullOrWhiteSpace(from.DateTimeFormat) ? "yyyy-MM-dd HH:mm" : from.DateTimeFormat;
+        to.StopAfterMinutes = from.StopAfterMinutes;
+        to.StopAtTime = from.StopAtTime ?? "";
         to.Snippets ??= new();
         to.Snippets.Clear();
         if (from.Snippets is null)
             return;
         foreach (var snippet in from.Snippets)
-            to.Snippets.Add(new TextSnippet { Name = snippet.Name, Text = snippet.Text });
+        {
+            var hotkey = snippet.Hotkey;
+            to.Snippets.Add(new TextSnippet
+            {
+                Name = snippet.Name,
+                Text = snippet.Text,
+                Hotkey = HotkeyBinding.Vk(hotkey?.VirtualKey ?? 0, hotkey?.Modifiers ?? 0)
+            });
+        }
     }
 
     public static void CopyJiggler(JigglerSettings from, JigglerSettings to)
@@ -117,6 +129,8 @@ public static class ProfileApplicator
         to.UseSchedule = from.UseSchedule;
         to.ScheduleStart = from.ScheduleStart;
         to.ScheduleEnd = from.ScheduleEnd;
+        to.StopAfterMinutes = from.StopAfterMinutes;
+        to.StopAtTime = from.StopAtTime ?? "";
     }
 
     public static void CopyClicker(ClickerSettings from, ClickerSettings to)
@@ -145,6 +159,8 @@ public static class ProfileApplicator
         to.SavedSequences.Clear();
         foreach (var saved in from.SavedSequences ?? [])
             to.SavedSequences.Add(SavedLibraries.CaptureSequence(saved.Name, saved.Points));
+        to.StopAfterMinutes = from.StopAfterMinutes;
+        to.StopAtTime = from.StopAtTime ?? "";
     }
 
     public static void CopyHotkeys(HotkeySettings from, HotkeySettings to)
@@ -169,6 +185,8 @@ public static class ProfileApplicator
             return;
         to.LoopCount = Math.Max(1, from.LoopCount);
         to.Speed = from.Speed;
+        to.StopAfterMinutes = from.StopAfterMinutes;
+        to.StopAtTime = from.StopAtTime ?? "";
         to.Events ??= new();
         to.Events.Clear();
         foreach (var item in from.Events ?? [])
@@ -237,6 +255,11 @@ public static class ProfileApplicator
         to.CompactTop = from.CompactTop;
         to.AutoProfile = from.AutoProfile;
         to.ProfileDebounceMs = from.ProfileDebounceMs;
+        to.OnlyWhileProcess = from.OnlyWhileProcess ?? "";
+        to.Plan ??= new();
+        to.Plan.Clear();
+        foreach (var step in from.Plan ?? [])
+            to.Plan.Add(new PlanStep { Kind = step.Kind, Name = step.Name ?? "", Seconds = step.Seconds });
         to.AppRules ??= new();
         to.AppRules.Clear();
         if (from.AppRules is null)

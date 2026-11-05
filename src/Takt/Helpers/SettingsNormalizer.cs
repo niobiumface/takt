@@ -16,7 +16,17 @@ public static class SettingsNormalizer
         if (string.IsNullOrWhiteSpace(settings.General.StopAtTime) || !TimeSpan.TryParse(settings.General.StopAtTime, out _))
             settings.General.StopAtTime = "";
         if (settings.Macro is not null)
+        {
             settings.Macro.LoopCount = Math.Clamp(settings.Macro.LoopCount, 1, 9_999);
+            settings.Macro.StopAfterMinutes = Math.Clamp(settings.Macro.StopAfterMinutes, 0, 24 * 60);
+            settings.Macro.StopAtTime = string.IsNullOrWhiteSpace(settings.Macro.StopAtTime) || !TimeSpan.TryParse(settings.Macro.StopAtTime, out _)
+                ? ""
+                : settings.Macro.StopAtTime.Trim();
+        }
+
+        settings.General.OnlyWhileProcess = settings.General.OnlyWhileProcess?.Trim() ?? "";
+        foreach (var step in settings.General.Plan ?? [])
+            step.Seconds = Math.Clamp(step.Seconds, 0, 86_400);
         if (string.IsNullOrWhiteSpace(settings.Typer.DateFormat))
             settings.Typer.DateFormat = "yyyy-MM-dd";
         if (string.IsNullOrWhiteSpace(settings.Typer.TimeFormat))
@@ -34,6 +44,8 @@ public static class SettingsNormalizer
         settings.IdleThresholdSeconds = SettingsLimits.ClampIdleSeconds(settings.IdleThresholdSeconds);
         settings.ScheduleStart = SettingsLimits.ClampSchedule(settings.ScheduleStart, "09:00");
         settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "18:00");
+        settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+        settings.StopAtTime = ClampClock(settings.StopAtTime);
     }
 
     public static void ApplyClicker(ClickerSettings settings)
@@ -47,6 +59,8 @@ public static class SettingsNormalizer
         settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
         settings.JitterPercent = Math.Clamp(settings.JitterPercent, 0, 100);
         settings.HoldDurationMs = Math.Clamp(settings.HoldDurationMs, 1, 60_000);
+        settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+        settings.StopAtTime = ClampClock(settings.StopAtTime);
     }
 
     public static void ApplyTyper(TyperSettings settings)
@@ -58,6 +72,8 @@ public static class SettingsNormalizer
         settings.StartDelayMs = SettingsLimits.ClampStartDelay(settings.StartDelayMs);
         settings.RepeatCount = SettingsLimits.ClampRepeatCount(settings.RepeatCount);
         settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
+        settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+        settings.StopAtTime = ClampClock(settings.StopAtTime);
     }
 
     public static void ApplyPresence(PresenceSettings settings)
@@ -69,7 +85,14 @@ public static class SettingsNormalizer
         settings.ScheduleStart = SettingsLimits.ClampSchedule(settings.ScheduleStart, "08:00");
         settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "17:00");
         settings.ResumeIdleSeconds = Math.Clamp(settings.ResumeIdleSeconds, 1, 3600);
+        settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+        settings.StopAtTime = ClampClock(settings.StopAtTime);
     }
+
+    private static int ClampMinutes(int minutes) => Math.Clamp(minutes, 0, 24 * 60);
+
+    private static string ClampClock(string? value) =>
+        string.IsNullOrWhiteSpace(value) || !TimeSpan.TryParse(value, out _) ? "" : value.Trim();
 
     public static void ApplyChanged(object? sender, string? propertyName)
     {
@@ -118,6 +141,12 @@ public static class SettingsNormalizer
             case nameof(JigglerSettings.ScheduleEnd):
                 settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "18:00");
                 break;
+            case nameof(JigglerSettings.StopAfterMinutes):
+                settings.StopAfterMinutes = Math.Clamp(settings.StopAfterMinutes, 0, 24 * 60);
+                break;
+            case nameof(JigglerSettings.StopAtTime):
+                settings.StopAtTime = string.IsNullOrWhiteSpace(settings.StopAtTime) || !TimeSpan.TryParse(settings.StopAtTime, out _) ? "" : settings.StopAtTime.Trim();
+                break;
         }
     }
 
@@ -152,6 +181,12 @@ public static class SettingsNormalizer
             case nameof(ClickerSettings.HoldDurationMs):
                 settings.HoldDurationMs = Math.Clamp(settings.HoldDurationMs, 1, 60_000);
                 break;
+            case nameof(ClickerSettings.StopAfterMinutes):
+                settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+                break;
+            case nameof(ClickerSettings.StopAtTime):
+                settings.StopAtTime = ClampClock(settings.StopAtTime);
+                break;
         }
     }
 
@@ -174,6 +209,12 @@ public static class SettingsNormalizer
             case nameof(TyperSettings.DurationSeconds):
                 settings.DurationSeconds = SettingsLimits.ClampDuration(settings.DurationSeconds);
                 break;
+            case nameof(TyperSettings.StopAfterMinutes):
+                settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+                break;
+            case nameof(TyperSettings.StopAtTime):
+                settings.StopAtTime = ClampClock(settings.StopAtTime);
+                break;
         }
     }
 
@@ -192,6 +233,12 @@ public static class SettingsNormalizer
                 break;
             case nameof(PresenceSettings.ScheduleEnd):
                 settings.ScheduleEnd = SettingsLimits.ClampSchedule(settings.ScheduleEnd, "17:00");
+                break;
+            case nameof(PresenceSettings.StopAfterMinutes):
+                settings.StopAfterMinutes = ClampMinutes(settings.StopAfterMinutes);
+                break;
+            case nameof(PresenceSettings.StopAtTime):
+                settings.StopAtTime = ClampClock(settings.StopAtTime);
                 break;
         }
     }

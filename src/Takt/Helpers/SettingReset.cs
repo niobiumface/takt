@@ -79,6 +79,17 @@ public static class SettingReset
             case "updates": settings.General.CheckForUpdates = defaults.General.CheckForUpdates; break;
             case "loop": settings.Macro.LoopCount = defaults.Macro.LoopCount; break;
             case "macro-speed": settings.Macro.Speed = defaults.Macro.Speed; break;
+            case "macro-stop": settings.Macro.StopAfterMinutes = 0; break;
+            case "macro-clock": settings.Macro.StopAtTime = ""; break;
+            case "jiggler-stop": settings.Jiggler.StopAfterMinutes = 0; break;
+            case "jiggler-clock": settings.Jiggler.StopAtTime = ""; break;
+            case "clicker-stop": settings.Clicker.StopAfterMinutes = 0; break;
+            case "clicker-clock": settings.Clicker.StopAtTime = ""; break;
+            case "typer-stop": settings.Typer.StopAfterMinutes = 0; break;
+            case "typer-clock": settings.Typer.StopAtTime = ""; break;
+            case "presence-stop": settings.Presence.StopAfterMinutes = 0; break;
+            case "presence-clock": settings.Presence.StopAtTime = ""; break;
+            case "focus": settings.General.OnlyWhileProcess = ""; break;
             case "stop-minutes": settings.General.StopAfterMinutes = defaults.General.StopAfterMinutes; break;
             case "stop-time": settings.General.StopAtTime = defaults.General.StopAtTime; break;
             case "auto-profile": settings.General.AutoProfile = defaults.General.AutoProfile; break;

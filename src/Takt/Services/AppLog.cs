@@ -1,4 +1,5 @@
 using System.IO;
+using Takt.Helpers;
 using Takt.Models;
 
 namespace Takt.Services;
@@ -11,6 +12,21 @@ internal static class AppLog
 
     public static string Folder { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Takt", "logs");
+
+    public static string ReadRecent(int maxLines = 80)
+    {
+        try
+        {
+            var path = Path.Combine(Folder, "takt.log");
+            if (!File.Exists(path))
+                return "";
+            return LogTail.LastLines(File.ReadAllText(path), maxLines);
+        }
+        catch
+        {
+            return "";
+        }
+    }
 
     public static void Info(string message)
     {

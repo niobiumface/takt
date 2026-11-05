@@ -111,10 +111,17 @@ internal partial class MainViewModel : ObservableObject
         _services.Tray.SettingsRequested += () => ShowSettings(null);
         _services.Tray.ToggleCompactRequested += () => ToggleCompact();
         _services.Tray.PauseRequested += () => TogglePause();
+        _services.Tray.ProfileChosen += name => _services.ApplyNamedProfile(name);
         _services.PauseStateChanged += () =>
         {
             OnPropertyChanged(nameof(PauseLabel));
             OnPropertyChanged(nameof(RemainderText));
+        };
+        _services.PlanChanged += () =>
+        {
+            OnPropertyChanged(nameof(PlanLabel));
+            OnPropertyChanged(nameof(PlanDetail));
+            OnPropertyChanged(nameof(PlanActive));
         };
         _services.ProfileRequested += SelectProfileByName;
         _services.DeadlineChanged += text =>
@@ -392,6 +399,32 @@ internal partial class MainViewModel : ObservableObject
 
     public string PauseHotkeyText => Settings.Hotkeys.TogglePause.ToDisplayString(Settings.Appearance.Language != AppLanguage.English);
 
+    public bool PlanActive => _services.PlanActive;
+
+    public string PlanLabel => _services.PlanActive
+        ? LocalizationService.Text("Plan.Stop", "Stop plan")
+        : LocalizationService.Text("Plan.Start", "Run plan");
+
+    public string PlanDetail
+    {
+        get
+        {
+            if (!_services.PlanActive)
+                return "";
+            var steps = Settings.General.Plan;
+            var index = _services.PlanIndex;
+            if (steps is null || index < 0 || index >= steps.Count)
+                return "";
+            var kind = steps[index].Kind switch
+            {
+                PlanKind.Sequence => LocalizationService.Text("Plan.Sequence", "Click sequence"),
+                PlanKind.Snippet => LocalizationService.Text("Plan.Snippet", "Snippet"),
+                _ => LocalizationService.Text("Plan.Jiggler", "Jiggler")
+            };
+            return string.Format(LocalizationService.Text("Plan.Step", "Step {0} / {1} · {2}"), index + 1, steps.Count, kind);
+        }
+    }
+
     public string PauseLabel =>
         (_services.Held == EngineFlags.None
             ? LocalizationService.Text("Pause.Hold", "Pause")
@@ -462,6 +495,18 @@ internal partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(TyperOn));
         OnPropertyChanged(nameof(PresenceOn));
         OnPropertyChanged(nameof(PauseLabel));
+    }
+
+    [RelayCommand]
+    private void TogglePlan()
+    {
+        _services.TogglePlan();
+        OnPropertyChanged(nameof(PlanLabel));
+        OnPropertyChanged(nameof(PlanDetail));
+        OnPropertyChanged(nameof(PlanActive));
+        OnPropertyChanged(nameof(JigglerOn));
+        OnPropertyChanged(nameof(ClickerOn));
+        OnPropertyChanged(nameof(TyperOn));
     }
 
     [RelayCommand]
@@ -628,6 +673,7 @@ internal partial class MainViewModel : ObservableObject
             PauseReason.WaitingForIdle => LocalizationService.Text("Pause.Idle", "Waiting for idle"),
             PauseReason.UserInput => LocalizationService.Text("Pause.Input", "User input"),
             PauseReason.StartDelay => LocalizationService.Text("Pause.Delay", "Start delay"),
+            PauseReason.Focus => LocalizationService.Text("Pause.Focus", "Waiting for the window"),
             _ => ""
         };
         return string.IsNullOrEmpty(why) ? label : label + " · " + why;
@@ -686,7 +732,7 @@ internal partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(PauseLabel));
         OnPropertyChanged(nameof(SafetyHint));
         OnPropertyChanged(nameof(FirstRunHint));
-        _services.Hotkeys.Rebind();
+        _services.RebindHotkeys();
     }
 
     private void OnHotkey(HotkeyAction action)
@@ -757,6 +803,8 @@ internal partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(ClickSummary));
             OnPropertyChanged(nameof(RemainderText));
             OnPropertyChanged(nameof(PauseLabel));
+            OnPropertyChanged(nameof(PlanLabel));
+            OnPropertyChanged(nameof(PlanDetail));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -851,6 +899,7 @@ internal partial class MainViewModel : ObservableObject
             Typer.Status == EngineStatus.Paused || Presence.Status == EngineStatus.Paused);
         ActivityHex = ActivityTonePicker.Hex(tone, Settings.Appearance.AccentHex);
         var detail = string.IsNullOrWhiteSpace(DeadlineText) ? PresenceStatusText : DeadlineText;
+        _services.Tray.SetProfiles(Settings.Profiles.Select(profile => profile.Name));
         _services.Tray.Refresh(Settings.Appearance.AccentHex, tone, detail);
         NotifyWeek();
     }

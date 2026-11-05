@@ -111,7 +111,15 @@ public enum PauseReason
     Fullscreen,
     WaitingForIdle,
     UserInput,
-    StartDelay
+    StartDelay,
+    Focus
+}
+
+public enum PlanKind
+{
+    Jiggler,
+    Sequence,
+    Snippet
 }
 
 [Flags]

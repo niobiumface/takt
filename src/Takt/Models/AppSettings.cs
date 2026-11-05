@@ -64,6 +64,8 @@ public partial class MacroSettings : ObservableObject
     [ObservableProperty] private ObservableCollection<MacroEvent> _events = new();
     [ObservableProperty] private int _loopCount = 1;
     [ObservableProperty] private MacroSpeed _speed = MacroSpeed.Normal;
+    [ObservableProperty] private int _stopAfterMinutes;
+    [ObservableProperty] private string _stopAtTime = "";
     [ObservableProperty] private ObservableCollection<SavedMacro> _saved = new();
 }
 
@@ -85,6 +87,14 @@ public partial class TextSnippet : ObservableObject
 {
     [ObservableProperty] private string _name = "";
     [ObservableProperty] private string _text = "";
+    [ObservableProperty] private HotkeyBinding _hotkey = new() { VirtualKey = 0 };
+}
+
+public partial class PlanStep : ObservableObject
+{
+    [ObservableProperty] private PlanKind _kind = PlanKind.Jiggler;
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private int _seconds = 60;
 }
 
 public partial class TyperSettings : ObservableObject
@@ -102,6 +112,8 @@ public partial class TyperSettings : ObservableObject
     [ObservableProperty] private RepeatMode _repeatMode = RepeatMode.Count;
     [ObservableProperty] private int _repeatCount = 1;
     [ObservableProperty] private int _durationSeconds = 60;
+    [ObservableProperty] private int _stopAfterMinutes;
+    [ObservableProperty] private string _stopAtTime = "";
     [ObservableProperty] private ObservableCollection<TextSnippet> _snippets = new();
 }
 
@@ -128,6 +140,8 @@ public partial class PresenceSettings : ObservableObject
     [ObservableProperty] private bool _sunday;
     [ObservableProperty] private string _scheduleStart = "08:00";
     [ObservableProperty] private string _scheduleEnd = "17:00";
+    [ObservableProperty] private int _stopAfterMinutes;
+    [ObservableProperty] private string _stopAtTime = "";
 
     public WeekdayMask Days =>
         (Monday ? WeekdayMask.Monday : WeekdayMask.None) |
@@ -159,6 +173,8 @@ public partial class JigglerSettings : ObservableObject
     [ObservableProperty] private bool _useSchedule;
     [ObservableProperty] private string _scheduleStart = "09:00";
     [ObservableProperty] private string _scheduleEnd = "18:00";
+    [ObservableProperty] private int _stopAfterMinutes;
+    [ObservableProperty] private string _stopAtTime = "";
 }
 
 public partial class ClickerSettings : ObservableObject
@@ -181,6 +197,8 @@ public partial class ClickerSettings : ObservableObject
     [ObservableProperty] private int _fixedY;
     [ObservableProperty] private ObservableCollection<ClickPoint> _points = new();
     [ObservableProperty] private ObservableCollection<SavedSequence> _savedSequences = new();
+    [ObservableProperty] private int _stopAfterMinutes;
+    [ObservableProperty] private string _stopAtTime = "";
 }
 
 public partial class HotkeySettings : ObservableObject
@@ -234,6 +252,8 @@ public partial class GeneralSettings : ObservableObject
     [ObservableProperty] private bool _autoProfile;
     [ObservableProperty] private int _profileDebounceMs = 800;
     [ObservableProperty] private ObservableCollection<AppRule> _appRules = new();
+    [ObservableProperty] private string _onlyWhileProcess = "";
+    [ObservableProperty] private ObservableCollection<PlanStep> _plan = new();
 }
 
 public partial class AppRule : ObservableObject

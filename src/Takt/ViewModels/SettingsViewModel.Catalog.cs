@@ -75,6 +75,7 @@ internal partial class SettingsViewModel
     public ObservableCollection<ChoiceOption> Sounds { get; } = [];
     public ObservableCollection<ChoiceOption> LogLevels { get; } = [];
     public ObservableCollection<ChoiceOption> MacroSpeeds { get; } = [];
+    public ObservableCollection<ChoiceOption> PlanKinds { get; } = [];
 
     [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private string _selectedSection = "general";
@@ -136,6 +137,12 @@ internal partial class SettingsViewModel
             new(MacroSpeed.Half, T("Macro.Half", "0.5×")),
             new(MacroSpeed.Normal, T("Macro.Normal", "1×")),
             new(MacroSpeed.Double, T("Macro.Double", "2×")));
+        Replace(PlanKinds,
+            new(PlanKind.Jiggler, T("Plan.Jiggler", "Jiggler")),
+            new(PlanKind.Sequence, T("Plan.Sequence", "Click sequence")),
+            new(PlanKind.Snippet, T("Plan.Snippet", "Snippet")));
+        RefreshHolidays();
+        RefreshLog();
         BuildHotkeyRows();
         UpdateSectionVisibility();
     }
@@ -268,15 +275,60 @@ internal partial class SettingsViewModel
             day.Windows.Remove(window);
     }
 
+    public void RefreshHolidays()
+    {
+        HolidayRows.Clear();
+        var word = T("Holiday.EveryYear", "every year");
+        foreach (var holiday in Settings.Work.Holidays ?? [])
+            HolidayRows.Add(new HolidayRow(holiday, HolidayCalendar.Label(holiday, word)));
+    }
+
+    [RelayCommand]
+    private void RefreshLog() => LogText = AppLog.ReadRecent();
+
+    [RelayCommand]
+    private void AddPlanStep()
+    {
+        Settings.General.Plan ??= new();
+        if (Settings.General.Plan.Count >= PlanLimits.MaxSteps)
+            return;
+        Settings.General.Plan.Add(new PlanStep
+        {
+            Kind = DraftKind,
+            Name = PlanName.Trim(),
+            Seconds = PlanSeconds
+        });
+        PlanName = "";
+    }
+
+    [RelayCommand]
+    private void RemovePlanStep(PlanStep? step)
+    {
+        if (step is not null)
+            Settings.General.Plan?.Remove(step);
+    }
+
+    [RelayCommand]
+    private void ClearSnippetHotkey()
+    {
+        if (SelectedSnippet?.Hotkey is null)
+            return;
+        SelectedSnippet.Hotkey.VirtualKey = 0;
+        SelectedSnippet.Hotkey.Modifiers = 0;
+        OnPropertyChanged(nameof(SnippetHotkeyDisplay));
+        _main.RefreshHotkeyLabels();
+    }
+
     [RelayCommand]
     private void AddHoliday()
     {
         if (!DateTime.TryParse(HolidayText, out var date))
             return;
-        var key = date.ToString("yyyy-MM-dd");
+        var key = HolidayYearly ? HolidayCalendar.Yearly(date.Month, date.Day) : HolidayCalendar.Exact(date);
         if (!Settings.Work.Holidays.Contains(key))
             Settings.Work.Holidays.Add(key);
         HolidayText = "";
+        RefreshHolidays();
     }
 
     [RelayCommand]
@@ -284,6 +336,7 @@ internal partial class SettingsViewModel
     {
         if (day is not null)
             Settings.Work.Holidays.Remove(day);
+        RefreshHolidays();
     }
 
     [RelayCommand]

@@ -67,6 +67,7 @@ public partial class CommandPaletteWindow : Window
             case "presence": viewModel.PresenceOn = !viewModel.PresenceOn; break;
             case "panic": viewModel.PanicCommand.Execute(null); break;
             case "pause": viewModel.TogglePauseCommand.Execute(null); break;
+            case "plan": viewModel.TogglePlanCommand.Execute(null); break;
             case "test-click": viewModel.TestClickCommand.Execute(null); break;
             case "test-type": viewModel.TestTypeCommand.Execute(null); break;
             case "compact": viewModel.ToggleCompactCommand.Execute(null); break;
@@ -91,6 +92,7 @@ public partial class CommandPaletteWindow : Window
             new("presence", T("Presence.Toggle", "Keep presence"), "teams idle", "jiggler"),
             new("panic", T("Action.Panic", "Stop all"), "failsafe", "general"),
             new("pause", T("Action.Pause", "Pause or resume"), "hold memory", "general"),
+            new("plan", T("Plan.Start", "Run plan"), "sequence snippet jiggler", "health"),
             new("test-click", T("Clicker.Test", "Test one click"), "once", "clicker"),
             new("test-type", T("Typer.Test", "Test once"), "text", "typer"),
             new("compact", T("Compact.Title", "Compact"), "mini always on top", "general"),

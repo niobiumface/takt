@@ -212,6 +212,15 @@ public sealed class SettingsService : IDisposable
         current.Clicker.SavedSequences ??= new();
         current.Profiles ??= new();
         current.General.AppRules ??= new();
+        current.General.Plan ??= new();
+        current.General.OnlyWhileProcess ??= "";
+        current.Jiggler.StopAtTime ??= "";
+        current.Clicker.StopAtTime ??= "";
+        current.Typer.StopAtTime ??= "";
+        current.Presence.StopAtTime ??= "";
+        current.Macro.StopAtTime ??= "";
+        foreach (var snippet in current.Typer.Snippets)
+            snippet.Hotkey ??= new HotkeyBinding { VirtualKey = 0 };
     }
 
     private void Wire(INotifyPropertyChanged target)

@@ -10,6 +10,8 @@ namespace Takt.ViewModels;
 
 public sealed record ChoiceOption(object Value, string Label);
 
+public readonly record struct HolidayRow(string Key, string Label);
+
 internal partial class SettingsViewModel : ObservableObject
 {
     private readonly AppServices _services;
@@ -111,6 +113,19 @@ internal partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _macroStepText = "";
     [ObservableProperty] private SavedMacro? _selectedSavedMacro;
     [ObservableProperty] private SavedSequence? _selectedSavedSequence;
+    [ObservableProperty] private TextSnippet? _selectedSnippet;
+    [ObservableProperty] private bool _holidayYearly;
+    [ObservableProperty] private PlanKind _draftKind = PlanKind.Jiggler;
+    [ObservableProperty] private string _planName = "";
+    [ObservableProperty] private int _planSeconds = 60;
+    [ObservableProperty] private string _logText = "";
+
+    public ObservableCollection<HolidayRow> HolidayRows { get; } = [];
+
+    public string SnippetHotkeyDisplay =>
+        SelectedSnippet?.Hotkey.ToDisplayString(IsGerman) ?? (IsGerman ? "Nicht gesetzt" : "Not set");
+
+    partial void OnSelectedSnippetChanged(TextSnippet? value) => OnPropertyChanged(nameof(SnippetHotkeyDisplay));
     [ObservableProperty] private IReadOnlyList<PreviewDot> _macroPreview = [];
 
     public bool HasMacroPreview => MacroPreview.Count > 0;
@@ -185,6 +200,7 @@ internal partial class SettingsViewModel : ObservableObject
             "show" => Settings.Hotkeys.ShowWindow,
             "compact" => Settings.Hotkeys.ToggleCompact,
             "pause" => Settings.Hotkeys.TogglePause,
+            "snippet" => SelectedSnippet?.Hotkey,
             _ => null
         };
 
@@ -268,6 +284,8 @@ internal partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(MacroHotkeyDisplay));
         OnPropertyChanged(nameof(TyperHotkeyDisplay));
         OnPropertyChanged(nameof(PauseHotkeyDisplay));
+        OnPropertyChanged(nameof(SnippetHotkeyDisplay));
+        RefreshHolidays();
     }
 
     [RelayCommand]

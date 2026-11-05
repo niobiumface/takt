@@ -27,6 +27,8 @@ internal sealed partial class TyperEngine : ObservableObject, IDisposable
 
     public event Action? CompletedNaturally;
 
+    public Func<bool>? AllowRun { get; set; }
+
     [ObservableProperty] private bool _isEnabled;
     [ObservableProperty] private EngineStatus _status = EngineStatus.Stopped;
     [ObservableProperty] private PauseReason _pauseReason;
@@ -131,9 +133,13 @@ internal sealed partial class TyperEngine : ObservableObject, IDisposable
                     continue;
                 }
 
+                if (!await WaitUntilAllowed(token))
+                    return;
                 for (var i = 0; i < text.Length; i++)
                 {
                     token.ThrowIfCancellationRequested();
+                    if (!await WaitUntilAllowed(token))
+                        return;
                     if (IsFinished(started, passes) && _settings.RepeatMode == RepeatMode.Duration)
                         return;
 
@@ -195,6 +201,37 @@ internal sealed partial class TyperEngine : ObservableObject, IDisposable
             {
                 // already disposed
             }
+        }
+    }
+
+    private async Task<bool> WaitUntilAllowed(CancellationToken token)
+    {
+        if (MayRun())
+            return true;
+        Publish(true, EngineStatus.Paused, PauseReason.Focus, null, fault: null);
+        while (!token.IsCancellationRequested)
+        {
+            if (MayRun())
+            {
+                Publish(true, EngineStatus.Running, PauseReason.None, null, fault: null);
+                return true;
+            }
+
+            await Task.Delay(250, token);
+        }
+
+        return false;
+    }
+
+    private bool MayRun()
+    {
+        try
+        {
+            return AllowRun?.Invoke() ?? true;
+        }
+        catch
+        {
+            return true;
         }
     }
 
