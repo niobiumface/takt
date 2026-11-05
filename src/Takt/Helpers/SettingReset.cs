@@ -78,6 +78,7 @@ public static class SettingReset
             case "log": settings.General.LogLevel = defaults.General.LogLevel; break;
             case "updates": settings.General.CheckForUpdates = defaults.General.CheckForUpdates; break;
             case "loop": settings.Macro.LoopCount = defaults.Macro.LoopCount; break;
+            case "macro-speed": settings.Macro.Speed = defaults.Macro.Speed; break;
             case "stop-minutes": settings.General.StopAfterMinutes = defaults.General.StopAfterMinutes; break;
             case "stop-time": settings.General.StopAtTime = defaults.General.StopAtTime; break;
             case "auto-profile": settings.General.AutoProfile = defaults.General.AutoProfile; break;

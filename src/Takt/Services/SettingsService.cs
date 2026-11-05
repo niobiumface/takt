@@ -90,11 +90,22 @@ public sealed class SettingsService : IDisposable
         lock (_gate)
         {
             var json = JsonSerializer.Serialize(Current, JsonOptions);
-            if (!_suppressUndo && File.Exists(_path))
+            if (File.Exists(_path))
             {
                 var previous = File.ReadAllText(_path);
                 if (!string.Equals(previous, json, StringComparison.Ordinal))
-                    Undo.Push(previous);
+                {
+                    if (!_suppressUndo)
+                        Undo.Push(previous);
+                    try
+                    {
+                        SettingsBackup.Rotate(_path);
+                    }
+                    catch
+                    {
+                        AppLog.Error("Settings backup could not be written.");
+                    }
+                }
             }
 
             var tmp = _path + ".tmp";
@@ -189,13 +200,16 @@ public sealed class SettingsService : IDisposable
         current.Hotkeys.RecordMacro ??= HotkeyBinding.Vk(0x7B, 0x0002);
         current.Hotkeys.ShowWindow ??= HotkeyBinding.Vk(0x54, 0x0001 | 0x0002);
         current.Hotkeys.ToggleCompact ??= HotkeyBinding.Vk(0x4D, 0x0002 | 0x0004);
+        current.Hotkeys.TogglePause ??= HotkeyBinding.Vk(0x74);
         current.Typer ??= new TyperSettings();
         current.Typer.Snippets ??= new();
         current.Presence ??= new PresenceSettings();
         current.Work ??= new WorkScheduleSettings();
         current.Macro ??= new MacroSettings();
         current.Macro.Events ??= new();
+        current.Macro.Saved ??= new();
         current.Clicker.Points ??= new();
+        current.Clicker.SavedSequences ??= new();
         current.Profiles ??= new();
         current.General.AppRules ??= new();
     }

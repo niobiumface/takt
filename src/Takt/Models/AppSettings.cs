@@ -37,12 +37,34 @@ public partial class MacroEvent : ObservableObject
     [ObservableProperty] private string _kind = "move";
     [ObservableProperty] private string _button = "Left";
     [ObservableProperty] private int _wheelDelta;
+    [ObservableProperty] private bool _anchored;
+    [ObservableProperty] private int _relX;
+    [ObservableProperty] private int _relY;
+    [ObservableProperty] private string _anchorProcess = "";
+    [ObservableProperty] private string _anchorTitle = "";
+    [ObservableProperty] private string _text = "";
+}
+
+public partial class SavedMacro : ObservableObject
+{
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private int _loopCount = 1;
+    [ObservableProperty] private MacroSpeed _speed = MacroSpeed.Normal;
+    [ObservableProperty] private ObservableCollection<MacroEvent> _events = new();
+}
+
+public partial class SavedSequence : ObservableObject
+{
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private ObservableCollection<ClickPoint> _points = new();
 }
 
 public partial class MacroSettings : ObservableObject
 {
     [ObservableProperty] private ObservableCollection<MacroEvent> _events = new();
     [ObservableProperty] private int _loopCount = 1;
+    [ObservableProperty] private MacroSpeed _speed = MacroSpeed.Normal;
+    [ObservableProperty] private ObservableCollection<SavedMacro> _saved = new();
 }
 
 public partial class ActivityProfile : ObservableObject
@@ -158,6 +180,7 @@ public partial class ClickerSettings : ObservableObject
     [ObservableProperty] private int _fixedX;
     [ObservableProperty] private int _fixedY;
     [ObservableProperty] private ObservableCollection<ClickPoint> _points = new();
+    [ObservableProperty] private ObservableCollection<SavedSequence> _savedSequences = new();
 }
 
 public partial class HotkeySettings : ObservableObject
@@ -173,6 +196,7 @@ public partial class HotkeySettings : ObservableObject
     [ObservableProperty] private HotkeyBinding _recordMacro = HotkeyBinding.Vk(0x7B, 0x0002);
     [ObservableProperty] private HotkeyBinding _showWindow = HotkeyBinding.Vk(0x54, 0x0001 | 0x0002);
     [ObservableProperty] private HotkeyBinding _toggleCompact = HotkeyBinding.Vk(0x4D, 0x0002 | 0x0004);
+    [ObservableProperty] private HotkeyBinding _togglePause = HotkeyBinding.Vk(0x74);
 }
 
 public partial class AppearanceSettings : ObservableObject

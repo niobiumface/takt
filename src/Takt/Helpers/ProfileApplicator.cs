@@ -139,17 +139,12 @@ public static class ProfileApplicator
         to.FixedY = from.FixedY;
         to.Points ??= new();
         to.Points.Clear();
-        if (from.Points is null)
-            return;
-        foreach (var point in from.Points)
-            to.Points.Add(new ClickPoint
-            {
-                X = point.X,
-                Y = point.Y,
-                DelayMs = point.DelayMs,
-                CustomButton = point.CustomButton,
-                Button = point.Button
-            });
+        foreach (var point in from.Points ?? [])
+            to.Points.Add(MacroEdit.Clone(point));
+        to.SavedSequences ??= new();
+        to.SavedSequences.Clear();
+        foreach (var saved in from.SavedSequences ?? [])
+            to.SavedSequences.Add(SavedLibraries.CaptureSequence(saved.Name, saved.Points));
     }
 
     public static void CopyHotkeys(HotkeySettings from, HotkeySettings to)
@@ -165,27 +160,53 @@ public static class ProfileApplicator
         CopyBinding(from.RecordMacro, to.RecordMacro);
         CopyBinding(from.ShowWindow, to.ShowWindow);
         CopyBinding(from.ToggleCompact, to.ToggleCompact);
+        CopyBinding(from.TogglePause, to.TogglePause);
     }
 
     public static void CopyMacro(MacroSettings from, MacroSettings to)
     {
+        if (from is null || to is null)
+            return;
         to.LoopCount = Math.Max(1, from.LoopCount);
+        to.Speed = from.Speed;
         to.Events ??= new();
         to.Events.Clear();
-        if (from.Events is null)
-            return;
-        foreach (var item in from.Events)
-        {
-            to.Events.Add(new MacroEvent
+        foreach (var item in from.Events ?? [])
+            to.Events.Add(MacroEdit.Clone(item));
+        to.Saved ??= new();
+        to.Saved.Clear();
+        foreach (var saved in from.Saved ?? [])
+            to.Saved.Add(SavedLibraries.CaptureMacro(saved.Name, new MacroSettings
             {
-                DelayMs = item.DelayMs,
-                X = item.X,
-                Y = item.Y,
-                Kind = item.Kind,
-                Button = item.Button,
-                WheelDelta = item.WheelDelta
-            });
-        }
+                LoopCount = saved.LoopCount,
+                Speed = saved.Speed,
+                Events = saved.Events
+            }));
+    }
+
+    public static void ReplaceProfiles(AppSettings from, AppSettings to)
+    {
+        if (from.Profiles is null)
+            return;
+        to.Profiles ??= new();
+        to.Profiles.Clear();
+        foreach (var profile in from.Profiles)
+            to.Profiles.Add(Clone(profile));
+    }
+
+    public static ActivityProfile Clone(ActivityProfile profile)
+    {
+        var copy = new ActivityProfile { Name = profile.Name };
+        CopyJiggler(profile.Jiggler, copy.Jiggler);
+        CopyClicker(profile.Clicker, copy.Clicker);
+        CopyHotkeys(profile.Hotkeys, copy.Hotkeys);
+        CopyMacro(profile.Macro, copy.Macro);
+        CopyTyper(profile.Typer, copy.Typer);
+        CopyPresence(profile.Presence, copy.Presence);
+        CopyGeneral(profile.General, copy.General);
+        CopyAppearance(profile.Appearance, copy.Appearance);
+        CopyWork(profile.Work, copy.Work);
+        return copy;
     }
 
     public static void CopyGeneral(GeneralSettings from, GeneralSettings to)

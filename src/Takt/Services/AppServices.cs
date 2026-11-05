@@ -31,6 +31,11 @@ internal sealed class AppServices : IDisposable
     private readonly ProfileSwitchGate _profiles = new();
     private readonly CancellationTokenSource _housekeeping = new();
     private DateTime _presenceTick = DateTime.UtcNow;
+    private EngineFlags _held = EngineFlags.None;
+
+    public EngineFlags Held => _held;
+
+    public event Action? PauseStateChanged;
 
     public AppServices(Dispatcher dispatcher)
     {
@@ -41,7 +46,7 @@ internal sealed class AppServices : IDisposable
         Activity = new UserActivityMonitor();
         Jiggler = new JigglerEngine(Settings.Current.Jiggler, Activity, dispatcher);
         Clicker = new ClickerEngine(Settings.Current.Clicker, dispatcher);
-        Macro = new MacroEngine(Settings.Current.Macro, Activity, dispatcher);
+        Macro = new MacroEngine(Settings.Current.Macro, Activity, dispatcher, WindowAnchorQuery.TryForeground, WindowAnchorQuery.TryFind);
         Typer = new TyperEngine(Settings.Current.Typer, dispatcher, ReadClipboard);
         Presence = new PresenceEngine(Settings.Current.Presence, Activity, dispatcher);
         Failsafe = new FailsafeMonitor(Settings.Current, Panic);
@@ -78,11 +83,13 @@ internal sealed class AppServices : IDisposable
 
     public void StopForTimer()
     {
+        _held = EngineFlags.None;
         Jiggler.Stop();
         Clicker.Stop();
         Macro.Stop();
         Typer.Stop();
         Presence.Stop();
+        PauseStateChanged?.Invoke();
         TimerDue?.Invoke();
     }
 
@@ -100,14 +107,71 @@ internal sealed class AppServices : IDisposable
 
     public event Action? Stopped;
 
+    public PauseAction TogglePause()
+    {
+        if (Macro.IsRecording && _held == EngineFlags.None &&
+            PauseResume.Capture(Jiggler.IsEnabled, Clicker.IsEnabled, Typer.IsEnabled, Presence.IsEnabled, Macro.IsPlaying) == EngineFlags.None)
+        {
+            Macro.Stop();
+            return PauseAction.Idle;
+        }
+
+        var action = PauseResume.Decide(
+            PauseResume.Capture(Jiggler.IsEnabled, Clicker.IsEnabled, Typer.IsEnabled, Presence.IsEnabled, Macro.IsPlaying),
+            _held);
+        if (action == PauseAction.Resumed)
+        {
+            var held = _held;
+            _held = EngineFlags.None;
+            if (held.HasFlag(EngineFlags.Jiggler))
+                Jiggler.Start();
+            if (held.HasFlag(EngineFlags.Clicker))
+                Clicker.Start();
+            if (held.HasFlag(EngineFlags.Typer))
+                Typer.Start();
+            if (held.HasFlag(EngineFlags.Presence))
+            {
+                Settings.Current.Presence.Enabled = true;
+                Presence.Start();
+            }
+
+            if (held.HasFlag(EngineFlags.Macro))
+                Macro.StartPlayback();
+            PauseStateChanged?.Invoke();
+            return action;
+        }
+
+        if (action != PauseAction.Suspended)
+            return PauseAction.Idle;
+
+        _held = PauseResume.Capture(Jiggler.IsEnabled, Clicker.IsEnabled, Typer.IsEnabled, Presence.IsEnabled, Macro.IsPlaying);
+        Jiggler.Stop();
+        Clicker.Stop();
+        Macro.Stop();
+        Typer.Stop();
+        Presence.Stop();
+        PauseStateChanged?.Invoke();
+        return action;
+    }
+
+    public void ForgetPause()
+    {
+        if (_held == EngineFlags.None)
+            return;
+        _held = EngineFlags.None;
+        PauseStateChanged?.Invoke();
+    }
+
     public void Panic()
     {
+        _held = EngineFlags.None;
         Failsafe.IsArmed = false;
         Jiggler.Stop();
         Clicker.Stop();
         Macro.Stop();
         Typer.Stop();
         Presence.Stop(persistOff: true);
+        PauseStateChanged?.Invoke();
         Stopped?.Invoke();
     }
 

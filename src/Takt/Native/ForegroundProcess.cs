@@ -4,11 +4,12 @@ namespace Takt.Native;
 
 internal static class ForegroundProcess
 {
-    public static string? TryGetName()
+    public static string? TryGetName() => TryGetPath(Win32.GetForegroundWindow());
+
+    public static string? TryGetPath(nint hwnd)
     {
         try
         {
-            var hwnd = Win32.GetForegroundWindow();
             if (hwnd == nint.Zero)
                 return null;
             Win32.GetWindowThreadProcessId(hwnd, out var pid);

@@ -29,6 +29,7 @@ internal partial class SettingsViewModel : ObservableObject
         Settings.Hotkeys.PickPosition.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.ToggleMacro.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         Settings.Hotkeys.ToggleTyper.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
+        Settings.Hotkeys.TogglePause.PropertyChanged += (_, _) => NotifyHotkeyDisplays();
         _services.Hotkeys.RegistrationFailed += name => RefreshHotkeyRows(name);
         Settings.Appearance.PropertyChanged += (_, args) =>
         {
@@ -101,9 +102,19 @@ internal partial class SettingsViewModel : ObservableObject
     public string PickHotkeyDisplay => Settings.Hotkeys.PickPosition.ToDisplayString(IsGerman);
     public string MacroHotkeyDisplay => Settings.Hotkeys.ToggleMacro.ToDisplayString(IsGerman);
     public string TyperHotkeyDisplay => Settings.Hotkeys.ToggleTyper.ToDisplayString(IsGerman);
+    public string PauseHotkeyDisplay => Settings.Hotkeys.TogglePause.ToDisplayString(IsGerman);
 
     [ObservableProperty] private string _snippetName = "";
     [ObservableProperty] private string _snippetText = "";
+    [ObservableProperty] private string _macroName = "";
+    [ObservableProperty] private string _sequenceName = "";
+    [ObservableProperty] private string _macroStepText = "";
+    [ObservableProperty] private SavedMacro? _selectedSavedMacro;
+    [ObservableProperty] private SavedSequence? _selectedSavedSequence;
+    [ObservableProperty] private IReadOnlyList<PreviewDot> _macroPreview = [];
+
+    public bool HasMacroPreview => MacroPreview.Count > 0;
+    public bool HideMacroPreview => MacroPreview.Count == 0;
 
     [ObservableProperty] private string _profileName = "";
     [ObservableProperty] private ActivityProfile? _selectedProfile;
@@ -173,6 +184,7 @@ internal partial class SettingsViewModel : ObservableObject
             "record" => Settings.Hotkeys.RecordMacro,
             "show" => Settings.Hotkeys.ShowWindow,
             "compact" => Settings.Hotkeys.ToggleCompact,
+            "pause" => Settings.Hotkeys.TogglePause,
             _ => null
         };
 
@@ -255,6 +267,7 @@ internal partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(PickHotkeyDisplay));
         OnPropertyChanged(nameof(MacroHotkeyDisplay));
         OnPropertyChanged(nameof(TyperHotkeyDisplay));
+        OnPropertyChanged(nameof(PauseHotkeyDisplay));
     }
 
     [RelayCommand]

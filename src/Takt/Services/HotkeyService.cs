@@ -17,7 +17,8 @@ internal enum HotkeyAction
     TogglePresence = 8,
     ShowWindow = 9,
     RecordMacro = 10,
-    ToggleCompact = 11
+    ToggleCompact = 11,
+    TogglePause = 12
 }
 
 internal sealed class HotkeyService : IDisposable
@@ -108,6 +109,7 @@ internal sealed class HotkeyService : IDisposable
         TryRegister(HotkeyAction.ShowWindow, _settings.ShowWindow, seen);
         TryRegister(HotkeyAction.RecordMacro, _settings.RecordMacro, seen);
         TryRegister(HotkeyAction.ToggleCompact, _settings.ToggleCompact, seen);
+        TryRegister(HotkeyAction.TogglePause, _settings.TogglePause, seen);
     }
 
     private void TryRegister(HotkeyAction action, HotkeyBinding binding, HashSet<(int Modifiers, int VirtualKey)> seen)

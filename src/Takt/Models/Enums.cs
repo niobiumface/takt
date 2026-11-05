@@ -144,3 +144,10 @@ public enum PresenceWarning
     PolicyLock,
     SessionLocked
 }
+
+public enum MacroSpeed
+{
+    Normal = 0,
+    Half = 1,
+    Double = 2
+}

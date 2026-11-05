@@ -46,6 +46,7 @@ internal sealed partial class HotkeyEditorRow : ObservableObject
 internal sealed class MacroFile
 {
     public int LoopCount { get; set; } = 1;
+    public MacroSpeed Speed { get; set; } = MacroSpeed.Normal;
     public List<MacroEvent>? Events { get; set; }
 }
 
@@ -73,6 +74,7 @@ internal partial class SettingsViewModel
     public ObservableCollection<ChoiceOption> Motions { get; } = [];
     public ObservableCollection<ChoiceOption> Sounds { get; } = [];
     public ObservableCollection<ChoiceOption> LogLevels { get; } = [];
+    public ObservableCollection<ChoiceOption> MacroSpeeds { get; } = [];
 
     [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private string _selectedSection = "general";
@@ -130,6 +132,10 @@ internal partial class SettingsViewModel
             new(LogLevel.Error, T("Log.Error", "Errors")),
             new(LogLevel.Info, T("Log.Info", "Info")),
             new(LogLevel.Debug, T("Log.Debug", "Debug")));
+        Replace(MacroSpeeds,
+            new(MacroSpeed.Half, T("Macro.Half", "0.5×")),
+            new(MacroSpeed.Normal, T("Macro.Normal", "1×")),
+            new(MacroSpeed.Double, T("Macro.Double", "2×")));
         BuildHotkeyRows();
         UpdateSectionVisibility();
     }
@@ -143,6 +149,7 @@ internal partial class SettingsViewModel
         AddRow("presence", nameof(HotkeyAction.TogglePresence), T("Hotkey.Presence", "Toggle presence"), Settings.Hotkeys.TogglePresence, 0x7C, 0);
         AddRow("record", nameof(HotkeyAction.RecordMacro), T("Hotkey.RecordMacro", "Record macro"), Settings.Hotkeys.RecordMacro, 0x7B, 0x0002);
         AddRow("macro", nameof(HotkeyAction.ToggleMacro), T("Hotkey.Macro", "Play macro"), Settings.Hotkeys.ToggleMacro, 0x7B, 0);
+        AddRow("pause", nameof(HotkeyAction.TogglePause), T("Hotkey.Pause", "Pause and resume"), Settings.Hotkeys.TogglePause, 0x74, 0);
         AddRow("panic", nameof(HotkeyAction.Panic), T("Hotkey.Panic", "Panic stop"), Settings.Hotkeys.Panic, 0x78, 0);
         AddRow("show", nameof(HotkeyAction.ShowWindow), T("Hotkey.Show", "Show or hide"), Settings.Hotkeys.ShowWindow, 0x54, 0x0003);
         AddRow("compact", nameof(HotkeyAction.ToggleCompact), T("Hotkey.Compact", "Compact window"), Settings.Hotkeys.ToggleCompact, 0x4D, 0x0006);
@@ -225,12 +232,15 @@ internal partial class SettingsViewModel
         var dialog = new OpenFileDialog { Filter = "JSON|*.json" };
         if (dialog.ShowDialog() != true)
             return;
-        var loaded = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(dialog.FileName), SettingsService.JsonOptions);
+        var json = File.ReadAllText(dialog.FileName);
+        var loaded = JsonSerializer.Deserialize<AppSettings>(json, SettingsService.JsonOptions);
         if (loaded is null)
             return;
         SettingsMigration.Migrate(loaded);
         SettingsNormalizer.ApplyAll(loaded);
         ProfileApplicator.Overlay(loaded, Settings);
+        if (SettingsImport.ContainsProfiles(json))
+            ProfileApplicator.ReplaceProfiles(loaded, Settings);
         _services.Theme.Apply(Settings);
         _main.RefreshHotkeyLabels();
         BuildCatalog();
@@ -378,7 +388,7 @@ internal partial class SettingsViewModel
         var dialog = new SaveFileDialog { Filter = "JSON|*.json", FileName = "takt-macro.json" };
         if (dialog.ShowDialog() != true)
             return;
-        var payload = new MacroFile { LoopCount = Settings.Macro.LoopCount, Events = Settings.Macro.Events.ToList() };
+        var payload = new MacroFile { LoopCount = Settings.Macro.LoopCount, Speed = Settings.Macro.Speed, Events = Settings.Macro.Events.ToList() };
         File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(payload, SettingsService.JsonOptions));
     }
 
@@ -392,10 +402,96 @@ internal partial class SettingsViewModel
         if (loaded?.Events is null)
             return;
         Settings.Macro.LoopCount = Math.Max(1, loaded.LoopCount);
+        Settings.Macro.Speed = loaded.Speed;
         Settings.Macro.Events.Clear();
         foreach (var item in loaded.Events)
             Settings.Macro.Events.Add(item);
         _main.NotifySummaries();
+    }
+
+    [RelayCommand]
+    private void PreviewMacro()
+    {
+        MacroPreview = MacroPath.Dots(Settings.Macro.Events, 220, 88);
+        OnPropertyChanged(nameof(HasMacroPreview));
+        OnPropertyChanged(nameof(HideMacroPreview));
+    }
+
+    [RelayCommand]
+    private void InsertTextStep()
+    {
+        if (string.IsNullOrEmpty(MacroStepText))
+            return;
+        var step = MacroEdit.Text(MacroStepText);
+        var index = SelectedMacro is null ? -1 : Settings.Macro.Events.IndexOf(SelectedMacro);
+        if (index >= 0)
+            Settings.Macro.Events.Insert(index + 1, step);
+        else
+            Settings.Macro.Events.Add(step);
+        SelectedMacro = step;
+        MacroStepText = "";
+    }
+
+    [RelayCommand]
+    private void SaveNamedMacro()
+    {
+        Settings.Macro.Saved ??= new();
+        SavedLibraries.StoreMacro(MacroName, Settings.Macro, Settings.Macro.Saved);
+        MacroName = "";
+    }
+
+    [RelayCommand]
+    private void LoadNamedMacro()
+    {
+        if (SelectedSavedMacro is null)
+            return;
+        SavedLibraries.LoadMacro(SelectedSavedMacro, Settings.Macro);
+        _main.NotifySummaries();
+    }
+
+    [RelayCommand]
+    private void DeleteNamedMacro()
+    {
+        if (SelectedSavedMacro is null)
+            return;
+        Settings.Macro.Saved?.Remove(SelectedSavedMacro);
+        SelectedSavedMacro = null;
+    }
+
+    [RelayCommand]
+    private void SaveNamedSequence()
+    {
+        Settings.Clicker.SavedSequences ??= new();
+        SavedLibraries.StoreSequence(SequenceName, Settings.Clicker.Points, Settings.Clicker.SavedSequences);
+        SequenceName = "";
+    }
+
+    [RelayCommand]
+    private void LoadNamedSequence()
+    {
+        if (SelectedSavedSequence is null)
+            return;
+        Settings.Clicker.Points ??= new();
+        SavedLibraries.LoadSequence(SelectedSavedSequence, Settings.Clicker.Points);
+        Settings.Clicker.PositionMode = ClickPositionMode.Sequence;
+    }
+
+    [RelayCommand]
+    private void DeleteNamedSequence()
+    {
+        if (SelectedSavedSequence is null)
+            return;
+        Settings.Clicker.SavedSequences?.Remove(SelectedSavedSequence);
+        SelectedSavedSequence = null;
+    }
+
+    [RelayCommand]
+    private void ExportStats()
+    {
+        var dialog = new SaveFileDialog { Filter = "CSV|*.csv", FileName = "takt-stats.csv" };
+        if (dialog.ShowDialog() != true)
+            return;
+        File.WriteAllText(dialog.FileName, StatsCsv.Format(_services.Stats.Days));
     }
 
     [RelayCommand]

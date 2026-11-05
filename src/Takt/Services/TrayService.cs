@@ -40,6 +40,7 @@ internal sealed class TrayService : IDisposable
     public event Action? ExitRequested;
     public event Action? SettingsRequested;
     public event Action? ToggleCompactRequested;
+    public event Action? PauseRequested;
 
     public void Attach(Window window) => _ = window;
 
@@ -98,6 +99,7 @@ internal sealed class TrayService : IDisposable
         menu.Items.Add(LocalizationService.Text("Tray.Jiggler", "Toggle jiggler"), null, (_, _) => ToggleJigglerRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Clicker", "Toggle clicker"), null, (_, _) => ToggleClickerRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Compact", "Compact window"), null, (_, _) => ToggleCompactRequested?.Invoke());
+        menu.Items.Add(LocalizationService.Text("Tray.Pause", "Pause or resume"), null, (_, _) => PauseRequested?.Invoke());
         menu.Items.Add(LocalizationService.Text("Tray.Panic", "Stop all"), null, (_, _) => PanicRequested?.Invoke());
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add(LocalizationService.Text("Tray.Exit", "Exit"), null, (_, _) => ExitRequested?.Invoke());

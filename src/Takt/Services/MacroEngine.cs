@@ -12,7 +12,10 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
     private readonly MacroSettings _settings;
     private readonly UserActivityMonitor _activity;
     private readonly Dispatcher _dispatcher;
+    private readonly Func<AnchorSnapshot?>? _capture;
+    private readonly Func<string, string, AnchorSnapshot?>? _find;
     private readonly object _gate = new();
+    private int _textFault;
     private CancellationTokenSource? _cts;
     private int _generation;
     private DateTime _lastUtc;
@@ -20,11 +23,18 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
     private int _lastY;
     private bool _hasLast;
 
-    public MacroEngine(MacroSettings settings, UserActivityMonitor activity, Dispatcher dispatcher)
+    public MacroEngine(
+        MacroSettings settings,
+        UserActivityMonitor activity,
+        Dispatcher dispatcher,
+        Func<AnchorSnapshot?>? capture = null,
+        Func<string, string, AnchorSnapshot?>? find = null)
     {
         _settings = settings;
         _activity = activity;
         _dispatcher = dispatcher;
+        _capture = capture;
+        _find = find;
         _activity.MouseObserved += OnMouse;
         EventCount = _settings.Events?.Count ?? 0;
     }
@@ -122,15 +132,13 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
                 foreach (var item in events)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (item.DelayMs > 0)
-                    {
-                        var cap = MacroEdit.IsWait(item.Kind) ? 60_000 : 2_000;
-                        await Task.Delay(Math.Min(item.DelayMs, cap), token);
-                    }
+                    var delay = MacroPace.PlaybackDelay(item.DelayMs, item.Kind, _settings.Speed);
+                    if (delay > 0)
+                        await Task.Delay(delay, token);
 
                     if (MacroEdit.IsWait(item.Kind))
                         continue;
-                    Play(item);
+                    await Play(item, token);
                 }
             }
         }
@@ -160,8 +168,23 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
         }
     }
 
-    private void Play(MacroEvent item)
+    private async Task Play(MacroEvent item, CancellationToken token)
     {
+        if (MacroEdit.IsText(item.Kind))
+        {
+            foreach (var character in MacroText.Keys(item.Text))
+            {
+                token.ThrowIfCancellationRequested();
+                if (!KeyboardInput.Type(character) && Interlocked.Exchange(ref _textFault, 1) == 0)
+                    AppLog.Error("Macro text SendInput was rejected.");
+                var gap = MacroPace.TextGap(_settings.Speed);
+                if (gap > 0)
+                    await Task.Delay(gap, token);
+            }
+
+            return;
+        }
+
         if (!Enum.TryParse<ClickButton>(item.Button, out var button))
             button = ClickButton.Left;
         switch (item.Kind)
@@ -176,7 +199,8 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
                 MouseInput.Wheel(item.WheelDelta == 0 ? PointerButtons.WheelDelta : item.WheelDelta);
                 break;
             default:
-                MouseInput.MoveAbsolute(item.X, item.Y);
+                var point = MacroAnchor.Resolve(item, _find);
+                MouseInput.MoveAbsolute(point.X, point.Y);
                 break;
         }
     }
@@ -206,20 +230,39 @@ internal sealed partial class MacroEngine : ObservableObject, IDisposable
             return;
         }
 
+        AnchorSnapshot? anchor = null;
+        try
+        {
+            anchor = _capture?.Invoke();
+        }
+        catch
+        {
+            anchor = null;
+        }
+
+        var anchored = anchor is not null;
+        var offset = anchored
+            ? MacroAnchor.Offset(sample.X, sample.Y, anchor!.Value.Left, anchor.Value.Top)
+            : (RelX: 0, RelY: 0);
         events.Add(new MacroEvent
         {
             DelayMs = Math.Max(0, delay),
             X = sample.X,
             Y = sample.Y,
-            Kind = KindFor(sample.Message),
+            Kind = PointerKind(sample.Message),
             Button = ButtonFor(sample.Message, sample.WheelDelta),
-            WheelDelta = sample.WheelDelta
+            WheelDelta = sample.WheelDelta,
+            Anchored = anchored,
+            RelX = offset.RelX,
+            RelY = offset.RelY,
+            AnchorProcess = anchor?.Process ?? "",
+            AnchorTitle = anchor?.Title ?? ""
         });
         var count = events.Count;
         _dispatcher.BeginInvoke(() => EventCount = count);
     }
 
-    private static string KindFor(int message) => message switch
+    internal static string PointerKind(int message) => message switch
     {
         Win32.WmLButtonDown or Win32.WmRButtonDown or Win32.WmMButtonDown or Win32.WmXButtonDown => "down",
         Win32.WmLButtonUp or Win32.WmRButtonUp or Win32.WmMButtonUp or Win32.WmXButtonUp => "up",

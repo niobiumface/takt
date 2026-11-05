@@ -20,6 +20,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     private int _faultLogged;
     private int _sequenceIndex;
     private bool _timerHeld;
+    private bool _once;
     private ClickButton _stepButton;
     private int _pointDelay;
 
@@ -36,8 +37,18 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
     [ObservableProperty] private PauseReason _pauseReason;
     [ObservableProperty] private int _clickCount;
     [ObservableProperty] private bool _inputFault;
+    [ObservableProperty] private DateTime? _runStartedUtc;
 
-    public void Start()
+    public void Start() => Begin(once: false);
+
+    public void StartOnce()
+    {
+        if (IsEnabled)
+            return;
+        Begin(once: true);
+    }
+
+    private void Begin(bool once)
     {
         CancellationTokenSource cts;
         int generation;
@@ -48,6 +59,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             _cts = cts = new CancellationTokenSource();
         }
 
+        _once = once;
         ClickCount = 0;
         _pendingCount = 0;
         _faultLogged = 0;
@@ -97,7 +109,7 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
         var cancelled = false;
         try
         {
-            if (_settings.StartDelayMs > 0)
+            if (!_once && _settings.StartDelayMs > 0)
             {
                 Publish(true, EngineStatus.Paused, PauseReason.StartDelay, fault: null);
                 await Task.Delay(_settings.StartDelayMs, token);
@@ -111,11 +123,14 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             }
 
             var started = DateTime.UtcNow;
+            PublishStarted(started);
             var burstCounter = 0;
             var clicks = 0;
 
             while (!token.IsCancellationRequested && IsCurrent(generation))
             {
+                if (_once && clicks >= 1)
+                    break;
                 if (IsFinished(started, clicks))
                     break;
 
@@ -152,9 +167,11 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             PublishCount(_pendingCount, flush: true);
             if (!cancelled && IsCurrent(generation))
             {
+                var quiet = _once;
                 _dispatcher.Invoke(() =>
                 {
-                    CompletedNaturally?.Invoke();
+                    if (!quiet)
+                        CompletedNaturally?.Invoke();
                     Stop();
                 });
             }
@@ -171,6 +188,19 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
 
     private async Task RunHoldAsync(CancellationToken token)
     {
+        var started = DateTime.UtcNow;
+        PublishStarted(started);
+        if (_once)
+        {
+            MoveIfNeeded();
+            Press(_stepButton);
+            await Task.Delay(Math.Max(1, _settings.HoldDurationMs), token);
+            ReleaseHold();
+            _pendingCount = 1;
+            PublishCount(1, flush: true);
+            return;
+        }
+
         var plan = HoldPlan.For(
             _settings.RepeatMode,
             _settings.RepeatCount,
@@ -188,6 +218,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
                 await Task.Delay(plan.ActiveHold, token);
 
             ReleaseHold();
+            _pendingCount = i + 1;
+            PublishCount(i + 1, flush: false);
             if (i + 1 >= plan.Cycles)
                 break;
 
@@ -278,6 +310,15 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             _dispatcher.BeginInvoke(Apply);
     }
 
+    private void PublishStarted(DateTime started)
+    {
+        void Apply() => RunStartedUtc = started;
+        if (_dispatcher.CheckAccess())
+            Apply();
+        else
+            _dispatcher.Invoke(Apply);
+    }
+
     private void Publish(bool enabled, EngineStatus status, PauseReason reason, bool? fault)
     {
         void Apply()
@@ -285,6 +326,8 @@ internal sealed partial class ClickerEngine : ObservableObject, IDisposable
             IsEnabled = enabled;
             Status = status;
             PauseReason = reason;
+            if (!enabled)
+                RunStartedUtc = null;
             if (fault is bool value)
                 InputFault = value;
         }

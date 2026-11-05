@@ -41,6 +41,10 @@ internal partial class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(ClickerStatusText));
             if (e.PropertyName is nameof(ClickerEngine.ClickCount) or nameof(ClickerEngine.Status))
                 OnPropertyChanged(nameof(ClickerProgress));
+            if (e.PropertyName is nameof(ClickerEngine.ClickCount) or nameof(ClickerEngine.IsEnabled) or nameof(ClickerEngine.RunStartedUtc))
+                OnPropertyChanged(nameof(RemainderText));
+            if (e.PropertyName is nameof(ClickerEngine.IsEnabled))
+                TestClickCommand.NotifyCanExecuteChanged();
             if (e.PropertyName is nameof(ClickerEngine.ClickCount))
                 NoteClicks(Clicker.ClickCount);
             if (e.PropertyName is nameof(ClickerEngine.InputFault) && Clicker.InputFault)
@@ -68,6 +72,10 @@ internal partial class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(TyperProgress));
                 NoteTyped(Typer.TypedCount);
             }
+            if (e.PropertyName is nameof(TyperEngine.PassCount) or nameof(TyperEngine.IsEnabled) or nameof(TyperEngine.RunStartedUtc))
+                OnPropertyChanged(nameof(RemainderText));
+            if (e.PropertyName is nameof(TyperEngine.IsEnabled))
+                TestTypeCommand.NotifyCanExecuteChanged();
             if (e.PropertyName is nameof(TyperEngine.InputFault) && Typer.InputFault)
                 ShowInputFault();
             if (e.PropertyName is nameof(TyperEngine.IsEnabled) or nameof(TyperEngine.Status))
@@ -102,10 +110,17 @@ internal partial class MainViewModel : ObservableObject
         _services.Tray.ExitRequested += ExitApp;
         _services.Tray.SettingsRequested += () => ShowSettings(null);
         _services.Tray.ToggleCompactRequested += () => ToggleCompact();
+        _services.Tray.PauseRequested += () => TogglePause();
+        _services.PauseStateChanged += () =>
+        {
+            OnPropertyChanged(nameof(PauseLabel));
+            OnPropertyChanged(nameof(RemainderText));
+        };
         _services.ProfileRequested += SelectProfileByName;
         _services.DeadlineChanged += text =>
         {
             DeadlineText = text;
+            OnPropertyChanged(nameof(RemainderText));
             var detail = string.IsNullOrWhiteSpace(text) ? PresenceStatusText : text;
             _services.Tray.SetDetail(detail);
             if (DateTime.UtcNow - _weekUi < TimeSpan.FromSeconds(1))
@@ -218,6 +233,13 @@ internal partial class MainViewModel : ObservableObject
         get => Jiggler.IsEnabled;
         set
         {
+            if (value == Jiggler.IsEnabled)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            _services.ForgetPause();
             if (value)
                 Jiggler.Start();
             else
@@ -231,6 +253,13 @@ internal partial class MainViewModel : ObservableObject
         get => Clicker.IsEnabled;
         set
         {
+            if (value == Clicker.IsEnabled)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            _services.ForgetPause();
             if (value)
                 Clicker.Start();
             else
@@ -260,6 +289,13 @@ internal partial class MainViewModel : ObservableObject
         get => Typer.IsEnabled;
         set
         {
+            if (value == Typer.IsEnabled)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            _services.ForgetPause();
             if (value)
                 Typer.Start();
             else
@@ -279,6 +315,13 @@ internal partial class MainViewModel : ObservableObject
         get => Presence.IsEnabled;
         set
         {
+            if (value == Presence.IsEnabled)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            _services.ForgetPause();
             if (value)
             {
                 Settings.Presence.Enabled = true;
@@ -318,6 +361,43 @@ internal partial class MainViewModel : ObservableObject
             ? $"{Clicker.ClickCount} / {Math.Max(1, Settings.Clicker.RepeatCount)}"
             : Clicker.ClickCount.ToString();
 
+    public string RemainderText
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (Clicker.IsEnabled)
+            {
+                var clicks = RunRemainder.CountLeft(Settings.Clicker.RepeatMode, Clicker.ClickCount, Settings.Clicker.RepeatCount);
+                if (clicks is int left)
+                    parts.Add(string.Format(LocalizationService.Text("Remain.Clicks", "Clicks left: {0}"), left));
+                var seconds = RunRemainder.SecondsLeft(Settings.Clicker.RepeatMode, Clicker.RunStartedUtc, DateTime.UtcNow, Settings.Clicker.DurationSeconds);
+                if (seconds is int clickerSeconds)
+                    parts.Add(string.Format(LocalizationService.Text("Remain.ClickerTime", "Clicker time left: {0} s"), clickerSeconds));
+            }
+
+            if (Typer.IsEnabled)
+            {
+                var passes = RunRemainder.CountLeft(Settings.Typer.RepeatMode, Typer.PassCount, Settings.Typer.RepeatCount);
+                if (passes is int left)
+                    parts.Add(string.Format(LocalizationService.Text("Remain.Passes", "Passes left: {0}"), left));
+                var seconds = RunRemainder.SecondsLeft(Settings.Typer.RepeatMode, Typer.RunStartedUtc, DateTime.UtcNow, Settings.Typer.DurationSeconds);
+                if (seconds is int typerSeconds)
+                    parts.Add(string.Format(LocalizationService.Text("Remain.TyperTime", "Typing time left: {0} s"), typerSeconds));
+            }
+
+            return string.Join("  ·  ", parts);
+        }
+    }
+
+    public string PauseHotkeyText => Settings.Hotkeys.TogglePause.ToDisplayString(Settings.Appearance.Language != AppLanguage.English);
+
+    public string PauseLabel =>
+        (_services.Held == EngineFlags.None
+            ? LocalizationService.Text("Pause.Hold", "Pause")
+            : LocalizationService.Text("Pause.Resume", "Resume"))
+        + "  " + PauseHotkeyText;
+
     [RelayCommand]
     private void ToggleJiggler()
     {
@@ -336,6 +416,7 @@ internal partial class MainViewModel : ObservableObject
     private void ToggleBoth()
     {
         CommitFocusedText();
+        _services.ForgetPause();
         var any = JigglerOn || ClickerOn;
         if (any)
         {
@@ -352,10 +433,18 @@ internal partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleRecord() => Macro.ToggleRecord();
+    private void ToggleRecord()
+    {
+        _services.ForgetPause();
+        Macro.ToggleRecord();
+    }
 
     [RelayCommand]
-    private void TogglePlay() => Macro.TogglePlay();
+    private void TogglePlay()
+    {
+        _services.ForgetPause();
+        Macro.TogglePlay();
+    }
 
     [RelayCommand]
     private void ToggleTyper()
@@ -370,7 +459,46 @@ internal partial class MainViewModel : ObservableObject
         _services.Panic();
         OnPropertyChanged(nameof(JigglerOn));
         OnPropertyChanged(nameof(ClickerOn));
+        OnPropertyChanged(nameof(TyperOn));
+        OnPropertyChanged(nameof(PresenceOn));
+        OnPropertyChanged(nameof(PauseLabel));
     }
+
+    [RelayCommand]
+    private void TogglePause()
+    {
+        var action = _services.TogglePause();
+        OnPropertyChanged(nameof(JigglerOn));
+        OnPropertyChanged(nameof(ClickerOn));
+        OnPropertyChanged(nameof(TyperOn));
+        OnPropertyChanged(nameof(PresenceOn));
+        OnPropertyChanged(nameof(PauseLabel));
+        OnPropertyChanged(nameof(RemainderText));
+        StatusMessage = action switch
+        {
+            PauseAction.Suspended => LocalizationService.Text("Status.Suspended", "Paused. The same shortcut resumes what was running."),
+            PauseAction.Resumed => LocalizationService.Text("Status.Resumed", "Resumed."),
+            _ => StatusMessage
+        };
+    }
+
+    [RelayCommand(CanExecute = nameof(CanTestClick))]
+    private void TestClick()
+    {
+        CommitFocusedText();
+        Clicker.StartOnce();
+    }
+
+    private bool CanTestClick() => !Clicker.IsEnabled;
+
+    [RelayCommand(CanExecute = nameof(CanTestType))]
+    private void TestType()
+    {
+        CommitFocusedText();
+        Typer.StartOnce();
+    }
+
+    private bool CanTestType() => !Typer.IsEnabled;
 
     [RelayCommand]
     private void OpenSettings() => ShowSettings(null);
@@ -514,6 +642,7 @@ internal partial class MainViewModel : ObservableObject
         nameof(HotkeyAction.PickPosition) => LocalizationService.Text("Hotkey.Pick", "Pick position"),
         nameof(HotkeyAction.ToggleMacro) => LocalizationService.Text("Hotkey.Macro", "Play macro"),
         nameof(HotkeyAction.ToggleTyper) => LocalizationService.Text("Hotkey.Typer", "Toggle typer"),
+        nameof(HotkeyAction.TogglePause) => LocalizationService.Text("Hotkey.Pause", "Pause and resume"),
         _ => action
     };
 
@@ -553,6 +682,8 @@ internal partial class MainViewModel : ObservableObject
         ClickerHotkeyText = Settings.Hotkeys.ToggleClicker.ToDisplayString(german);
         PanicHotkeyText = Settings.Hotkeys.Panic.ToDisplayString(german);
         TyperHotkeyText = Settings.Hotkeys.ToggleTyper.ToDisplayString(german);
+        OnPropertyChanged(nameof(PauseHotkeyText));
+        OnPropertyChanged(nameof(PauseLabel));
         OnPropertyChanged(nameof(SafetyHint));
         OnPropertyChanged(nameof(FirstRunHint));
         _services.Hotkeys.Rebind();
@@ -597,6 +728,9 @@ internal partial class MainViewModel : ObservableObject
                 case HotkeyAction.ToggleCompact:
                     ToggleCompact();
                     break;
+                case HotkeyAction.TogglePause:
+                    TogglePause();
+                    break;
             }
         });
     }
@@ -621,6 +755,8 @@ internal partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(TyperWpm));
             OnPropertyChanged(nameof(PresenceStatusText));
             OnPropertyChanged(nameof(ClickSummary));
+            OnPropertyChanged(nameof(RemainderText));
+            OnPropertyChanged(nameof(PauseLabel));
             RefreshTray();
             foreach (Window window in Application.Current.Windows)
             {
@@ -656,6 +792,7 @@ internal partial class MainViewModel : ObservableObject
 
     public string SafetyHint =>
         LocalizationService.Text("Safety.Panic", "Panic") + " " + PanicHotkeyText +
+        "  ·  " + LocalizationService.Text("Pause.Hold", "Pause") + " " + PauseHotkeyText +
         "  ·  " + CornerLabel();
 
     public string FirstRunHint =>
