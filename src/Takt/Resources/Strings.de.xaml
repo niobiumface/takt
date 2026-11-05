@@ -439,4 +439,23 @@
     <sys:String x:Key="Tip.TestType">Tippt den aktuellen Text einmal und stoppt dann.</sys:String>
     <sys:String x:Key="Tip.Remain">Sichtbar, solange ein Lauf nach Anzahl oder Dauer aktiv ist.</sys:String>
     <sys:String x:Key="Tip.StatsCsv">Schreibt die lokalen Tageswerte als CSV. Es wird nichts hochgeladen.</sys:String>
+    <sys:String x:Key="Pause.Focus">Wartet auf das Fenster</sys:String>
+    <sys:String x:Key="Plan.Start">Ablauf starten</sys:String>
+    <sys:String x:Key="Plan.Stop">Ablauf stoppen</sys:String>
+    <sys:String x:Key="Plan.Step">Schritt {0} / {1} · {2}</sys:String>
+    <sys:String x:Key="Plan.Jiggler">Jiggler</sys:String>
+    <sys:String x:Key="Plan.Sequence">Klickfolge</sys:String>
+    <sys:String x:Key="Plan.Snippet">Textbaustein</sys:String>
+    <sys:String x:Key="Plan.Title">Ablaufplan</sys:String>
+    <sys:String x:Key="Plan.Hint">Startet nacheinander einen Jiggler, eine gespeicherte Klickfolge und einen Textbaustein. Ein Jiggler-Schritt nutzt seine Sekunden. Null Sekunden lassen Klicker oder Typer ihre eigene Wiederholung nutzen.</sys:String>
+    <sys:String x:Key="Plan.Add">Schritt hinzufügen</sys:String>
+    <sys:String x:Key="Holiday.EveryYear">jedes Jahr</sys:String>
+    <sys:String x:Key="Focus.Label">Nur solange diese App vorn ist</sys:String>
+    <sys:String x:Key="Log.Refresh">Log aktualisieren</sys:String>
+    <sys:String x:Key="Tip.HolidayYear">Speichert Monat und Tag. Dasselbe Datum gilt jedes Jahr.</sys:String>
+    <sys:String x:Key="Tip.OwnStop">Stoppt nur diese Funktion. Die Uhr unter Statistik stoppt weiterhin alles.</sys:String>
+    <sys:String x:Key="Tip.Focus">Klicker und Typer warten, solange eine andere App vorn ist. Leer heißt, sie laufen weiter. Takt versteckt sich nicht.</sys:String>
+    <sys:String x:Key="Tip.SnippetHotkey">Gibt diesem Baustein eine eigene Taste. Nochmal drücken stoppt, wenn genau dieser Text tippt. Höchstens 12 Tasten.</sys:String>
+    <sys:String x:Key="Tip.Plan">Der Name ist die gespeicherte Folge oder der Baustein. Sekunden sind die Schrittdauer.</sys:String>
+    <sys:String x:Key="Tip.LogView">Die letzten Zeilen aus dem lokalen Log. Es wird nichts hochgeladen.</sys:String>
 </ResourceDictionary>

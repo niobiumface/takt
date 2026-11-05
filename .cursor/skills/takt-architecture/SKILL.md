@@ -44,6 +44,7 @@ If the clicker uses **cursor position** and the jiggler is in a **visible** move
 
 - Panic hotkey and failsafe corner stop jiggler, clicker, typer, and macro. The pause hotkey remembers which of those were running and starts the same set again. Recording is not resumed
 - A macro stores the pointer offset from the foreground window and plays it back relative to that window, with 0.5×, 1×, and 2× speed. A path preview does not click. A text step types text the user entered. Named macros and click sequences are stored like snippets. Test actions run one click or one typing pass. Count and duration runs show what is left. Import copies named profiles when the file has them. Each changed `settings.json` keeps the previous three copies in AppData, and stats can be written as CSV
+- A run plan starts the jiggler, a saved click sequence, and a snippet in order. Snippets can have their own hotkey. The tray lists profiles. Clicker and typer can wait until a named process is in front. Holidays can repeat every year. Each function has its own stop in addition to the global timer. Settings can show the tail of the local log
 - `SetThreadExecutionState` is applied on the UI thread and only while the jiggler is effectively running (not while a schedule, fullscreen, or user input has paused it)
 - Random jiggle moves anywhere inside the operating radius. Amplitude is only the nudge distance, and it is capped by that radius
 - Restore `SetThreadExecutionState` and unregister hotkeys on exit

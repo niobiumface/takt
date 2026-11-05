@@ -192,6 +192,12 @@
                         <Button Style="{StaticResource GhostButton}" Command="{Binding RemovePointCommand}" Content="{DynamicResource Profile.Delete}" />
                     </StackPanel>
                     </StackPanel>
+                    <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="clicker-stop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="clicker-clock" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Clicker.StopAtTime, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Focus.Label}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Focus}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="focus" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.OnlyWhileProcess, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Group.Safety}" Style="{StaticResource GroupLabel}" />
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Failsafe}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="failsafe" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.FailsafeEnabled}" Content="{DynamicResource General.Failsafe}" /></DockPanel>
                     <TextBlock Text="{DynamicResource General.Corner}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
@@ -233,8 +239,16 @@
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.PauseInput}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="presence-pause" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.Presence.PauseOnUserInput}" Content="{DynamicResource Jiggler.PauseInput}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Presence.Resume}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Resume}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="presence-resume" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Presence.ResumeIdleSeconds, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="presence-stop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Presence.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="presence-clock" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Presence.StopAtTime, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Jiggler.IdleSeconds}" Style="{StaticResource FieldLabel}" />
                     <DockPanel ToolTip="{DynamicResource Tip.Resume}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="jiggler-resume" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Jiggler.ResumeIdleSeconds, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="jiggler-stop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Jiggler.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="jiggler-clock" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Jiggler.StopAtTime, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                 </StackPanel>
                 </Border>
 
@@ -290,12 +304,13 @@
                     </ItemsControl>
                     <TextBlock Text="{DynamicResource Schedule.Holiday}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Holiday}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding AddHolidayCommand}" Content="{DynamicResource Schedule.AddHoliday}" /><DatePicker SelectedDate="{Binding HolidayDate}" /></DockPanel>
-                    <ItemsControl ItemsSource="{Binding Settings.Work.Holidays}">
+                    <CheckBox IsChecked="{Binding HolidayYearly}" Content="{DynamicResource Holiday.EveryYear}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.HolidayYear}" />
+                    <ItemsControl ItemsSource="{Binding HolidayRows}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <DockPanel Margin="0,2">
-                                    <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Profile.Delete}" Command="{Binding DataContext.RemoveHolidayCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                    <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Profile.Delete}" Command="{Binding DataContext.RemoveHolidayCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Key}" />
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
                                 </DockPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -339,6 +354,16 @@
                         <Button Style="{StaticResource PrimaryButton}" Command="{Binding AddSnippetCommand}" Margin="0,0,8,0" Content="{DynamicResource Typer.SaveSnippet}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding ResetSnippetDraftCommand}" Content="{DynamicResource Settings.Reset}" />
                     </StackPanel>
+                    <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="typer-stop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="typer-clock" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Typer.StopAtTime, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <ListBox ItemsSource="{Binding Settings.Typer.Snippets}" SelectedItem="{Binding SelectedSnippet}" DisplayMemberPath="Name" MinHeight="72" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.SnippetHotkey}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.SnippetHotkey}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ClearSnippetHotkeyCommand}" Content="{DynamicResource Hotkey.Clear}" />
+                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding CaptureHotkeyCommand}" CommandParameter="snippet" Margin="0,0,8,0" Content="{DynamicResource Hotkey.Record}" />
+                        <TextBlock Text="{Binding SnippetHotkeyDisplay}" VerticalAlignment="Center" />
+                    </DockPanel>
                     <ItemsControl ItemsSource="{Binding Settings.Typer.Snippets}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -359,6 +384,10 @@
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Loop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="loop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Macro.LoopCount, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Macro.Speed}" Style="{StaticResource FieldLabel}" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.MacroSpeed}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="macro-speed" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding MacroSpeeds}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.Macro.Speed}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="macro-stop" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Macro.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
+                    <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />
+                    <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.OwnStop}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="macro-clock" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.Macro.StopAtTime, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Style="{StaticResource GhostButton}" Command="{Binding InsertDelayCommand}" Margin="0,0,8,0" Content="{DynamicResource Macro.InsertDelay}" ToolTip="{DynamicResource Tip.Wait}" />
                         <Button Style="{StaticResource GhostButton}" Command="{Binding MoveMacroCommand}" CommandParameter="up" Margin="0,0,8,0" Content="{DynamicResource Macro.Up}" />
@@ -428,7 +457,11 @@
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Notify}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="notify-hotkey" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.NotifyOnHotkey}" Content="{DynamicResource Notify.Hotkey}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Log.Level}" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
                     <DockPanel Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Log}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="log" Margin="8,0,0,0" Content="{DynamicResource Settings.Reset}" /><ComboBox ItemsSource="{Binding LogLevels}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Settings.General.LogLevel}" /></DockPanel>
-                    <Button Style="{StaticResource GhostButton}" Command="{Binding OpenLogFolderCommand}" HorizontalAlignment="Left" Content="{DynamicResource Log.Open}" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.Log}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding OpenLogFolderCommand}" Margin="0,0,8,0" Content="{DynamicResource Log.Open}" ToolTip="{DynamicResource Tip.Log}" />
+                        <Button Style="{StaticResource GhostButton}" Command="{Binding RefreshLogCommand}" Content="{DynamicResource Log.Refresh}" ToolTip="{DynamicResource Tip.LogView}" />
+                    </StackPanel>
+                    <TextBox Text="{Binding LogText}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MinHeight="120" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.LogView}" />
                     <DockPanel Margin="0,2" ToolTip="{DynamicResource Tip.Updates}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="updates" Content="{DynamicResource Settings.Reset}" /><CheckBox IsChecked="{Binding Settings.General.CheckForUpdates}" Content="{DynamicResource General.Updates}" /></DockPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,8">
                         <Button Style="{StaticResource GhostButton}" Command="{Binding ExportSettingsCommand}" Margin="0,0,8,0" Content="{DynamicResource Settings.Export}" ToolTip="{DynamicResource Tip.Export}" />
@@ -443,6 +476,24 @@
                 <Border Style="{StaticResource SectionCard}" Visibility="{Binding ShowHealth, Converter={StaticResource BoolVis}}">
                     <StackPanel x:Name="SectionHealth">
                     <TextBlock Text="{DynamicResource Nav.Health}" Style="{StaticResource TitleText}" Margin="0,0,0,12" />
+                    <TextBlock Text="{DynamicResource Plan.Title}" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{DynamicResource Plan.Hint}" Style="{StaticResource HintText}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBox DockPanel.Dock="Right" Width="72" Margin="8,0,0,0" Text="{Binding PlanSeconds, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Tip.Plan}" />
+                        <TextBox Margin="8,0,0,0" Text="{Binding PlanName, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Tip.Plan}" />
+                        <ComboBox Width="140" ItemsSource="{Binding PlanKinds}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding DraftKind}" />
+                    </DockPanel>
+                    <Button Style="{StaticResource GhostButton}" Command="{Binding AddPlanStepCommand}" HorizontalAlignment="Left" Margin="0,0,0,8" Content="{DynamicResource Plan.Add}" />
+                    <ItemsControl ItemsSource="{Binding Settings.General.Plan}" Margin="0,0,0,12">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,2">
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Profile.Delete}" Command="{Binding DataContext.RemovePlanStepCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                    <TextBlock VerticalAlignment="Center"><Run Text="{Binding Kind}" /><Run Text=" · " /><Run Text="{Binding Name}" /><Run Text=" · " /><Run Text="{Binding Seconds}" /><Run Text=" s" /></TextBlock>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <TextBlock Text="{DynamicResource Timer.After}" Style="{StaticResource FieldLabel}" />
                     <DockPanel x:Name="SetStopMinutes" Margin="0,0,0,8" ToolTip="{DynamicResource Tip.StopMinutes}"><Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Command="{Binding ResetSettingCommand}" CommandParameter="stop-minutes" Content="{DynamicResource Settings.Reset}" /><TextBox Text="{Binding Settings.General.StopAfterMinutes, UpdateSourceTrigger=LostFocus}" /></DockPanel>
                     <TextBlock Text="{DynamicResource Timer.Clock}" Style="{StaticResource FieldLabel}" />

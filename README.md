@@ -36,11 +36,13 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Click at the cursor, at one picked point, or through a sequence of points. Sequences can be saved by name. Test one click runs a single click and stops
 - Sequence points keep their own delay and button. The picker is a crosshair on each monitor; Esc cancels
 - Optional sound and tray notice when a run finishes
-- A timer can stop every running function after a number of minutes or at a clock time. The remaining time is in the status line. A count or duration run also shows how many clicks, passes, or seconds are left
+- A timer can stop every running function after a number of minutes or at a clock time. Each function also has its own stop. The remaining time is in the status line. A count or duration run also shows how many clicks, passes, or seconds are left
+- A run plan starts a jiggler, a saved click sequence, and a snippet one after another
+- Clicker and typer can wait until a named app is in front again. The name is the process, the same way app rules match it
 
 **Typer**
 
-- Types text you enter or save as snippets. It does not read the keyboard
+- Types text you enter or save as snippets. It does not read the keyboard. A snippet can have its own shortcut, up to 12
 - Characters per minute with variation, start delay, and repeat by count or duration
 - Unicode input via `SendInput`
 - Placeholders `{date}`, `{time}`, `{datetime}`, and `{clipboard}`, with formats in Settings. Test once types the current text a single time
@@ -58,7 +60,8 @@ Requires Windows 10/11 and the [.NET 8 Desktop Runtime](https://dotnet.microsoft
 - Global hotkeys (customizable), including while recording a new one. Pause (default `F5`) remembers which functions were running and starts those again. Panic still stops everything
 - Tray icon colored by state: idle, paused, clicker, jiggler or presence, and typer
 - Compact always-on-top window with a start/stop switch per function, from the main window, the tray, or Ctrl+Shift+M. Its position is remembered
-- Named profiles in the same settings file, including optional switching when a foreground app you name is in front
+- Named profiles in the same settings file, including optional switching when a foreground app you name is in front. The tray lists those profiles for a quick switch
+- Working hours can mark a holiday as the same month and day every year. The settings page shows the latest local log lines
 - Command palette with Ctrl+K
 - A skippable first-run wizard, reopened from Settings
 - Windows 11 Mica and rounded corners when the system supports them, with the normal theme background otherwise

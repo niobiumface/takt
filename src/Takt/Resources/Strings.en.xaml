@@ -439,4 +439,23 @@
     <sys:String x:Key="Tip.TestType">Types the current text once, then stops.</sys:String>
     <sys:String x:Key="Tip.Remain">Shown while a count or a duration is running.</sys:String>
     <sys:String x:Key="Tip.StatsCsv">Writes the local day totals as a CSV file. Nothing is uploaded.</sys:String>
+    <sys:String x:Key="Pause.Focus">Waiting for the window</sys:String>
+    <sys:String x:Key="Plan.Start">Run plan</sys:String>
+    <sys:String x:Key="Plan.Stop">Stop plan</sys:String>
+    <sys:String x:Key="Plan.Step">Step {0} / {1} · {2}</sys:String>
+    <sys:String x:Key="Plan.Jiggler">Jiggler</sys:String>
+    <sys:String x:Key="Plan.Sequence">Click sequence</sys:String>
+    <sys:String x:Key="Plan.Snippet">Snippet</sys:String>
+    <sys:String x:Key="Plan.Title">Run plan</sys:String>
+    <sys:String x:Key="Plan.Hint">Runs a jiggler, a saved click sequence, and a snippet one after another. A jiggler step uses its seconds. Zero seconds lets the clicker or typer use its own repeat.</sys:String>
+    <sys:String x:Key="Plan.Add">Add step</sys:String>
+    <sys:String x:Key="Holiday.EveryYear">every year</sys:String>
+    <sys:String x:Key="Focus.Label">Only while this app is in front</sys:String>
+    <sys:String x:Key="Log.Refresh">Refresh log</sys:String>
+    <sys:String x:Key="Tip.HolidayYear">Stores the month and day. The same date matches every year.</sys:String>
+    <sys:String x:Key="Tip.OwnStop">Stops only this function. The timer under Stats still stops everything.</sys:String>
+    <sys:String x:Key="Tip.Focus">Clicker and typer wait while another app is in front. Empty means they keep going. This does not hide Takt.</sys:String>
+    <sys:String x:Key="Tip.SnippetHotkey">Gives this snippet its own shortcut. Press it again to stop if that text is already typing. Up to 12 shortcuts.</sys:String>
+    <sys:String x:Key="Tip.Plan">Name is the saved sequence or snippet. Seconds are the step length.</sys:String>
+    <sys:String x:Key="Tip.LogView">The latest lines from the local log. Nothing is uploaded.</sys:String>
 </ResourceDictionary>
