@@ -2,10 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="TaktDictionaryKey">takt-theme</sys:String>
-    <Color x:Key="WindowBackgroundColor">#1B1D22</Color>
-    <Color x:Key="SurfaceColor">#24262C</Color>
-    <Color x:Key="SurfaceAltColor">#2C2F36</Color>
-    <Color x:Key="BorderColor">#3A3D46</Color>
+    <Color x:Key="WindowBackgroundColor">#14161B</Color>
+    <Color x:Key="SurfaceColor">#1C1F27</Color>
+    <Color x:Key="SurfaceAltColor">#262A34</Color>
+    <Color x:Key="BorderColor">#343845</Color>
     <Color x:Key="TextColor">#F2F3F5</Color>
     <Color x:Key="MutedColor">#9AA0AB</Color>
     <Color x:Key="WarningColor">#E0B25D</Color>

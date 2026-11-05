@@ -9,15 +9,19 @@ Takt should feel like a small professional utility, not a game overlay and not a
 
 ## Main window
 
-- Compact (~420×320), no giant dashboard
-- Two equal cards: Jiggler | Clicker
-- Each card: status dot + label, primary toggle, one or two live controls (mode or interval), hotkey hint
+- Compact (about 520×700 once the typer card is present), no giant dashboard
+- Two equal cards on the first row: Jiggler | Clicker. Typer is a full-width card under them. Below about 500 px the cards stack in one column
+- A running card uses an accent stripe, a paused card an amber stripe. The clicker card shows button, action, and repeat on one line
+- Each card: accent stripe and status pill while running, amber while paused, primary toggle, the live controls, hotkey hint
+- Path icons for stop and settings. No emoji glyphs
+- Themed checkbox, slider, scrollbar, and an accent focus ring
+- Dark or light title bar via `DWMWA_USE_IMMERSIVE_DARK_MODE`, matching the theme
 - Gear opens Settings; closing the window hides to tray if that option is on, otherwise exit
 - Optional always-on-top from settings
 
 ## Settings
 
-Put density behind a gear. Tabs: Jiggler, Clicker, Hotkeys, Appearance, General. Validate numeric ranges in the ViewModel. Bind two-way to `AppSettings`; persist via `SettingsService` debounce.
+Put density behind a gear and the tray menu. The settings window uses a left sidebar (general, hotkeys, clicker, jiggler and presence, working hours, typer, notifications) and a search box that filters those sections. Validate and clamp in the settings normalizer. Bind two-way to `AppSettings` so engines see changes live; persist via `SettingsService` debounce. Every value can reset to its default. Profiles store a full copy of the settings.
 
 ## Visual language
 
@@ -25,7 +29,7 @@ Put density behind a gear. Tabs: Jiggler, Clicker, Hotkeys, Appearance, General.
 - Accent color user-selectable (used on toggles, status-running, primary buttons)
 - Status: muted = idle, accent = running, amber = paused (idle-wait / schedule)
 - Type: Segoe UI; 12–13 px body, 11 px hints, 16–18 px card titles
-- Spacing: 8/12/16; corner radius 8 on cards
+- Spacing: 8/12/16; corner radius 10 on cards. Settings sections sit on surface cards. The sidebar selection uses an accent bar. Pace chips and the 7-day count row live on the main window. The compact window uses the same switches as the cards
 - No neon, no rainbow, no fake acrylic clutter
 
 Themes live in `Themes/Dark.xaml` and `Themes/Light.xaml`. Swap `MergedDictionaries` at runtime; keep DynamicResource for colors.

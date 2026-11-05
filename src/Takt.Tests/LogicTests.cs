@@ -164,6 +164,15 @@ public class UserActivityFilterTests
         Assert.True(UserActivityFilter.IsInjected(0x00000002, keyboard: false));
         Assert.False(UserActivityFilter.IsInjected(0, keyboard: false));
     }
+
+    [Fact]
+    public void DetectsInjectedKeyboardFlagsWithoutTreatingExtendedKeysAsInjected()
+    {
+        Assert.True(UserActivityFilter.IsInjected(UserActivityFilter.KeyboardInjected, keyboard: true));
+        Assert.True(UserActivityFilter.IsInjected(UserActivityFilter.KeyboardLowerIlInjected, keyboard: true));
+        Assert.False(UserActivityFilter.IsInjected(UserActivityFilter.KeyboardExtended, keyboard: true));
+        Assert.False(UserActivityFilter.IsInjected(0, keyboard: true));
+    }
 }
 
 public class NativeLayoutTests

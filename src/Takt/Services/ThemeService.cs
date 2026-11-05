@@ -22,13 +22,31 @@ internal sealed class ThemeService
         if (app is null)
             return;
 
-        var themeUri = settings.Appearance.Theme == ThemeMode.Light
-            ? "Themes/Light.xaml"
-            : "Themes/Dark.xaml";
+        var dark = IsDark(settings.Appearance.Theme);
+        var themeUri = dark ? "Themes/Dark.xaml" : "Themes/Light.xaml";
 
         ReplaceDictionary("takt-theme", new ResourceDictionary { Source = new Uri(themeUri, UriKind.Relative) });
         ApplyAccent(settings.Appearance.AccentHex);
         app.MainWindow?.SetValue(Window.TopmostProperty, settings.Appearance.AlwaysOnTop);
+        TitleBarTheme.ApplyAll(dark);
+    }
+
+    public static bool IsDark(ThemeMode mode)
+    {
+        if (mode == ThemeMode.Light)
+            return false;
+        if (mode == ThemeMode.Dark)
+            return true;
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return key?.GetValue("AppsUseLightTheme") is not int light || light == 0;
+        }
+        catch
+        {
+            return true;
+        }
     }
 
     public void ApplyAccent(string hex)

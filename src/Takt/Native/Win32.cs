@@ -5,6 +5,9 @@ namespace Takt.Native;
 internal static class Win32
 {
     public const int InputMouse = 0;
+    public const int InputKeyboard = 1;
+    public const uint KeyEventKeyUp = 0x0002;
+    public const uint KeyEventUnicode = 0x0004;
     public const uint MouseEventMove = 0x0001;
     public const uint MouseEventLeftDown = 0x0002;
     public const uint MouseEventLeftUp = 0x0004;
@@ -12,6 +15,9 @@ internal static class Win32
     public const uint MouseEventRightUp = 0x0010;
     public const uint MouseEventMiddleDown = 0x0020;
     public const uint MouseEventMiddleUp = 0x0040;
+    public const uint MouseEventXDown = 0x0080;
+    public const uint MouseEventXUp = 0x0100;
+    public const uint MouseEventWheel = 0x0800;
     public const uint MouseEventMoveNoCoalesce = 0x2000;
     public const uint MouseEventVirtualDesk = 0x4000;
     public const uint MouseEventAbsolute = 0x8000;
@@ -45,6 +51,7 @@ internal static class Win32
     public const int WmXButtonUp = 0x020C;
     public const int WmMouseHWheel = 0x020E;
 
+    public const uint MonitorDefaultToNull = 0;
     public const uint MonitorDefaultToNearest = 2;
     public const int HwndBroadcast = 0xFFFF;
     public const uint ModAlt = 0x0001;
@@ -151,6 +158,8 @@ internal static class Win32
 
     public delegate nint HookProc(int nCode, nint wParam, nint lParam);
 
+    public delegate bool MonitorEnumProc(nint hMonitor, nint hdc, nint lprcMonitor, nint dwData);
+
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, ref INPUT pInputs, int cbSize);
 
@@ -196,8 +205,22 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern bool GetWindowRect(nint hWnd, out RECT lpRect);
 
+    public delegate bool EnumWindowsProc(nint hWnd, nint lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, nint lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(nint hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetWindowText(nint hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
     [DllImport("user32.dll")]
     public static extern nint MonitorFromWindow(nint hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    public static extern nint MonitorFromPoint(POINT pt, uint dwFlags);
 
     [DllImport("user32.dll")]
     public static extern bool GetMonitorInfo(nint hMonitor, ref MONITORINFO lpmi);
@@ -216,4 +239,27 @@ internal static class Win32
 
     [DllImport("user32.dll")]
     public static extern bool DestroyIcon(nint hIcon);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumDisplayMonitors(nint hdc, nint lprcClip, MonitorEnumProc lpfnEnum, nint dwData);
+
+    [DllImport("shcore.dll")]
+    public static extern int GetDpiForMonitor(nint hmonitor, int dpiType, out uint dpiX, out uint dpiY);
+
+    public const uint ProcessQueryLimitedInformation = 0x1000;
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern nint OpenProcess(uint access, bool inherit, uint processId);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool QueryFullProcessImageName(nint process, uint flags, System.Text.StringBuilder name, ref uint size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(nint handle);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SystemParametersInfo(uint action, uint param, ref int value, uint winIni);
 }

@@ -1,7 +1,9 @@
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Takt.Helpers;
 using Takt.Models;
 
 namespace Takt.Services;
@@ -19,6 +21,9 @@ public sealed class SettingsService : IDisposable
     private readonly object _gate = new();
     private CancellationTokenSource? _debounce;
     private bool _wired;
+    private bool _suppressUndo;
+
+    public SettingsUndoStack Undo { get; } = new();
 
     public SettingsService(string? path = null)
     {
@@ -34,6 +39,8 @@ public sealed class SettingsService : IDisposable
 
     public event EventHandler? Changed;
 
+    public bool LastLoadReset { get; private set; }
+
     public void Load()
     {
         try
@@ -48,9 +55,12 @@ public sealed class SettingsService : IDisposable
         }
         catch
         {
+            LastLoadReset = true;
+            AppLog.Error("Settings file could not be read and was reset.");
             try
             {
-                File.Copy(_path, _path + ".bak", overwrite: true);
+                if (File.Exists(_path))
+                    File.Copy(_path, _path + ".bak", overwrite: true);
             }
             catch
             {
@@ -58,10 +68,12 @@ public sealed class SettingsService : IDisposable
             }
         }
 
-        EnsureNested();
+        EnsureShape(Current);
+        var upgraded = SettingsMigration.Migrate(Current);
         Wire(Current);
         _wired = true;
-        if (!File.Exists(_path))
+        SettingsNormalizer.ApplyAll(Current);
+        if (!File.Exists(_path) || LastLoadReset || upgraded)
             SaveNow();
     }
 
@@ -78,11 +90,75 @@ public sealed class SettingsService : IDisposable
         lock (_gate)
         {
             var json = JsonSerializer.Serialize(Current, JsonOptions);
+            if (File.Exists(_path))
+            {
+                var previous = File.ReadAllText(_path);
+                if (!string.Equals(previous, json, StringComparison.Ordinal))
+                {
+                    if (!_suppressUndo)
+                        Undo.Push(previous);
+                    try
+                    {
+                        SettingsBackup.Rotate(_path);
+                    }
+                    catch
+                    {
+                        AppLog.Error("Settings backup could not be written.");
+                    }
+                }
+            }
+
             var tmp = _path + ".tmp";
             File.WriteAllText(tmp, json);
-            File.Copy(tmp, _path, overwrite: true);
-            File.Delete(tmp);
+            if (File.Exists(_path))
+                File.Replace(tmp, _path, destinationBackupFileName: null);
+            else
+                File.Move(tmp, _path);
+            if (File.Exists(tmp))
+                File.Delete(tmp);
         }
+    }
+
+    public bool TryUndo()
+    {
+        var snapshot = Undo.Pop();
+        if (string.IsNullOrWhiteSpace(snapshot))
+            return false;
+        AppSettings? loaded;
+        try
+        {
+            loaded = JsonSerializer.Deserialize<AppSettings>(snapshot, JsonOptions);
+        }
+        catch
+        {
+            loaded = null;
+        }
+
+        if (loaded is null)
+        {
+            Undo.Push(snapshot);
+            return false;
+        }
+
+        EnsureShape(loaded);
+        SettingsMigration.Migrate(loaded);
+        SettingsNormalizer.ApplyAll(loaded);
+        _suppressUndo = true;
+        try
+        {
+            ProfileApplicator.Overlay(loaded, Current);
+            Current.Profiles.Clear();
+            foreach (var profile in loaded.Profiles)
+                Current.Profiles.Add(profile);
+            SaveNow();
+        }
+        finally
+        {
+            _suppressUndo = false;
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
     }
 
     public void Dispose()
@@ -106,18 +182,45 @@ public sealed class SettingsService : IDisposable
         }
     }
 
-    private void EnsureNested()
+    internal static void EnsureShape(AppSettings current)
     {
-        Current.Jiggler ??= new JigglerSettings();
-        Current.Clicker ??= new ClickerSettings();
-        Current.Hotkeys ??= new HotkeySettings();
-        Current.Appearance ??= new AppearanceSettings();
-        Current.General ??= new GeneralSettings();
-        Current.Hotkeys.ToggleJiggler ??= HotkeyBinding.Vk(0x75);
-        Current.Hotkeys.ToggleClicker ??= HotkeyBinding.Vk(0x76);
-        Current.Hotkeys.ToggleBoth ??= HotkeyBinding.Vk(0x77);
-        Current.Hotkeys.Panic ??= HotkeyBinding.Vk(0x78);
-        Current.Hotkeys.PickPosition ??= HotkeyBinding.Vk(0x79);
+        current.Jiggler ??= new JigglerSettings();
+        current.Clicker ??= new ClickerSettings();
+        current.Hotkeys ??= new HotkeySettings();
+        current.Appearance ??= new AppearanceSettings();
+        current.General ??= new GeneralSettings();
+        current.Hotkeys.ToggleJiggler ??= HotkeyBinding.Vk(0x75);
+        current.Hotkeys.ToggleClicker ??= HotkeyBinding.Vk(0x76);
+        current.Hotkeys.ToggleBoth ??= HotkeyBinding.Vk(0x77);
+        current.Hotkeys.Panic ??= HotkeyBinding.Vk(0x78);
+        current.Hotkeys.PickPosition ??= HotkeyBinding.Vk(0x79);
+        current.Hotkeys.ToggleMacro ??= HotkeyBinding.Vk(0x7B);
+        current.Hotkeys.ToggleTyper ??= HotkeyBinding.Vk(0x7A);
+        current.Hotkeys.TogglePresence ??= HotkeyBinding.Vk(0x7C);
+        current.Hotkeys.RecordMacro ??= HotkeyBinding.Vk(0x7B, 0x0002);
+        current.Hotkeys.ShowWindow ??= HotkeyBinding.Vk(0x54, 0x0001 | 0x0002);
+        current.Hotkeys.ToggleCompact ??= HotkeyBinding.Vk(0x4D, 0x0002 | 0x0004);
+        current.Hotkeys.TogglePause ??= HotkeyBinding.Vk(0x74);
+        current.Typer ??= new TyperSettings();
+        current.Typer.Snippets ??= new();
+        current.Presence ??= new PresenceSettings();
+        current.Work ??= new WorkScheduleSettings();
+        current.Macro ??= new MacroSettings();
+        current.Macro.Events ??= new();
+        current.Macro.Saved ??= new();
+        current.Clicker.Points ??= new();
+        current.Clicker.SavedSequences ??= new();
+        current.Profiles ??= new();
+        current.General.AppRules ??= new();
+        current.General.Plan ??= new();
+        current.General.OnlyWhileProcess ??= "";
+        current.Jiggler.StopAtTime ??= "";
+        current.Clicker.StopAtTime ??= "";
+        current.Typer.StopAtTime ??= "";
+        current.Presence.StopAtTime ??= "";
+        current.Macro.StopAtTime ??= "";
+        foreach (var snippet in current.Typer.Snippets)
+            snippet.Hotkey ??= new HotkeyBinding { VirtualKey = 0 };
     }
 
     private void Wire(INotifyPropertyChanged target)
@@ -130,7 +233,38 @@ public sealed class SettingsService : IDisposable
                 continue;
             if (prop.GetValue(target) is INotifyPropertyChanged child)
                 Wire(child);
+            if (prop.GetValue(target) is INotifyCollectionChanged collection)
+                Watch(collection);
         }
+    }
+
+    private void Watch(INotifyCollectionChanged collection)
+    {
+        collection.CollectionChanged -= OnCollectionChanged;
+        collection.CollectionChanged += OnCollectionChanged;
+        if (collection is System.Collections.IEnumerable items)
+        {
+            foreach (var item in items)
+            {
+                if (item is INotifyPropertyChanged child)
+                    Wire(child);
+            }
+        }
+    }
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (var item in e.NewItems)
+            {
+                if (item is INotifyPropertyChanged child)
+                    Wire(child);
+            }
+        }
+
+        if (_wired)
+            QueueSave();
     }
 
     private void OnChanged(object? sender, PropertyChangedEventArgs e)
@@ -142,7 +276,10 @@ public sealed class SettingsService : IDisposable
                 Wire(child);
         }
 
-        if (_wired)
-            QueueSave();
+        if (!_wired)
+            return;
+
+        SettingsNormalizer.ApplyChanged(sender, e.PropertyName);
+        QueueSave();
     }
 }

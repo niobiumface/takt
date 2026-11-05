@@ -11,7 +11,14 @@ internal enum HotkeyAction
     ToggleClicker = 2,
     ToggleBoth = 3,
     Panic = 4,
-    PickPosition = 5
+    PickPosition = 5,
+    ToggleMacro = 6,
+    ToggleTyper = 7,
+    TogglePresence = 8,
+    ShowWindow = 9,
+    RecordMacro = 10,
+    ToggleCompact = 11,
+    TogglePause = 12
 }
 
 internal sealed class HotkeyService : IDisposable
@@ -22,13 +29,23 @@ internal sealed class HotkeyService : IDisposable
     private Window? _window;
     private HwndSource? _source;
     private nint _hwnd;
+    private bool _suspended;
+    public const int SnippetIdBase = 200;
+    public const int SnippetSlots = 12;
+
     private readonly HashSet<int> _registered = [];
+    private HotkeyBinding[] _snippets = [];
+    public int RejectedCount { get; private set; }
 
     public HotkeyService(HotkeySettings settings) => _settings = settings;
 
     public event Action<HotkeyAction>? Pressed;
+    public event Action<int>? SnippetPressed;
     public event Action? ShowRequested;
     public event Action<string>? RegistrationFailed;
+
+    public void SetSnippets(IReadOnlyList<HotkeyBinding>? snippets) =>
+        _snippets = snippets?.Take(SnippetSlots).ToArray() ?? [];
 
     public void Attach(Window window)
     {
@@ -39,9 +56,24 @@ internal sealed class HotkeyService : IDisposable
             window.SourceInitialized += (_, _) => Hook();
     }
 
+    public void Suspend()
+    {
+        _suspended = true;
+        UnregisterAll();
+    }
+
+    public void Resume()
+    {
+        _suspended = false;
+        if (_hwnd == nint.Zero)
+            return;
+        UnregisterAll();
+        TryRegisterAll();
+    }
+
     public void Rebind()
     {
-        if (_hwnd == nint.Zero)
+        if (_hwnd == nint.Zero || _suspended)
             return;
         UnregisterAll();
         TryRegisterAll();
@@ -72,26 +104,48 @@ internal sealed class HotkeyService : IDisposable
 
     private void TryRegisterAll()
     {
-        TryRegister(HotkeyAction.ToggleJiggler, _settings.ToggleJiggler);
-        TryRegister(HotkeyAction.ToggleClicker, _settings.ToggleClicker);
-        TryRegister(HotkeyAction.ToggleBoth, _settings.ToggleBoth);
-        TryRegister(HotkeyAction.Panic, _settings.Panic);
-        TryRegister(HotkeyAction.PickPosition, _settings.PickPosition);
+        RejectedCount = 0;
+        var seen = new HashSet<(int Modifiers, int VirtualKey)>();
+        TryRegister(HotkeyAction.ToggleJiggler, _settings.ToggleJiggler, seen);
+        TryRegister(HotkeyAction.ToggleClicker, _settings.ToggleClicker, seen);
+        TryRegister(HotkeyAction.ToggleBoth, _settings.ToggleBoth, seen);
+        TryRegister(HotkeyAction.Panic, _settings.Panic, seen);
+        TryRegister(HotkeyAction.PickPosition, _settings.PickPosition, seen);
+        TryRegister(HotkeyAction.ToggleMacro, _settings.ToggleMacro, seen);
+        TryRegister(HotkeyAction.ToggleTyper, _settings.ToggleTyper, seen);
+        TryRegister(HotkeyAction.TogglePresence, _settings.TogglePresence, seen);
+        TryRegister(HotkeyAction.ShowWindow, _settings.ShowWindow, seen);
+        TryRegister(HotkeyAction.RecordMacro, _settings.RecordMacro, seen);
+        TryRegister(HotkeyAction.ToggleCompact, _settings.ToggleCompact, seen);
+        TryRegister(HotkeyAction.TogglePause, _settings.TogglePause, seen);
+        for (var index = 0; index < _snippets.Length; index++)
+            TryRegister(SnippetIdBase + index, _snippets[index], seen, "snippet");
     }
 
-    private void TryRegister(HotkeyAction action, HotkeyBinding binding)
+    private void TryRegister(HotkeyAction action, HotkeyBinding binding, HashSet<(int Modifiers, int VirtualKey)> seen) =>
+        TryRegister((int)action, binding, seen, action.ToString());
+
+    private void TryRegister(int id, HotkeyBinding? binding, HashSet<(int Modifiers, int VirtualKey)> seen, string name)
     {
-        if (!binding.IsValid)
+        if (binding is null || !binding.IsValid)
             return;
 
-        var mods = (uint)binding.Modifiers | Win32.ModNoRepeat;
-        if (Win32.RegisterHotKey(_hwnd, (int)action, mods, (uint)binding.VirtualKey))
+        if (!seen.Add((binding.Modifiers, binding.VirtualKey)))
         {
-            _registered.Add((int)action);
+            RejectedCount++;
+            RegistrationFailed?.Invoke(name);
             return;
         }
 
-        RegistrationFailed?.Invoke(action.ToString());
+        var mods = (uint)binding.Modifiers | Win32.ModNoRepeat;
+        if (Win32.RegisterHotKey(_hwnd, id, mods, (uint)binding.VirtualKey))
+        {
+            _registered.Add(id);
+            return;
+        }
+
+        RejectedCount++;
+        RegistrationFailed?.Invoke(name);
     }
 
     private void UnregisterAll()
@@ -115,7 +169,9 @@ internal sealed class HotkeyService : IDisposable
         if (msg == Win32.WmHotkey)
         {
             var id = wParam.ToInt32();
-            if (Enum.IsDefined(typeof(HotkeyAction), id))
+            if (id >= SnippetIdBase && id < SnippetIdBase + SnippetSlots)
+                SnippetPressed?.Invoke(id - SnippetIdBase);
+            else if (Enum.IsDefined(typeof(HotkeyAction), id))
                 Pressed?.Invoke((HotkeyAction)id);
             handled = true;
         }

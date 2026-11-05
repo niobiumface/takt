@@ -23,36 +23,59 @@ internal sealed class FailsafeMonitor : IDisposable
         if (_cts is not null)
             return;
         _cts = new CancellationTokenSource();
-        _ = RunAsync(_cts.Token);
+        _ = RunAsync(_cts);
     }
 
     public void Dispose()
     {
-        _cts?.Cancel();
-        _cts?.Dispose();
+        var cts = _cts;
         _cts = null;
+        try
+        {
+            cts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // the loop already disposed this source
+        }
     }
 
-    private async Task RunAsync(CancellationToken token)
+    private async Task RunAsync(CancellationTokenSource cts)
     {
-        while (!token.IsCancellationRequested)
+        var token = cts.Token;
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                await Task.Delay(50, token);
+
+                if (!IsArmed || !_settings.General.FailsafeEnabled)
+                    continue;
+
+                if (!MouseInput.TryGetCursorPos(out var pos))
+                    continue;
+                if (!MouseInput.TryGetMonitor(pos.X, pos.Y, out var monitor))
+                    continue;
+
+                var size = SettingsLimits.ClampFailsafe(_settings.General.FailsafeSize);
+                if (FailsafeRegion.IsInCorner(pos.X, pos.Y, monitor, _settings.General.FailsafeCorner, size))
+                    _onTriggered();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // stopping
+        }
+        finally
         {
             try
             {
-                await Task.Delay(50, token);
+                cts.Dispose();
             }
-            catch (OperationCanceledException)
+            catch (ObjectDisposedException)
             {
-                return;
+                // already disposed
             }
-
-            if (!IsArmed || !_settings.General.FailsafeEnabled)
-                continue;
-
-            var pos = MouseInput.GetCursorPos();
-            var screen = MouseInput.GetVirtualScreen();
-            if (FailsafeRegion.IsInCorner(pos.X, pos.Y, screen, _settings.General.FailsafeCorner, _settings.General.FailsafeSize))
-                _onTriggered();
         }
     }
 }

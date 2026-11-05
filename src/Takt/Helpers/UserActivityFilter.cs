@@ -4,9 +4,13 @@ public static class UserActivityFilter
 {
     public const int MoveThresholdPx = 10;
 
+    public const uint KeyboardInjected = 0x00000010;
+    public const uint KeyboardLowerIlInjected = 0x00000002;
+    public const uint KeyboardExtended = 0x00000001;
+
     public static bool IsInjected(uint flags, bool keyboard) =>
         keyboard
-            ? (flags & 0x00000010) != 0
+            ? (flags & (KeyboardInjected | KeyboardLowerIlInjected)) != 0
             : (flags & 0x00000003) != 0;
 
     public static bool IsButtonOrWheel(int mouseMessage) => mouseMessage is

@@ -1,0 +1,41 @@
+<Window x:Class="Takt.Views.CompactWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Takt"
+        Width="280"
+        SizeToContent="Height"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Closing="OnClosing"
+        LocationChanged="OnMoved">
+    <Border Margin="10" Padding="12" CornerRadius="10" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <StackPanel>
+            <DockPanel Margin="0,0,0,10">
+                <Ellipse DockPanel.Dock="Right" Width="8" Height="8" VerticalAlignment="Center"
+                         Fill="{Binding ActivityHex, Converter={StaticResource HexToBrush}}"
+                         ToolTip="{Binding DeadlineText}" />
+                <TextBlock Text="{DynamicResource Compact.Title}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Margin="0,4">
+                <ToggleButton DockPanel.Dock="Right" Style="{StaticResource SwitchToggle}" IsChecked="{Binding JigglerOn, Mode=TwoWay}" ToolTip="{DynamicResource Tip.Jiggler}" AutomationProperties.Name="{DynamicResource Card.Jiggler}" />
+                <TextBlock Text="{DynamicResource Card.Jiggler}" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Margin="0,4">
+                <ToggleButton DockPanel.Dock="Right" Style="{StaticResource SwitchToggle}" IsChecked="{Binding ClickerOn, Mode=TwoWay}" ToolTip="{DynamicResource Tip.Clicker}" AutomationProperties.Name="{DynamicResource Card.Clicker}" />
+                <TextBlock Text="{DynamicResource Card.Clicker}" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Margin="0,4">
+                <ToggleButton DockPanel.Dock="Right" Style="{StaticResource SwitchToggle}" IsChecked="{Binding TyperOn, Mode=TwoWay}" ToolTip="{DynamicResource Tip.Typer}" AutomationProperties.Name="{DynamicResource Card.Typer}" />
+                <TextBlock Text="{DynamicResource Card.Typer}" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Margin="0,4">
+                <ToggleButton DockPanel.Dock="Right" Style="{StaticResource SwitchToggle}" IsChecked="{Binding PresenceOn, Mode=TwoWay}" ToolTip="{DynamicResource Tip.Presence}" AutomationProperties.Name="{DynamicResource Presence.Toggle}" />
+                <TextBlock Text="{DynamicResource Presence.Toggle}" VerticalAlignment="Center" />
+            </DockPanel>
+            <TextBlock Text="{Binding DeadlineText}" Style="{StaticResource HintText}" Margin="0,10,0,0" />
+        </StackPanel>
+    </Border>
+</Window>

@@ -6,10 +6,33 @@ namespace Takt.Native;
 
 internal static class MouseInput
 {
+    public static bool TryGetCursorPos(out Win32.POINT point) => Win32.GetCursorPos(out point);
+
     public static Win32.POINT GetCursorPos()
     {
-        Win32.GetCursorPos(out var point);
+        TryGetCursorPos(out var point);
         return point;
+    }
+
+    public static bool TryGetMonitor(int x, int y, out PixelRect monitor)
+    {
+        var handle = Win32.MonitorFromPoint(new Win32.POINT { X = x, Y = y }, Win32.MonitorDefaultToNull);
+        if (handle == nint.Zero)
+        {
+            monitor = default;
+            return false;
+        }
+
+        var info = new Win32.MONITORINFO { CbSize = Marshal.SizeOf<Win32.MONITORINFO>() };
+        if (!Win32.GetMonitorInfo(handle, ref info))
+        {
+            monitor = default;
+            return false;
+        }
+
+        var rect = info.RcMonitor;
+        monitor = new PixelRect(rect.Left, rect.Top, rect.Right, rect.Bottom);
+        return monitor.Right > monitor.Left && monitor.Bottom > monitor.Top;
     }
 
     public static VirtualScreen GetVirtualScreen() => new(
@@ -18,82 +41,98 @@ internal static class MouseInput
         Win32.GetSystemMetrics(Win32.SmCxVirtualScreen),
         Win32.GetSystemMetrics(Win32.SmCyVirtualScreen));
 
-    public static void MoveRelative(int dx, int dy)
-    {
+    public static bool MoveRelative(int dx, int dy) =>
         SendFlags(dx, dy, Win32.MouseEventMove);
+
+    public static bool PulseRelative(int dx, int dy)
+    {
+        if (dx == 0 && dy == 0)
+            dx = 1;
+        var forward = MoveRelative(dx, dy);
+        var back = MoveRelative(-dx, -dy);
+        return forward && back;
     }
 
-    public static void MoveAbsolute(int pixelX, int pixelY)
+    public static bool MoveAbsolute(int pixelX, int pixelY)
     {
         var screen = GetVirtualScreen();
         var mapped = CoordinateMapper.ToAbsolute65535(pixelX, pixelY, screen);
-        SendFlags(mapped.X, mapped.Y, Win32.MouseEventMove | Win32.MouseEventAbsolute | Win32.MouseEventVirtualDesk);
+        return SendFlags(mapped.X, mapped.Y, Win32.MouseEventMove | Win32.MouseEventAbsolute | Win32.MouseEventVirtualDesk);
     }
 
-    public static void Nudge(int amplitude)
+    public static bool Nudge(int amplitude)
     {
-        var pos = GetCursorPos();
+        if (!TryGetCursorPos(out var pos))
+            return false;
+
         var amp = Math.Max(amplitude, 1);
-        MoveAbsolute(pos.X + amp, pos.Y);
+        var outOk = MoveAbsolute(pos.X + amp, pos.Y);
         Thread.Sleep(40);
-        MoveAbsolute(pos.X, pos.Y);
+        var backOk = MoveAbsolute(pos.X, pos.Y);
+        return outOk && backOk;
     }
 
-    public static void Click(ClickButton button, ClickAction action)
+    public static bool Click(ClickButton button, ClickAction action)
     {
+        if (PointerButtons.IsWheel(button))
+        {
+            var (_, data) = PointerButtons.Describe(button, down: true);
+            var once = Wheel(unchecked((int)data));
+            if (action != ClickAction.Double)
+                return once;
+            Thread.Sleep(40);
+            return once && Wheel(unchecked((int)data));
+        }
+
         switch (action)
         {
             case ClickAction.Hold:
-                Down(button);
-                break;
+                return Down(button);
             case ClickAction.Double:
-                Pulse(button);
+                if (!Pulse(button))
+                    return false;
                 Thread.Sleep(40);
-                Pulse(button);
-                break;
+                return Pulse(button);
             default:
-                Pulse(button);
-                break;
+                return Pulse(button);
         }
     }
 
-    public static void Down(ClickButton button) => SendFlags(0, 0, DownFlag(button));
-
-    public static void Up(ClickButton button) => SendFlags(0, 0, UpFlag(button));
-
-    private static void Pulse(ClickButton button)
+    public static bool Down(ClickButton button)
     {
-        Down(button);
-        Thread.Sleep(8);
-        Up(button);
+        var (flags, data) = PointerButtons.Describe(button, down: true);
+        return SendFlags(0, 0, flags, data);
     }
 
-    private static uint DownFlag(ClickButton button) => button switch
+    public static bool Up(ClickButton button)
     {
-        ClickButton.Right => Win32.MouseEventRightDown,
-        ClickButton.Middle => Win32.MouseEventMiddleDown,
-        _ => Win32.MouseEventLeftDown
-    };
+        var (flags, data) = PointerButtons.Describe(button, down: false);
+        return SendFlags(0, 0, flags, data);
+    }
 
-    private static uint UpFlag(ClickButton button) => button switch
+    public static bool Wheel(int delta) =>
+        SendFlags(0, 0, PointerButtons.Wheel, unchecked((uint)delta));
+
+    private static bool Pulse(ClickButton button)
     {
-        ClickButton.Right => Win32.MouseEventRightUp,
-        ClickButton.Middle => Win32.MouseEventMiddleUp,
-        _ => Win32.MouseEventLeftUp
-    };
+        if (!Down(button))
+            return false;
+        Thread.Sleep(8);
+        return Up(button);
+    }
 
-    private static void SendFlags(int dx, int dy, uint flags)
+    private static bool SendFlags(int dx, int dy, uint flags, uint mouseData = 0)
     {
         if ((flags & Win32.MouseEventMove) != 0)
         {
-            if (TrySend(dx, dy, flags | Win32.MouseEventMoveNoCoalesce))
-                return;
+            if (TrySend(dx, dy, flags | Win32.MouseEventMoveNoCoalesce, mouseData))
+                return true;
         }
 
-        TrySend(dx, dy, flags);
+        return TrySend(dx, dy, flags, mouseData);
     }
 
-    private static bool TrySend(int dx, int dy, uint flags)
+    private static bool TrySend(int dx, int dy, uint flags, uint mouseData)
     {
         var input = new Win32.INPUT
         {
@@ -104,6 +143,7 @@ internal static class MouseInput
                 {
                     Dx = dx,
                     Dy = dy,
+                    MouseData = mouseData,
                     DwFlags = flags
                 }
             }
